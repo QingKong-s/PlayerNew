@@ -1,0 +1,329 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="eck">
+      <UniqueIdentifier>{27351c93-bde3-4702-b1d2-bda103ce0336}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="targetver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Entry.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CWndMain.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CApp.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CWnd.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CWndSizer.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\DbgHelper.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\DesignerDef.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\DlgHelper.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\ECK.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\Env.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\GdiplusFlatDef.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\ImageHelper.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\LunarDateLib.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\ResStruct.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\Utility.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\WndHelper.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CAllocator.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CArray.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CBk.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CButton.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CChartBar.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CChartLine.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CChartPie.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CColorPicker.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CComboBox.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CComboBoxEx.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CCommDlg.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CDirBox.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CEdit.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CEditExt.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CFile.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CFileDlg.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CForm.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CFormTable.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CHeader.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CHotKey.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CIniFile.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CLabel.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CListBox.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CListBoxExt.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CListView.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CLunarCalendar.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CPropertySheet.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CRefBin.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CRefStr.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CResSet.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CResTable.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CScrollBar.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CStatic.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CSubclassMgr.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CTab.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CTabHeader.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CTaskGroupList.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CTreeView.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CUpDown.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="CSimpleList.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CScrollView.h">
+      <Filter>eck</Filter>
+    </ClInclude>
+    <ClInclude Include="CMainBK.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CBass.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CWndList.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CPlayList.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CPlayListFile.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Entry.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CWndMain.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CApp.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinEzCtrlKit\eck\DesignerDef.cpp">
+      <Filter>eck</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinEzCtrlKit\eck\DlgHelper.cpp">
+      <Filter>eck</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinEzCtrlKit\eck\ECK.cpp">
+      <Filter>eck</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinEzCtrlKit\eck\ImageHelper.cpp">
+      <Filter>eck</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinEzCtrlKit\eck\Utility.cpp">
+      <Filter>eck</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinEzCtrlKit\eck\WndHelper.cpp">
+      <Filter>eck</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinEzCtrlKit\eck\CBk.cpp">
+      <Filter>eck</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinEzCtrlKit\eck\CButton.cpp">
+      <Filter>eck</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinEzCtrlKit\eck\CChartPie.cpp">
+      <Filter>eck</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinEzCtrlKit\eck\CColorPicker.cpp">
+      <Filter>eck</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinEzCtrlKit\eck\CCommDlg.cpp">
+      <Filter>eck</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinEzCtrlKit\eck\CDirBox.cpp">
+      <Filter>eck</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinEzCtrlKit\eck\CEdit.cpp">
+      <Filter>eck</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinEzCtrlKit\eck\CEditExt.cpp">
+      <Filter>eck</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinEzCtrlKit\eck\CFile.cpp">
+      <Filter>eck</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinEzCtrlKit\eck\CForm.cpp">
+      <Filter>eck</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinEzCtrlKit\eck\CLabel.cpp">
+      <Filter>eck</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinEzCtrlKit\eck\CListBox.cpp">
+      <Filter>eck</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinEzCtrlKit\eck\CListBoxExt.cpp">
+      <Filter>eck</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinEzCtrlKit\eck\CLunarCalendar.cpp">
+      <Filter>eck</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinEzCtrlKit\eck\CRefBin.cpp">
+      <Filter>eck</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinEzCtrlKit\eck\CRefStr.cpp">
+      <Filter>eck</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinEzCtrlKit\eck\CTabHeader.cpp">
+      <Filter>eck</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinEzCtrlKit\eck\CTaskGroupList.cpp">
+      <Filter>eck</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinEzCtrlKit\eck\CWnd.cpp">
+      <Filter>eck</Filter>
+    </ClCompile>
+    <ClCompile Include="CSimpleList.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CMainBK.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CBass.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CWndList.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CPlayList.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CPlayListFile.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Win32Template.rc">
+      <Filter>资源文件</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

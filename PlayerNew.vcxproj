@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{e66c13ab-5633-48b8-b1e9-39cb8c42f799}</ProjectGuid>
+    <RootNamespace>PlayerNew</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../WinEzCtrlKit</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../WinEzCtrlKit</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../WinEzCtrlKit</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../WinEzCtrlKit</IncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions);NOMINMAX</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions);NOMINMAX</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions);NOMINMAX</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions);NOMINMAX</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CAllocator.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CArray.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CBk.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CButton.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CChartBar.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CChartLine.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CChartPie.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CColorPicker.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CComboBox.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CComboBoxEx.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CCommDlg.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CDirBox.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CEdit.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CEditExt.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CFile.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CFileDlg.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CForm.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CFormTable.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CHeader.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CHotKey.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CIniFile.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CLabel.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CListBox.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CListBoxExt.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CListView.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CLunarCalendar.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CPropertySheet.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CRefBin.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CRefStr.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CResSet.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CResTable.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CScrollBar.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CScrollView.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CStatic.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CSubclassMgr.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CTab.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CTabHeader.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CTaskGroupList.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CTreeView.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CUpDown.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CWnd.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CWndSizer.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\DbgHelper.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\DesignerDef.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\DlgHelper.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\ECK.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\Env.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\GdiplusFlatDef.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\ImageHelper.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\LunarDateLib.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\ResStruct.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\Utility.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\WndHelper.h" />
+    <ClInclude Include="CApp.h" />
+    <ClInclude Include="CBass.h" />
+    <ClInclude Include="CMainBK.h" />
+    <ClInclude Include="CPlayList.h" />
+    <ClInclude Include="CPlayListFile.h" />
+    <ClInclude Include="CSimpleList.h" />
+    <ClInclude Include="CWndList.h" />
+    <ClInclude Include="CWndMain.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="Entry.h" />
+    <ClInclude Include="Utils.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\WinEzCtrlKit\eck\CBk.cpp" />
+    <ClCompile Include="..\WinEzCtrlKit\eck\CButton.cpp" />
+    <ClCompile Include="..\WinEzCtrlKit\eck\CChartPie.cpp" />
+    <ClCompile Include="..\WinEzCtrlKit\eck\CColorPicker.cpp" />
+    <ClCompile Include="..\WinEzCtrlKit\eck\CCommDlg.cpp" />
+    <ClCompile Include="..\WinEzCtrlKit\eck\CDirBox.cpp" />
+    <ClCompile Include="..\WinEzCtrlKit\eck\CEdit.cpp" />
+    <ClCompile Include="..\WinEzCtrlKit\eck\CEditExt.cpp" />
+    <ClCompile Include="..\WinEzCtrlKit\eck\CFile.cpp" />
+    <ClCompile Include="..\WinEzCtrlKit\eck\CForm.cpp" />
+    <ClCompile Include="..\WinEzCtrlKit\eck\CLabel.cpp" />
+    <ClCompile Include="..\WinEzCtrlKit\eck\CListBox.cpp" />
+    <ClCompile Include="..\WinEzCtrlKit\eck\CListBoxExt.cpp" />
+    <ClCompile Include="..\WinEzCtrlKit\eck\CLunarCalendar.cpp" />
+    <ClCompile Include="..\WinEzCtrlKit\eck\CRefBin.cpp" />
+    <ClCompile Include="..\WinEzCtrlKit\eck\CRefStr.cpp" />
+    <ClCompile Include="..\WinEzCtrlKit\eck\CTabHeader.cpp" />
+    <ClCompile Include="..\WinEzCtrlKit\eck\CTaskGroupList.cpp" />
+    <ClCompile Include="..\WinEzCtrlKit\eck\CWnd.cpp" />
+    <ClCompile Include="..\WinEzCtrlKit\eck\DesignerDef.cpp" />
+    <ClCompile Include="..\WinEzCtrlKit\eck\DlgHelper.cpp" />
+    <ClCompile Include="..\WinEzCtrlKit\eck\ECK.cpp" />
+    <ClCompile Include="..\WinEzCtrlKit\eck\ImageHelper.cpp" />
+    <ClCompile Include="..\WinEzCtrlKit\eck\Utility.cpp" />
+    <ClCompile Include="..\WinEzCtrlKit\eck\WndHelper.cpp" />
+    <ClCompile Include="CApp.cpp" />
+    <ClCompile Include="CBass.cpp" />
+    <ClCompile Include="CMainBK.cpp" />
+    <ClCompile Include="CPlayList.cpp" />
+    <ClCompile Include="CPlayListFile.cpp" />
+    <ClCompile Include="CSimpleList.cpp" />
+    <ClCompile Include="CWndList.cpp" />
+    <ClCompile Include="CWndMain.cpp" />
+    <ClCompile Include="Entry.cpp" />
+    <ClCompile Include="Utils.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Win32Template.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
