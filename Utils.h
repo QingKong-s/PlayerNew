@@ -63,6 +63,14 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi);
 #pragma endregion
 
 #pragma region Lrc
+enum class LrcEncoding
+{
+    Auto,
+    GB2312,
+    UTF8,
+    UTF16LE,
+    UTF16BE
+};
 struct LRCINFO
 {
 	PWSTR pszLrc = NULL;// 歌词
@@ -127,6 +135,17 @@ struct LRCLABEL
 	}
 };
 
-BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<LRCLABEL>& Label, int iDefTextEncoding = 0);
+/// <summary>
+/// 解析LRC。
+/// 支持压缩LRC，支持无换行LRC，支持歌词内嵌入中括号
+/// </summary>
+/// <param name="p">文件名或LRC字节流</param>
+/// <param name="cbMem">若为0，则指示p为文件名，否则p为LRC字节流</param>
+/// <param name="Result">解析结果</param>
+/// <param name="Label">其他标签的解析结果</param>
+/// <param name="iDefTextEncoding">默认文本编码</param>
+/// <returns></returns>
+BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result,
+    std::vector<LRCLABEL>& Label, LrcEncoding uTextEncoding = LrcEncoding::Auto);
 #pragma endregion
 UTILS_NAMESPACE_END

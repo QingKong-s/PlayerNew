@@ -68,7 +68,7 @@ BOOL Test()
 {
 	std::vector<Utils::LRCINFO> v{};
 	std::vector<Utils::LRCLABEL> v2{};
-	Utils::ParseLrc(LR"(D:\@重要文件\@音乐\'Fuwa Fuwa Time' #6 'Gakuen Sai!' Version - 桜高軽音部.lrc)", 0, v, v2);
+	Utils::ParseLrc(LR"(D:\@重要文件\@音乐\终有一天你会离开 - Lyrik_p、乐正绫、洛天依.lrc)", 0, v, v2);
 	return FALSE;
 }
 #endif

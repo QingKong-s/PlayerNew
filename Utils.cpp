@@ -289,13 +289,13 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 	else if (memcmp(by, "fLaC", 4) == 0)// Flac
 	{
 		FLAC_Header Header;
-		DWORD dwSize;
+		DWORD cbBlock;
 		UINT t;
 		char* pBuffer;
 		do
 		{
 			File >> Header;
-			dwSize = Header.bySize[2] | Header.bySize[1] << 8 | Header.bySize[0] << 16;
+			cbBlock = Header.bySize[2] | Header.bySize[1] << 8 | Header.bySize[0] << 16;
 			switch (Header.by & 0x7F)
 			{
 			case 4:// 标签信息，注意：这一部分是小端序
@@ -315,7 +315,7 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 					*(pBuffer + t) = '\0';
 
 					t = MultiByteToWideChar(CP_UTF8, 0, pBuffer, -1, NULL, 0);
-					PWSTR pszLabel = (PWSTR)HeapAlloc(GetProcessHeap(), 0, t * sizeof(WCHAR));
+					PWSTR pszLabel = new WCHAR[t];
 					MultiByteToWideChar(CP_UTF8, 0, pBuffer, -1, pszLabel, t);// 转换编码，UTF-8到UTF-16LE
 					delete[] pBuffer;
 
@@ -326,31 +326,31 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 						if (eck::FindStr(pszLabel, L"TITLE"))
 						{
 							mi.rsTitle.ReSizeAbs(cch);
-							lstrcpyW(mi.rsTitle.Data(), pszLabel + iPos);
+							wcscpy(mi.rsTitle.Data(), pszLabel + iPos);
 						}
 						else if (eck::FindStr(pszLabel, L"ALBUM"))
 						{
 							mi.rsAlbum.ReSizeAbs(cch);
-							lstrcpyW(mi.rsAlbum.Data(), pszLabel + iPos);
+							wcscpy(mi.rsAlbum.Data(), pszLabel + iPos);
 						}
 						else if (eck::FindStr(pszLabel, L"ARTIST"))
 						{
 							mi.rsArtist.ReSizeAbs(cch);
-							lstrcpyW(mi.rsArtist.Data(), pszLabel + iPos);
+							wcscpy(mi.rsArtist.Data(), pszLabel + iPos);
 						}
 						else if (eck::FindStr(pszLabel, L"DESCRIPTION"))
 						{
 							mi.rsComment.ReSizeAbs(cch);
-							lstrcpyW(mi.rsComment.Data(), pszLabel + iPos);
+							wcscpy(mi.rsComment.Data(), pszLabel + iPos);
 						}
 						else if (eck::FindStr(pszLabel, L"LYRICS"))
 						{
 							mi.rsLrc.ReSizeAbs(cch);
-							lstrcpyW(mi.rsLrc.Data(), pszLabel + iPos);
+							wcscpy(mi.rsLrc.Data(), pszLabel + iPos);
 						}
 					}
 
-					HeapFree(GetProcessHeap(), 0, pszLabel);
+					delete[] pszLabel;
 				}
 			}
 			break;
@@ -376,7 +376,7 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 			}
 			break;
 			default:
-				File += dwSize;// 跳过块
+				File += cbBlock;// 跳过块
 			}
 
 		} while (!(Header.by & 0x80));// 检查最高位，判断是不是最后一个块
@@ -385,91 +385,41 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 }
 
 
-/// <summary>
-/// [读取歌词数据辅助函数]处理歌词时间标签，将文本标签转换成浮点数，并将其按次序装载到歌词数组中，处理完成后不销毁原数组
-/// </summary>
-/// <param name="Result">结果数组</param>
-/// <param name="TimeLabel">时间标签数组</param>
-/// <param name="pszLrc">与时间标签数组里所有成员都对应的歌词</param>
-void ParseLrc_ProcLabel(std::vector<LRCINFO>& Result, std::vector<LRCLABEL>& Label,
-	std::vector<PWSTR>& TimeLabel, PWSTR pszLrc, int cchLrc)
+struct LRCTIMELABEL
+{
+	PCWSTR pszLabel;
+	int pos1;
+	int pos2;
+
+	LRCTIMELABEL(PCWSTR pszLabel, int pos1, int pos2) : pszLabel(pszLabel), pos1(pos1), pos2(pos2) {}
+};
+
+void ParseLrc_ProcTimeLabel(std::vector<LRCINFO>& Result, std::vector<LRCLABEL>& Label,
+	const std::vector<LRCTIMELABEL>& TimeLabel, PWSTR pszLrc, int cchLrc)
 {
 #pragma warning (push)
 #pragma warning (disable: 6387)// 可能是NULL
 #pragma warning (disable: 6053)// 可能未添加终止NULL
-	PWSTR pszTimeLabel;
-
 	PWSTR pTemp;
-	int cchTemp;
 	int M, S, MS;
-	BOOL IsMS = TRUE;
 	float fTime;
-	int iStrPos1, iStrPos2;
 	EckCounter(TimeLabel.size(), i)
 	{
-		pszTimeLabel = TimeLabel[i];
+		auto& Label = TimeLabel[i];
 
-		iStrPos1 = eck::FindStr(pszTimeLabel, L":");
-		if (iStrPos1 < 0)
-			continue;// 没冒号，到循环尾
-		iStrPos2 = eck::FindStr(pszTimeLabel, L":", iStrPos1 + 1);
-
-		if (iStrPos2 <= 0)// 是否[分:秒:毫秒]
+		// 取分钟
+		StrToIntExW(Label.pszLabel, STIF_DEFAULT, &M);
+		fTime = (float)M * 60.f;
+		// 取秒
+		StrToIntExW(Label.pszLabel + Label.pos1 + 1, STIF_DEFAULT, &S);
+		fTime += (float)S;
+		// 取毫秒
+		if (Label.pos2 > 0)
 		{
-			iStrPos2 = eck::FindStr(pszTimeLabel, L".", iStrPos1 + 1);
-			if (iStrPos2 <= 0)// 是否[分:秒.毫秒]
-			{
-				IsMS = FALSE;// [分:秒]
-				iStrPos2 = (int)wcslen(pszTimeLabel) + 1;
-			}
-		}
-		///////////////////取分钟
-		cchTemp = iStrPos1;
-		pTemp = (PWSTR)_malloca(eck::Cch2Cb(cchTemp));
-		wcsncpy(pTemp, pszTimeLabel, cchTemp);
-		*(pTemp + cchTemp) = L'\0';
-		if (!StrToIntExW(pTemp, STIF_DEFAULT, &M))
-		{
-			// 转换失败，视为非时间标签
-			Label.emplace_back(pTemp, eck::LTrimStr(pszTimeLabel + iStrPos1 + 1));
-			_freea(pTemp);
-			continue;
-		}
-		fTime = (float)M * 60.0f;
-		_freea(pTemp);
-		///////////////////取秒
-		cchTemp = iStrPos2 - iStrPos1 - 1;
-		pTemp = (PWSTR)_malloca(eck::Cch2Cb(cchTemp));
-		wcsncpy(pTemp, pszTimeLabel + iStrPos1 + 1, cchTemp + 1);
-		*(pTemp + cchTemp) = L'\0';
-		if (!StrToIntExW(pTemp, STIF_DEFAULT, &S))
-			continue;
-		fTime += S;
-		_freea(pTemp);
-		///////////////////取毫秒
-		if (IsMS)
-		{
-			cchTemp = (int)wcslen(pszTimeLabel) - iStrPos2;
-			if (cchTemp == 2)// 只有两位xx时表示xx0（精度降低了，单位是十毫秒）
-			{
-				pTemp = (PWSTR)_malloca(eck::Cch2Cb(cchTemp + 1));
-				wcsncpy(pTemp, pszTimeLabel + iStrPos2 + 1, cchTemp);
-				*(pTemp + cchTemp) = L'0';
-				*(pTemp + cchTemp + 1) = L'\0';
-			}
-			else
-			{
-				pTemp = (PWSTR)_malloca(eck::Cch2Cb(cchTemp));
-				wcsncpy(pTemp, pszTimeLabel + iStrPos2 + 1, cchTemp);
-				*(pTemp + cchTemp) = L'\0';
-			}
-
-			if (!StrToIntExW(pTemp, STIF_DEFAULT, &MS))
-				continue;
+			StrToIntExW(Label.pszLabel + Label.pos2 + 1, STIF_DEFAULT, &MS);
 			fTime += ((float)MS / 1000.f);
-			_freea(pTemp);
 		}
-		///////////////////
+
 		if (fTime < 0)
 			continue;
 
@@ -486,9 +436,64 @@ void ParseLrc_ProcLabel(std::vector<LRCINFO>& Result, std::vector<LRCLABEL>& Lab
 #pragma warning (pop)
 }
 
-BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<LRCLABEL>& Label, int iDefTextEncoding)
+BOOL ParseLrc_IsTimeLabelLegal(PCWSTR pszLabel, int cchLabel, int* pposFirstDiv, int* pposSecondDiv, BOOL* pbMS)
+{
+	*pposFirstDiv = -1;
+	*pposSecondDiv = -1;
+	int pos1, pos2;
+	pos1 = eck::FindStr(pszLabel, L":");
+	if (pos1 <= 0 || pos1 >= cchLabel - 1)
+		return FALSE;// 没冒号、冒号在开头、冒号在结尾、冒号超过结尾都不合法
+	
+	pos2 = eck::FindStr(pszLabel, L":", pos1 + 1);
+	if (pos2 == pos1 + 1)
+		return FALSE;// 两个冒号挨着也不合法
+
+	*pbMS = TRUE;
+	if (pos2 < 0 || pos2 >= cchLabel)
+	{
+		pos2 = eck::FindStr(pszLabel, L".", pos1 + 1);
+		if (pos2 < 0 || pos2 >= cchLabel)
+		{
+			*pbMS = FALSE;// [分:秒]
+			pos2 = cchLabel;
+		}
+		// else [分:秒.毫秒]
+	}
+	// else [分:秒:毫秒]
+
+	*pposFirstDiv = pos1;
+	if (*pbMS)
+		*pposSecondDiv = pos2;
+
+	// 测试第一个字段
+	if (pos1 == 0)
+		return FALSE;// 没有第一个字段
+
+	for (int i = 0; i < pos1; ++i)
+		if (!iswdigit(pszLabel[i]))
+			return FALSE;// 第一个字段不是数字
+	// 测试第二个字段
+	if (pos2 <= pos1 + 1)
+		return FALSE;// 没有第二个字段
+
+	for (int i = pos1 + 1; i < pos2; ++i)
+		if (!iswdigit(pszLabel[i]))
+			return FALSE;// 第二个字段不是数字
+	// 测试第三个字段
+	if(*pbMS)
+	{
+		for (int i = pos2 + 1; i < cchLabel; ++i)
+			if (!iswdigit(pszLabel[i]))
+				return FALSE;// 第三个字段不是数字
+	}
+	return TRUE;
+}
+
+BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<LRCLABEL>& Label, LrcEncoding uTextEncoding)
 {
 	Result.clear();
+	Label.clear();
 #pragma region 读入数据
 	BYTE* pFileData;
 	if (cbMem)
@@ -522,9 +527,10 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 
 	UINT uCode;
 
-	constexpr BYTE c_chBomU16LE[] = { 0xFF, 0xFE };
-	constexpr BYTE c_chBomU16BE[] = { 0xFE, 0xFF };
-	constexpr BYTE c_chBomU8[] = { 0xEF, 0xBB, 0xBF };
+	constexpr BYTE
+		c_chBomU16LE[]{ 0xFF, 0xFE },
+		c_chBomU16BE[]{ 0xFE, 0xFF },
+		c_chBomU8[]{ 0xEF, 0xBB, 0xBF };
 	if (memcmp(pFileData, c_chBomU16LE, 2) == 0)
 	{
 		--cchFile;
@@ -550,9 +556,9 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 	}
 	else// 无BOM
 	{
-		switch (iDefTextEncoding)
+		switch (uTextEncoding)
 		{
-		case 0:// 自动
+		case LrcEncoding::Auto:
 		{
 			int i = IS_TEXT_UNICODE_REVERSE_MASK | IS_TEXT_UNICODE_NULL_BYTES;
 			if (IsTextUnicode(pFileData, cbMem, &i))//  先测UTF-16BE，不然会出问题
@@ -569,7 +575,7 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 			}
 		}
 		break;
-		case 1:// GB2312
+		case LrcEncoding::GB2312:
 		{
 		GetLrc_GB2312:
 			int cchBuf = MultiByteToWideChar(936, 0, (CHAR*)pFileData, -1, NULL, 0);
@@ -580,7 +586,7 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 			cchFile = cchBuf - 1;
 		}
 		break;
-		case 2:// UTF-8
+		case LrcEncoding::UTF8:
 		{
 		GetLrc_UTF8:
 			int cchBuf = MultiByteToWideChar(CP_UTF8, 0, (CHAR*)pFileData, -1, NULL, 0);
@@ -591,10 +597,10 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 			cchFile = cchBuf - 1;
 		}
 		break;
-		case 3:// UTF-16LE
+		case LrcEncoding::UTF16LE:
 		GetLrc_UTF16LE:;
 			break;
-		case 4:// UTF-16BE
+		case LrcEncoding::UTF16BE:
 		{
 		GetLrc_UTF16BE:
 			pszOrg = (PWSTR)VirtualAlloc(NULL, (cchFile + 1) * sizeof(WCHAR), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
@@ -611,15 +617,16 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 	std::vector<std::pair<PWSTR, int>> Lines{};
 	Lines.reserve(50);
 
-	WCHAR szDiv1[3] = L"\r\n";// CRLF
-	WCHAR szDiv2[2] = L"\n";// LF
-	WCHAR szDiv3[2] = L"\r";// CR
+	constexpr WCHAR
+		c_szDiv1[]{ L"\r\n" },// CRLF
+		c_szDiv2[]{ L"\n" },// LF
+		c_szDiv3[]{ L"\r" };// CR
 
 	BOOL b1, b2, b3;
 
-	int i1 = eck::FindStr(pszOrg, szDiv1),
-		i2 = eck::FindStr(pszOrg, szDiv2),
-		i3 = eck::FindStr(pszOrg, szDiv3);
+	int i1 = eck::FindStr(pszOrg, c_szDiv1),
+		i2 = eck::FindStr(pszOrg, c_szDiv2),
+		i3 = eck::FindStr(pszOrg, c_szDiv3);
 
 	b1 = i1 >= 0;
 	b2 = i2 >= 0;
@@ -682,11 +689,11 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 			pos2 = pos1 + cchDiv;// 跳过换行符
 			/////////////取下一换行符位置
 			if (b1)
-				i1 = eck::FindStr(pszOrg, szDiv1, pos2);
+				i1 = eck::FindStr(pszOrg, c_szDiv1, pos2);
 			if (b2)
-				i2 = eck::FindStr(pszOrg, szDiv2, pos2);
+				i2 = eck::FindStr(pszOrg, c_szDiv2, pos2);
 			if (b3)
-				i3 = eck::FindStr(pszOrg, szDiv3, pos2);
+				i3 = eck::FindStr(pszOrg, c_szDiv3, pos2);
 
 			pos1 = 0;
 			if (i1 >= 0)// CRLF
@@ -737,55 +744,137 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 #pragma endregion
 #pragma region 处理每行歌词
 	int pos3;
-	std::vector<PWSTR> SameTimeLabel;
-	int cchSentence;
+	int cchTimeLabel;
+
+	std::vector<LRCTIMELABEL> vTimeLabel{};
+
+	PWSTR pszTimeLabel;
+	int posTimeDiv1, posTimeDiv2;
+	BOOL bMS;
 
 	EckCounter(Lines.size(), i)
 	{
 		pszLine = Lines[i].first;
+		vTimeLabel.clear();// 相同的时间标签
+
 		pos1 = eck::FindStr(pszLine, L"[");// 先找左中括号
-		pos2 = 0;
 		if (pos1 < 0)// 找不到左中括号
-			continue;// 到循环尾（处理下一行）   
-		SameTimeLabel.clear();// 相同的时间标签
-		for (;;)// 行中循环取标签（一行中可能有多个标签）
+			continue;// 到循环尾（处理下一行） 
+
+		pos2 = eck::FindStr(pszLine, L"]", pos1 + 1);// 找下一个右中括号
+		if (pos2 < 0)
+			continue;// 中括号错误，这时还没有时间标签被读入，因此不是歌词中间出现的中括号，应该跳过这一行
+	RetryThisLine:
+		pszTimeLabel = pszLine + pos1 + 1;
+		if(!ParseLrc_IsTimeLabelLegal(pszTimeLabel, pos2 - pos1 - 1, &posTimeDiv1, &posTimeDiv2, &bMS))
 		{
-			pos2 = eck::FindStr(pszLine, L"]", pos2);// 找下一个右中括号
-			if (pos2 < 0 || pos2 <= pos1)
-				pos1 = pos2 = 0;// 中括号错误，跳过这一行
-
-			cchSentence = pos2 - pos1 - 1;
-			pos3 = eck::FindStr(pszLine, L"[", pos1 + cchSentence + 1);// 找下一个左中括号
-			// pos1=右中括号之前的第一个左中括号位置
-			// pos2=右中括号位置
-			// pos3=右中括号之后的第一个左中括号位置
-			if (pos3 - pos2 - 1 == 0)// 紧贴着，类似于这种：[xx:xx][yy:yy]zzzzzzzzzzzzz
+			if (posTimeDiv1 > 0)// 不合法，但有冒号，视为其他标签
 			{
-				*(pszLine + pos1 + cchSentence + 1) = L'\0';
-				SameTimeLabel.emplace_back(pszLine + pos1 + 1);
-				pos1 = pos3;
-				pos2 = pos1 + 1;
+				*(pszTimeLabel + posTimeDiv1) = L'\0';
+				*(pszLine + pos2) = L'\0';
+				Label.emplace_back(pszTimeLabel, pszTimeLabel + posTimeDiv1 + 1);
+				// 往后找，是否还有其他标签
+				pos1 = eck::FindStr(pszLine, L"[", pos2 + 1);
+				if(pos1>=0)
+				{
+					pos2 = eck::FindStr(pszLine, L"]", pos1 + 1);
+					if (pos2 >= 0)
+						goto RetryThisLine;
+				}
 			}
-			else if (pos3 < 0 || pos2 < 0)// 没有下一个标签了，这一行到头了
-			{
-				*(pszLine + pos1 + cchSentence + 1) = L'\0';
-				SameTimeLabel.emplace_back(pszLine + pos1 + 1);
+			continue;// 不合法，跳过这一行
+		}
 
-				ParseLrc_ProcLabel(Result, Label, SameTimeLabel, pszLine + pos2 + 1, Lines[i].second - pos2 - 1);
+		for (;;)// 行中循环取标签
+		{
+		GetLabelLoopBegin:
+			pszTimeLabel = pszLine + pos1 + 1;
+			cchTimeLabel = pos2 - pos1 - 1;
+			*(pszTimeLabel + posTimeDiv1) = L'\0';
+			if (posTimeDiv2 > 0)
+				*(pszTimeLabel + posTimeDiv2) = L'\0';
+			*(pszTimeLabel + cchTimeLabel) = L'\0';
+			vTimeLabel.emplace_back(pszLine + pos1 + 1, posTimeDiv1, posTimeDiv2);
+			// 当前时间标签已解析完成
+
+			pos3 = eck::FindStr(pszLine, L"[", pos1 + cchTimeLabel + 2);// 找下一个左中括号
+		TryNewBracket:
+			if (pos3 < 0)// 找不到，则本行解析完成
+			{
+				ParseLrc_ProcTimeLabel(Result, Label, vTimeLabel, pszLine + pos2 + 1, Lines[i].second - pos2 - 1);
 				break;
 			}
-			else// 处理完一行中的一句，类似于[xx:xx]aaaaaaaaa[yy:yy]bbbbbbbbbbbb，现在处理完a或b了
+			else if (pos3 == pos2 + 1)// 找到了，而且紧跟在上一个右中括号的后面
 			{
-				*(pszLine + pos1 + cchSentence + 1) = L'\0';
-				SameTimeLabel.emplace_back(pszLine + pos1 + 1);
-
-				ParseLrc_ProcLabel(Result, Label, SameTimeLabel, pszLine + pos2 + 1, pos3 - pos2 - 1);
-
-				SameTimeLabel.clear();
-				pos1 = pos3;
-				pos2 = pos1 + 1;
+				int posNextRightBracket = eck::FindStr(pszLine, L"]", pos3);// 找下一个右中括号
+				if (posNextRightBracket < 0)// 找不到，则本行解析完成
+				{
+					ParseLrc_ProcTimeLabel(Result, Label, vTimeLabel, pszLine + pos2 + 1, Lines[i].second - pos2 - 1);
+					break;
+				}
+				else
+				{
+					if (ParseLrc_IsTimeLabelLegal(pszLine + pos3 + 1, posNextRightBracket - pos3 - 1, &posTimeDiv1, &posTimeDiv2, &bMS))
+					{
+						pos1 = pos3;
+						pos2 = posNextRightBracket;
+						continue;// 合法，继续循环
+					}
+					else// 如果不合法，跳过当前左中括号重试
+					{
+						pos3 = eck::FindStr(pszLine, L"[", pos3 + 1);// 找下一个左中括号
+						goto TryNewBracket;
+					}
+				}
 			}
-			pos1 = pos2;
+			else// 找到了，但离上一个右中括号有一段间隔
+			{
+				int posNextRightBracket = eck::FindStr(pszLine, L"]", pos3);// 找下一个右中括号
+				if (posNextRightBracket < 0)// 找不到，则本行解析完成，剩余部分视为歌词
+				{
+					ParseLrc_ProcTimeLabel(Result, Label, vTimeLabel, pszLine + pos2 + 1, Lines[i].second - pos2 - 1);
+					break;
+				}
+				else
+				{
+					if (ParseLrc_IsTimeLabelLegal(pszLine + pos3 + 1, posNextRightBracket - pos3 - 1, &posTimeDiv1, &posTimeDiv2, &bMS))
+					{// 如果是合法的，则间隔部分视为歌词
+						ParseLrc_ProcTimeLabel(Result, Label, vTimeLabel, pszLine + pos2 + 1, pos3 - pos2 - 1);
+						vTimeLabel.clear();
+						pos1 = pos3;
+						pos2 = posNextRightBracket;
+						continue;// 继续循环
+					}
+					else// 如果不合法，跳过当前左中括号重试
+					{
+						for (;;)
+						{
+							pos3 = eck::FindStr(pszLine, L"[", pos3 + 1);// 找下一个左中括号
+							if (pos3 < 0)
+								goto NoValidTimeLabel;
+							else
+							{
+								int posNextRightBracket = eck::FindStr(pszLine, L"]", pos3);// 找下一个右中括号
+								if (posNextRightBracket < 0)
+									goto NoValidTimeLabel;
+								else if (ParseLrc_IsTimeLabelLegal(pszLine + pos3 + 1, posNextRightBracket - pos3 - 1,
+									&posTimeDiv1, &posTimeDiv2, &bMS))
+								{
+									ParseLrc_ProcTimeLabel(Result, Label, vTimeLabel, pszLine + pos2 + 1, pos3 - pos2 - 1);
+									vTimeLabel.clear();
+									pos1 = pos3;
+									pos2 = posNextRightBracket;
+									goto GetLabelLoopBegin;
+								}
+							}
+						}
+
+					NoValidTimeLabel:
+						ParseLrc_ProcTimeLabel(Result, Label, vTimeLabel, pszLine + pos2 + 1, Lines[i].second - pos2 - 1);
+						break;
+					}
+				}
+			}
 		}
 	}
 #pragma endregion
@@ -811,10 +900,10 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 				int cch1 = TopItem.cchTotal,
 					cch2 = x.cchTotal;
 
-				//if (cch1 && !cch2)// 只有第一个
-				//{
-				//}// 什么都不做
-				/*else */if (!cch1 && cch2)// 只有第二个
+				if (cch1 && !cch2)// 只有第一个
+				{
+				}// 什么都不做
+				else if (!cch1 && cch2)// 只有第二个
 				{
 					TopItem.pszLrc = x.pszLrc;
 					TopItem.pszTranslation = NULL;
@@ -823,9 +912,9 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 					TopItem.cchLrc = x.cchLrc;
 					TopItem.cchTotal = x.cchTotal;
 				}
-				//else if (!cch1 && !cch2)// 两个都没有
-				//{
-				//}
+				else if (!cch1 && !cch2)// 两个都没有
+				{
+				}
 				else// 两个都有
 				{
 #pragma warning (push)
