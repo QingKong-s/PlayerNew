@@ -97,8 +97,12 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Manifest>
-      <EnableDpiAwareness>true</EnableDpiAwareness>
+      <EnableDpiAwareness>false</EnableDpiAwareness>
+      <AdditionalManifestFiles>..\WinEzCtrlKit\eck\Others\DpiAwarePreMonV2.manifest</AdditionalManifestFiles>
     </Manifest>
+    <PreBuildEvent>
+      <Command>Before-Build-Process-Prog.exe</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -119,8 +123,12 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Manifest>
-      <EnableDpiAwareness>true</EnableDpiAwareness>
+      <EnableDpiAwareness>false</EnableDpiAwareness>
+      <AdditionalManifestFiles>..\WinEzCtrlKit\eck\Others\DpiAwarePreMonV2.manifest</AdditionalManifestFiles>
     </Manifest>
+    <PreBuildEvent>
+      <Command>Before-Build-Process-Prog.exe</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -137,8 +145,12 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Manifest>
-      <EnableDpiAwareness>true</EnableDpiAwareness>
+      <EnableDpiAwareness>false</EnableDpiAwareness>
+      <AdditionalManifestFiles>..\WinEzCtrlKit\eck\Others\DpiAwarePreMonV2.manifest</AdditionalManifestFiles>
     </Manifest>
+    <PreBuildEvent>
+      <Command>Before-Build-Process-Prog.exe</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -159,8 +171,12 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Manifest>
-      <EnableDpiAwareness>true</EnableDpiAwareness>
+      <EnableDpiAwareness>false</EnableDpiAwareness>
+      <AdditionalManifestFiles>..\WinEzCtrlKit\eck\Others\DpiAwarePreMonV2.manifest</AdditionalManifestFiles>
     </Manifest>
+    <PreBuildEvent>
+      <Command>Before-Build-Process-Prog.exe</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\WinEzCtrlKit\eck\CAllocator.h" />
@@ -174,6 +190,7 @@
     <ClInclude Include="..\WinEzCtrlKit\eck\CComboBox.h" />
     <ClInclude Include="..\WinEzCtrlKit\eck\CComboBoxEx.h" />
     <ClInclude Include="..\WinEzCtrlKit\eck\CCommDlg.h" />
+    <ClInclude Include="..\WinEzCtrlKit\eck\CDialog.h" />
     <ClInclude Include="..\WinEzCtrlKit\eck\CDirBox.h" />
     <ClInclude Include="..\WinEzCtrlKit\eck\CEdit.h" />
     <ClInclude Include="..\WinEzCtrlKit\eck\CEditExt.h" />
@@ -218,7 +235,10 @@
     <ClInclude Include="..\WinEzCtrlKit\eck\WndHelper.h" />
     <ClInclude Include="CApp.h" />
     <ClInclude Include="CBass.h" />
-    <ClInclude Include="CMainBK.h" />
+    <ClInclude Include="CDlgListFile.h" />
+    <ClInclude Include="COptionsMgr.h" />
+    <ClInclude Include="CPlayer.h" />
+    <ClInclude Include="CWndBK.h" />
     <ClInclude Include="CPlayList.h" />
     <ClInclude Include="CPlayListFile.h" />
     <ClInclude Include="CSimpleList.h" />
@@ -235,6 +255,7 @@
     <ClCompile Include="..\WinEzCtrlKit\eck\CChartPie.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\CColorPicker.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\CCommDlg.cpp" />
+    <ClCompile Include="..\WinEzCtrlKit\eck\CDialog.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\CDirBox.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\CEdit.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\CEditExt.cpp" />
@@ -257,7 +278,11 @@
     <ClCompile Include="..\WinEzCtrlKit\eck\WndHelper.cpp" />
     <ClCompile Include="CApp.cpp" />
     <ClCompile Include="CBass.cpp" />
-    <ClCompile Include="CMainBK.cpp" />
+    <ClCompile Include="CDlgListFile.cpp" />
+    <ClCompile Include="COptionsMgr.cpp" />
+    <ClCompile Include="CPlayer.cpp" />
+    <ClCompile Include="CUILrc.cpp" />
+    <ClCompile Include="CWndBK.cpp" />
     <ClCompile Include="CPlayList.cpp" />
     <ClCompile Include="CPlayListFile.cpp" />
     <ClCompile Include="CSimpleList.cpp" />

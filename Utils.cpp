@@ -495,6 +495,8 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 	Result.clear();
 	Label.clear();
 #pragma region ¶ÁÈëÊý¾Ý
+	if (!p)
+		return FALSE;
 	BYTE* pFileData;
 	if (cbMem)
 	{
@@ -508,8 +510,14 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 	}
 	else
 	{
+		PWSTR pszTemp = new WCHAR[wcslen((PCWSTR)p) + 6];
+		wcscpy(pszTemp, (PCWSTR)p);
+		PathRenameExtensionW(pszTemp, L".lrc");
 		eck::CFile File;
-		File.Open((PCWSTR)p);
+		File.Open((PCWSTR)pszTemp);
+		delete[] pszTemp;
+		if (File.GetHandle() == INVALID_HANDLE_VALUE)
+			return FALSE;
 		cbMem = File.GetSize32();
 		if (cbMem < 5)
 			return FALSE;

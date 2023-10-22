@@ -1,5 +1,5 @@
 #include "CSimpleList.h"
-
+UINT eck::CInertialScrollView::s_uTimerNotify = 0;
 void CSimpleList::ScrollProc(int iPos, int iPrevPos, LPARAM lParam)
 {
 	auto p = (CSimpleList*)lParam;
@@ -226,7 +226,7 @@ void CSimpleList::OnMouseWheel(HWND hWnd, int xPos, int yPos, int zDelta, UINT f
 	//int iOldPos = m_ScrollView.GetPos();
 	//m_ScrollView.OnMouseWheel(zDelta / WHEEL_DELTA);
 
-	m_ScrollView.OnMouseWheel2(zDelta / WHEEL_DELTA, ScrollProc, (LPARAM)this);
+	m_ScrollView.OnMouseWheel2(-zDelta / WHEEL_DELTA, ScrollProc, (LPARAM)this);
 }
 
 ATOM CSimpleList::RegisterWndClass()

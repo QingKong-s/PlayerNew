@@ -55,6 +55,7 @@ void CApp::Init(HINSTANCE hInstance)
 {
 	m_hInstance = hInstance;
 	eck::Init(hInstance);
+	CBass::Init();
 
 	HRESULT hr;
 #ifndef NDEBUG
@@ -148,7 +149,7 @@ void CApp::ShowError(HWND hWnd, EckOpt(DWORD, dwErrCode), ErrSrc uSrc, PCWSTR ps
 	case CApp::ErrSrc::Win32:
 		if (!dwErrCode.has_value())
 			dwErrCode = GetLastError();
-		// fall through
+#pragma warning(suppress: 26819)// fall through
 	case CApp::ErrSrc::HResult:
 	{
 		PWSTR pszErrMsg = NULL;

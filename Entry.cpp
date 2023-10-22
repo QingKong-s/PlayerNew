@@ -21,6 +21,7 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #include "Resource.h"
 #include "CApp.h"
 #include "CWndMain.h"
+#include "CSimpleList.h"
 
 #include "eck\Env.h"
 
@@ -37,9 +38,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	App->Init(hInstance);
 
 	CWndMain::RegisterWndClass();
+	CWndBK::RegisterWndClass();
+	CWndList::RegisterWndClass();
 	CWndMain Wnd{};
 
 #ifdef _DEBUG
+	CSimpleList::RegisterWndClass();
 	if(Test())
 		return 0;
 #endif // _DEBUG
@@ -47,7 +51,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	const DWORD dwExStyle = 0u;
 
 	const int iDpi = GetDpiForSystem();
-	RECT rc{ 0,0,512 * iDpi / 96,768 * iDpi / 96 };
+	RECT rc{ 0,0,1000 * iDpi / 96,640 * iDpi / 96 };
 	AdjustWindowRectEx(&rc, dwStyle, FALSE, dwExStyle);
 	Wnd.Create(L"", dwStyle, dwExStyle, 100, 100, rc.right, rc.bottom, NULL, 0);
 
@@ -66,9 +70,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 #ifdef _DEBUG
 BOOL Test()
 {
-	std::vector<Utils::LRCINFO> v{};
+	/*std::vector<Utils::LRCINFO> v{};
 	std::vector<Utils::LRCLABEL> v2{};
-	Utils::ParseLrc(LR"(D:\@重要文件\@音乐\终有一天你会离开 - Lyrik_p、乐正绫、洛天依.lrc)", 0, v, v2);
+	Utils::ParseLrc(LR"()", 0, v, v2);*/
+
+	COptionsMgr::GetInst().vListPath.push_back(L"D:\\test");
+	COptionsMgr::GetInst().vListPath.push_back(L"D:\\test - 副本");
 	return FALSE;
 }
 #endif

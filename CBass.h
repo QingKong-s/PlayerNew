@@ -24,6 +24,8 @@ private:
 	DWORD m_hStream;
 
 public:
+	~CBass();
+
 	DWORD Open(PCWSTR pszFile,
 		DWORD dwFlagsHS = BASS_SAMPLE_FX | BASS_STREAM_DECODE,
 		DWORD dwFlagsHM = BASS_SAMPLE_FX | BASS_MUSIC_PRESCAN | BASS_STREAM_DECODE,
@@ -59,17 +61,35 @@ public:
 		BASS_ChannelSetPosition(m_hStream, BASS_ChannelSeconds2Bytes(m_hStream, fTime), BASS_POS_BYTE);
 	}
 
-	PNInline float GetPosition() const
+	PNInline double GetPosition() const
 	{
 		return BASS_ChannelBytes2Seconds(m_hStream, BASS_ChannelGetPosition(m_hStream, BASS_POS_BYTE));
 	}
 
-	PNInline float GetLength() const
+	PNInline double GetLength() const
 	{
 		return BASS_ChannelBytes2Seconds(m_hStream, BASS_ChannelGetLength(m_hStream, BASS_POS_BYTE));
 	}
 
 	PNInline void Close();
+
+	PNInline DWORD GetHStream() { return m_hStream; }
+
+	PNInline DWORD GetLevel()
+	{
+		return BASS_ChannelGetLevel(m_hStream);
+	}
+
+	PNInline DWORD GetData(float* pBuf, DWORD cbBuf)
+	{
+		return BASS_ChannelGetData(m_hStream, pBuf, cbBuf);
+	}
+
+	PNInline DWORD TempoCreate(DWORD dwFlags = BASS_SAMPLE_FX | BASS_FX_FREESOURCE)
+	{
+		m_hStream = BASS_FX_TempoCreate(m_hStream, dwFlags);
+		return m_hStream;
+	}
 
 	static int GetError(PCWSTR* ppszErr = NULL);
 

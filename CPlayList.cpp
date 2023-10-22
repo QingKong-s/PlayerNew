@@ -28,17 +28,17 @@ void CPlayList::SortInternal(int idxBegin, int idxEnd, const FSortProc& fnProc)
 	_freea(pidxSortMapping);
 }
 
-int CPlayList::Insert(int idxPos, PCWSTR pszName, int cchName, PCWSTR pszTime, int cchTime, PCWSTR pszFile, int cchFile)
+int CPlayList::Insert(int idxPos, const LISTFILEITEM_1& Info, PCWSTR pszName, PCWSTR pszTime, PCWSTR pszFile)
 {
 	PLAYLISTUNIT Item;
 	if (pszName)
 	{
-		Item.rsName.ReSizeAbs(cchName);
-		wcscpy(Item.rsName.Data(), pszName);
+		Item.rsName.ReSizeAbs(Info.cchName);
+		wcsncpy(Item.rsName.Data(), pszName, Info.cchName);
 	}
 	else
 	{
-		PWSTR pTemp = (PWSTR)_malloca((cchFile + 1) * sizeof(WCHAR));
+		PWSTR pTemp = (PWSTR)_malloca((Info.cchFile + 1) * sizeof(WCHAR));
 		EckAssert(pTemp);
 
 		wcscpy(pTemp, pszFile);
@@ -46,7 +46,7 @@ int CPlayList::Insert(int idxPos, PCWSTR pszName, int cchName, PCWSTR pszTime, i
 		auto pszFileName = PathFindFileNameW(pTemp);
 		PathRemoveExtensionW(pszFileName);
 
-		cchName = (int)wcslen(pszFileName);
+		int cchName = (int)wcslen(pszFileName);
 		Item.rsName.ReSizeAbs(cchName);
 		wcscpy(Item.rsName.Data(), pszFileName);
 
@@ -55,12 +55,16 @@ int CPlayList::Insert(int idxPos, PCWSTR pszName, int cchName, PCWSTR pszTime, i
 
 	if (pszTime)
 	{
-		Item.rsTime.ReSizeAbs(cchTime);
-		wcscpy(Item.rsTime.Data(), pszTime);
+		Item.rsTime.ReSizeAbs(Info.cchTime);
+		wcsncpy(Item.rsTime.Data(), pszTime, Info.cchTime);
 	}
 
-	Item.rsFile.ReSizeAbs(cchFile);
-	wcscpy(Item.rsFile.Data(), pszFile);
+	Item.rsFile.ReSizeAbs(Info.cchFile);
+	wcsncpy(Item.rsFile.Data(), pszFile, Info.cchFile);
+
+	Item.bDelayPlaying = Info.bDelayPlaying;
+	Item.bBookmark = Info.bBookmark;
+	Item.bIgnore = Info.bIgnore;
 
 	if (idxPos >= 0)
 		m_PlayList.insert(m_PlayList.begin() + idxPos, std::move(Item));
@@ -87,7 +91,13 @@ void CPlayList::InsertBookmark(int idxItem, PCWSTR pszName, int cchName, COLORRE
 
 int CPlayList::Delete(int idxItem)
 {
-	EckAssert(idxItem >= 0 && idxItem < (int)m_PlayList.size());
+	if (idxItem < 0)
+	{
+		m_PlayList.clear();
+		return 0;
+	}
+
+	EckAssert(idxItem < (int)m_PlayList.size());
 
 	auto it = m_PlayList.begin() + idxItem;
 	if (it->bBookmark)
@@ -100,7 +110,12 @@ int CPlayList::Delete(int idxItem)
 
 int CPlayList::DeleteBookmark(int idxItem)
 {
-	EckAssert(idxItem >= 0 && idxItem < (int)m_PlayList.size());
+	if (idxItem < 0)
+	{
+		m_BookmarkList.clear();
+		return 0;
+	}
+	EckAssert(idxItem < (int)m_PlayList.size());
 
 	auto it = m_PlayList.begin() + idxItem;
 	EckAssert(it->bBookmark);

@@ -49,6 +49,9 @@ struct LISTFILEITEM_0	// 播放列表文件项目头
 
 //////////////////////////////////新版本的播放列表文件//////////////////////////////////
 #pragma pack(push, 4)
+constexpr inline int
+PNLFVER_0 = 0,
+PNBMVER_0 = 0;
 struct LISTFILEHEADER_1	// 播放列表文件头
 {
 	CHAR chHeader[4];	// 文件起始标记，ASCII字符串"PNPL"
@@ -64,9 +67,10 @@ struct LISTFILEITEM_1	// 播放列表文件项目头
 	int cchFile;		// 文件名长度，不包括结尾的\0
 	BITBOOL bIgnore : 1;
 	BITBOOL bDelayPlaying : 1;
+	BITBOOL bBookmark : 1;
 	// WCHAR szName[];
-	// WCHAR szTime[];
 	// WCHAR szFile[];
+	// WCHAR szTime[];
 };
 
 struct BOOKMARKHEADER	// 书签信息头
@@ -98,7 +102,7 @@ struct BOOKMARKITEM		// 书签信息项目头
 */
 ////////////////////////////////////////////////////////////////////
 
-class CPlayListFile
+class CPlayListFileReader
 {
 private:
 	eck::CMappingFile m_File{};
@@ -108,17 +112,17 @@ public:
 	using FItemProcessor = std::function<BOOL(const LISTFILEITEM_1* pItem, PCWSTR pszName, PCWSTR pszFile, PCWSTR pszTime)>;
 	using FBookmarkProcessor = std::function<BOOL(const BOOKMARKITEM* pItem, PCWSTR pszName)>;
 
-	CPlayListFile() = default;
-	CPlayListFile(PCWSTR pszFile)
+	CPlayListFileReader() = default;
+	CPlayListFileReader(PCWSTR pszFile)
 	{
 		Open(pszFile);
 	}
 
-	CPlayListFile(const CPlayListFile&) = delete;
-	CPlayListFile(CPlayListFile&&) = delete;
-	CPlayListFile& operator=(const CPlayListFile&) = delete;
-	CPlayListFile& operator=(CPlayListFile&&) = delete;
-	~CPlayListFile() = default;
+	CPlayListFileReader(const CPlayListFileReader&) = delete;
+	CPlayListFileReader(CPlayListFileReader&&) = delete;
+	CPlayListFileReader& operator=(const CPlayListFileReader&) = delete;
+	CPlayListFileReader& operator=(CPlayListFileReader&&) = delete;
+	~CPlayListFileReader() = default;
 
 	BOOL Open(PCWSTR pszFile);
 
@@ -127,4 +131,36 @@ public:
 	void For(FItemProcessor fnProcessor);
 
 	void ForBookmark(FBookmarkProcessor fnProcessor);
+};
+
+
+class CPlayListFileWriter
+{
+private:
+	eck::CFile m_File{};
+
+	LISTFILEHEADER_1 m_Header{ {'P','N','P','L'},PNLFVER_0 };
+	BOOKMARKHEADER m_BmHeader{ PNBMVER_0 };
+public:
+	CPlayListFileWriter() = default;
+	CPlayListFileWriter(PCWSTR pszFile)
+	{
+		Open(pszFile);
+	}
+
+	CPlayListFileWriter(const CPlayListFileWriter&) = delete;
+	CPlayListFileWriter(CPlayListFileWriter&&) = delete;
+	CPlayListFileWriter& operator=(const CPlayListFileWriter&) = delete;
+	CPlayListFileWriter& operator=(CPlayListFileWriter&&) = delete;
+	~CPlayListFileWriter() = default;
+
+	BOOL Open(PCWSTR pszFile);
+
+	void PushBack(const LISTFILEITEM_1& Item, PCWSTR pszName, PCWSTR pszFile, PCWSTR pszTime);
+
+	void BeginBookMark();
+
+	void PushBackBookmark(const BOOKMARKITEM& Item, PCWSTR pszName);
+
+	BOOL End();
 };

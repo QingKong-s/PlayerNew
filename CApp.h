@@ -16,9 +16,11 @@
 #include <assert.h>
 
 #include "Utils.h"
-#include "CBass.h"
+#include "CPlayer.h"
 
 #include "eck\CWnd.h"
+
+constexpr inline int c_cyLVItem = 24;
 
 class CApp;
 extern CApp* App;
@@ -46,13 +48,17 @@ public:
 private:
 	HINSTANCE			m_hInstance = NULL;
 
+	CPlayer m_Player{};
+
 	static HRESULT WICCreateBitmap(IWICBitmapDecoder* pDecoder, IWICBitmap** ppBitmap);
 public:
 	~CApp();
 
 	void Init(HINSTANCE hInstance);
 
-	inline HINSTANCE GetHInstance() const { return m_hInstance; }
+	PNInline HINSTANCE GetHInstance() const { return m_hInstance; }
+
+	PNInline CPlayer& GetPlayer() { return m_Player; }
 
 	static HRESULT WICCreateBitmap(PWSTR pszFile, IWICBitmap** ppWICBitmap);
 

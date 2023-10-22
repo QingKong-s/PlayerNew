@@ -43,6 +43,11 @@ static const std::unordered_map<int, PCWSTR> c_BassErrorMap
 	{-1,L"BASS_ERROR_UNKNOWN"},
 };
 
+CBass::~CBass()
+{
+	Close();
+}
+
 DWORD CBass::Open(PCWSTR pszFile, DWORD dwFlagsHS, DWORD dwFlagsHM, DWORD dwFlagsHMIDI)
 {
 	if (m_hStream)
@@ -66,11 +71,14 @@ DWORD CBass::Open(PCWSTR pszFile, DWORD dwFlagsHS, DWORD dwFlagsHM, DWORD dwFlag
 	else
 		m_eMusicType = MusicType::Normal;
 
+	m_hStream = h;
 	return h;
 }
 
 PNInline void CBass::Close()
 {
+	if (!m_hStream)
+		return;
 	switch (m_eMusicType)
 	{
 	case MusicType::Normal:

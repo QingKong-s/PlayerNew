@@ -12,6 +12,8 @@ using eck::BITBOOL;
 
 #define PNInline __forceinline
 
+#define SAFE_RELEASE(p) if (p) { p->Release(); p = NULL; }
+
 #define UTILS_NAMESPACE_BEGIN namespace Utils {
 #define UTILS_NAMESPACE_END }
 

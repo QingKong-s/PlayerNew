@@ -195,7 +195,7 @@
     <ClInclude Include="..\WinEzCtrlKit\eck\CScrollView.h">
       <Filter>eck</Filter>
     </ClInclude>
-    <ClInclude Include="CMainBK.h">
+    <ClInclude Include="CWndBK.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="CBass.h">
@@ -212,6 +212,18 @@
     </ClInclude>
     <ClInclude Include="CPlayListFile.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="COptionsMgr.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CPlayer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgListFile.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\WinEzCtrlKit\eck\CDialog.h">
+      <Filter>eck</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -302,7 +314,7 @@
     <ClCompile Include="CSimpleList.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="CMainBK.cpp">
+    <ClCompile Include="CWndBK.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="CBass.cpp">
@@ -318,6 +330,21 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="CPlayListFile.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="COptionsMgr.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CPlayer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CUILrc.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgListFile.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinEzCtrlKit\eck\CDialog.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
