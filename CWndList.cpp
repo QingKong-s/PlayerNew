@@ -1,7 +1,7 @@
-#include "CWndMain.h"
+ï»¿#include "CWndMain.h"
 #include "CDlgListFile.h"
 
-constexpr PCWSTR c_szDefListName = L"µ±Ç°ÎÞ²¥·ÅÁÐ±í";
+constexpr PCWSTR c_szDefListName = L"å½“å‰æ— æ’­æ”¾åˆ—è¡¨";
 
 LRESULT CWndList::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -13,14 +13,14 @@ LRESULT CWndList::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (((NMHDR*)lParam)->hwndFrom == p->m_LVList.GetHWND())
 			switch (((NMHDR*)lParam)->code)
 			{
-			case LVN_GETDISPINFOW:
-				p->OnLVNGetDispInfo((NMLVDISPINFOW*)lParam);
-				return 0;
+			case NM_CUSTOMDRAW:
+				return p->OnLVNCustomDraw((NMLVCUSTOMDRAW*)lParam);
 			case NM_DBLCLK:
 				p->OnLVNDbLClick((NMITEMACTIVATE*)lParam);
 				return 0;
-			case NM_CUSTOMDRAW:
-				return p->OnLVNCustomDraw((NMLVCUSTOMDRAW*)lParam);
+			case NM_RCLICK:
+				p->OnLVNRClick((NMITEMACTIVATE*)lParam);
+				return 0;// è¿”å›ž0é»˜è®¤å¤„ç†
 			}
 	}
 	break;
@@ -34,12 +34,15 @@ LRESULT CWndList::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				break;
 			switch (LOWORD(wParam))
 			{
+			case TBCID_LOCATE:
+				p->OnCmdLocate();
+				return 0;
 			case TBCID_ADD:
 			{
 				RECT rc;
 				p->m_TBManage.GetRect(TBCID_ADD, &rc);
 				eck::ClientToScreen(p->m_TBManage.GetHWND(), &rc);
-				int iRet = TrackPopupMenu(p->m_hMenuAdd, TPM_NONOTIFY | TPM_RETURNCMD | TPM_VERNEGANIMATION,
+				int iRet = TrackPopupMenu(p->m_hMenuAdd, TPM_NONOTIFY | TPM_RETURNCMD | TPM_VERNEGANIMATION | TPM_RIGHTBUTTON,
 					rc.left, rc.bottom, 0, hWnd, NULL);
 				switch (iRet)
 				{
@@ -58,6 +61,9 @@ LRESULT CWndList::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			case TBCID_SAVELIST:
 				p->OnCmdSaveList();
 				return 0;
+			case TBCID_EMPTY:
+				p->OnCmdEmpty();
+				return 0;
 			}
 		}
 		else
@@ -72,6 +78,8 @@ LRESULT CWndList::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 	case WM_CREATE:
 		return HANDLE_WM_CREATE(hWnd, wParam, lParam, p->OnCreate);
+	case WM_DESTROY:
+		return HANDLE_WM_DESTROY(hWnd, wParam, lParam, p->OnDestroy);
 	}
 	return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 }
@@ -81,9 +89,25 @@ BOOL CWndList::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	UpdateDpiInit(eck::GetDpi(hWnd));
 
 	m_hMenuAdd = CreatePopupMenu();
-	AppendMenuW(m_hMenuAdd, 0, IDMI_ADDFILE, L"Ìí¼ÓÎÄ¼þ...");
-	AppendMenuW(m_hMenuAdd, 0, IDMI_ADDDIR, L"Ìí¼ÓÎÄ¼þ¼Ð...");
+	AppendMenuW(m_hMenuAdd, 0, IDMI_ADDFILE, L"æ·»åŠ æ–‡ä»¶...");
+	AppendMenuW(m_hMenuAdd, 0, IDMI_ADDDIR, L"æ·»åŠ æ–‡ä»¶å¤¹...");
 
+	m_hMenuLV = CreatePopupMenu();
+	AppendMenuW(m_hMenuLV, 0, IDMI_PLAY, L"æ’­æ”¾");
+	SetMenuDefaultItem(m_hMenuLV, IDMI_PLAY, FALSE);
+	AppendMenuW(m_hMenuLV, 0, IDMI_PLAYLATER, L"ç¨åŽæ’­æ”¾");
+	AppendMenuW(m_hMenuLV, MF_SEPARATOR, 0, NULL);
+	AppendMenuW(m_hMenuLV, 0, IDMI_OPEN_IN_EXPLORER, L"æ‰“å¼€æ–‡ä»¶ä½ç½®");
+	AppendMenuW(m_hMenuLV, 0, IDMI_DELETE_FROM_LIST, L"ä»Žæ’­æ”¾åˆ—è¡¨ä¸­åˆ é™¤");
+	AppendMenuW(m_hMenuLV, 0, IDMI_DELETE_FROM_DISK, L"ä»Žç£ç›˜ä¸­åˆ é™¤");
+	AppendMenuW(m_hMenuLV, MF_SEPARATOR, 0, NULL);
+	AppendMenuW(m_hMenuLV, 0, IDMI_IGNORE, L"å¿½ç•¥/å–æ¶ˆå¿½ç•¥");
+	AppendMenuW(m_hMenuLV, 0, IDMI_RENAME, L"é‡å‘½å");
+	AppendMenuW(m_hMenuLV, 0, IDMI_INFO, L"è¯¦ç»†ä¿¡æ¯");
+	AppendMenuW(m_hMenuLV, MF_SEPARATOR, 0, NULL);
+	AppendMenuW(m_hMenuLV, 0, IDMI_PREVBOOKMARK, L"è·³åˆ°ä¸Šä¸€ä¹¦ç­¾");
+	AppendMenuW(m_hMenuLV, 0, IDMI_NEXTBOOKMARK, L"è·³åˆ°ä¸‹ä¸€ä¹¦ç­¾");
+	AppendMenuW(m_hMenuLV, 0, IDMI_BOOKMARK, L"æ·»åŠ /åˆ é™¤ä¹¦ç­¾");
 
 	int y = m_Ds.iGap;
 	m_LAListName.Create(c_szDefListName, WS_VISIBLE, 0, 0, y, 0, 0, hWnd, IDC_LA_LIST_NAME);
@@ -95,7 +119,7 @@ BOOL CWndList::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	m_EDSearch.Create(NULL, WS_VISIBLE | ES_AUTOHSCROLL, 0, 0, y, 0, 0, hWnd, IDC_ED_SEARCH);
 	m_EDSearch.SetFrameType(1);
 
-	m_BTSearch.Create(L"ËÑË÷", WS_VISIBLE, 0, 0, y, m_Ds.cySearch, m_Ds.cySearch, hWnd, IDC_BT_SEARCH);
+	m_BTSearch.Create(L"æœç´¢", WS_VISIBLE, 0, 0, y, m_Ds.cySearch, m_Ds.cySearch, hWnd, IDC_BT_SEARCH);
 	y += (m_Ds.cySearch + m_Ds.iGap);
 
 	m_TBManage.Create(NULL,
@@ -105,12 +129,12 @@ BOOL CWndList::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	m_TBManage.SetButtonStructSize();
 	TBBUTTON TBBtns[]
 	{
-		{0,TBCID_LOCATE,TBSTATE_ENABLED,0,{},0,(INT_PTR)L"¶¨Î»"},
-		{0,TBCID_ADD,TBSTATE_ENABLED,0,{},0,(INT_PTR)L"Ìí¼Ó"},
-		{0,TBCID_LOADLIST,TBSTATE_ENABLED,0,{},0,(INT_PTR)L"¶ÁÈ¡"},
-		{0,TBCID_SAVELIST,TBSTATE_ENABLED,0,{},0,(INT_PTR)L"±£´æ"},
-		{0,TBCID_EMPTY,TBSTATE_ENABLED,0,{},0,(INT_PTR)L"Çå¿Õ"},
-		{0,TBCID_MANAGE,TBSTATE_ENABLED,0,{},0,(INT_PTR)L"¹ÜÀí"},
+		{0,TBCID_LOCATE,TBSTATE_ENABLED,0,{},0,(INT_PTR)L"å®šä½"},
+		{0,TBCID_ADD,TBSTATE_ENABLED,0,{},0,(INT_PTR)L"æ·»åŠ "},
+		{0,TBCID_LOADLIST,TBSTATE_ENABLED,0,{},0,(INT_PTR)L"è¯»å–"},
+		{0,TBCID_SAVELIST,TBSTATE_ENABLED,0,{},0,(INT_PTR)L"ä¿å­˜"},
+		{0,TBCID_EMPTY,TBSTATE_ENABLED,0,{},0,(INT_PTR)L"æ¸…ç©º"},
+		{0,TBCID_MANAGE,TBSTATE_ENABLED,0,{},0,(INT_PTR)L"ç®¡ç†"},
 	};
 	m_TBManage.AddButtons(ARRAYSIZE(TBBtns), TBBtns);
 	m_TBManage.Show(SW_SHOWNOACTIVATE);
@@ -119,8 +143,8 @@ BOOL CWndList::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	m_LVList.Create(NULL, WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS | LVS_OWNERDATA, 0, 0, y, 0, 0, hWnd, IDC_LV_LIST);
 	constexpr DWORD dwLVExStyle = LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER;
 	m_LVList.SetLVExtendStyle(dwLVExStyle);
-	m_LVList.InsertColumn(L"Ãû³Æ", 0, 300);
-	m_LVList.InsertColumn(L"Ê±³¤", 1, 100);
+	m_LVList.InsertColumn(L"åç§°", 0, 300);
+	m_LVList.InsertColumn(L"æ—¶é•¿", 1, 100);
 	m_LVList.SetExplorerTheme();
 	m_hThemeLV = OpenThemeData(m_LVList.GetHWND(), L"ListView");
 
@@ -161,6 +185,14 @@ void CWndList::OnSize(HWND hWnd, UINT state, int cx, int cy)
 	EndDeferWindowPos(hDwp);
 }
 
+void CWndList::OnDestroy(HWND hWnd)
+{
+	DestroyMenu(m_hMenuAdd);
+	DestroyMenu(m_hMenuLV);
+	DeleteObject(m_hFont);
+	DeleteObject(m_hFontListName);
+}
+
 void CWndList::OnCmdLocate()
 {
 	int idx = App->GetPlayer().GetCurrFile();
@@ -174,18 +206,18 @@ void CWndList::OnMenuAddFile()
 	HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pfod));
 	if (FAILED(hr))
 	{
-		CApp::ShowError(m_hWnd, hr, CApp::ErrSrc::HResult, L"IFileOpenDialog´´½¨Ê§°Ü");
+		CApp::ShowError(m_hWnd, hr, CApp::ErrSrc::HResult, L"IFileOpenDialogåˆ›å»ºå¤±è´¥");
 		return;
 	}
-	pfod->SetTitle(L"´ò¿ªÒôÆµÎÄ¼þ");
+	pfod->SetTitle(L"æ‰“å¼€éŸ³é¢‘æ–‡ä»¶");
 	pfod->SetOptions(FOS_ALLOWMULTISELECT | FOS_FORCEFILESYSTEM | FOS_FILEMUSTEXIST);
-	constexpr COMDLG_FILTERSPEC cdfs[]
+	constexpr COMDLG_FILTERSPEC c_cdfs[]
 	{
-		{L"ÒôÆµÎÄ¼þ(*.mp1;*.mp2;*.xm;*.mp3;*.flac;*.wma;*.wav;*.m4a;*.ogg;*.acc;*.ape;*.aiff)",
+		{L"éŸ³é¢‘æ–‡ä»¶(*.mp1;*.mp2;*.xm;*.mp3;*.flac;*.wma;*.wav;*.m4a;*.ogg;*.acc;*.ape;*.aiff)",
 			L"*.mp1;*.mp2;*.xm;*.mp3;*.flac;*.wma;*.wav;*.m4a;*.ogg;*.acc;*.ape;*.aiff"},
-		{L"ËùÓÐÎÄ¼þ",L"*.*"}
+		{L"æ‰€æœ‰æ–‡ä»¶",L"*.*"}
 	};
-	pfod->SetFileTypes(ARRAYSIZE(cdfs), cdfs);
+	pfod->SetFileTypes(ARRAYSIZE(c_cdfs), c_cdfs);
 	pfod->Show(m_hWnd);
 	IShellItemArray* psia;
 	hr = pfod->GetResults(&psia);
@@ -194,8 +226,8 @@ void CWndList::OnMenuAddFile()
 		pfod->Release();
 		return;
 	}
-	DWORD cItem;
-	hr = psia->GetCount(&cItem);
+	DWORD cItems;
+	hr = psia->GetCount(&cItems);
 	if (FAILED(hr))
 	{
 		psia->Release();
@@ -207,28 +239,109 @@ void CWndList::OnMenuAddFile()
 
 	auto& pl = App->GetPlayer().GetList();
 	LISTFILEITEM_1 Info{};
-	EckCounter(cItem, i)
+	pl.Reserve(pl.GetCount() + cItems);
+	int idx = m_LVList.GetCurrSel();
+	if (idx < 0)
+		idx = m_LVList.GetItemCount();
+	const int idxBegin = idx;
+	EckCounter(cItems, i)
 	{
 		psia->GetItemAt(i, &psi);
 		psi->GetDisplayName(SIGDN_DESKTOPABSOLUTEPARSING, &pszFile);
 		if (pszFile)
 		{
 			Info.cchFile = (int)wcslen(pszFile);
-			pl.Insert(-1, Info, NULL, NULL, pszFile);
+			pl.Insert(idx, Info, NULL, NULL, pszFile);
+			++idx;
 			CoTaskMemFree(pszFile);
 		}
 		psi->Release();
 	}
-
 	psia->Release();
 	pfod->Release();
-
+	App->GetPlayer().OnItemInserted(idxBegin, cItems);
 	m_LVList.SetItemCount(pl.GetCount());
-
 }
 
 void CWndList::OnMenuAddDir()
 {
+	IFileOpenDialog* pfod;
+	HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pfod));
+	if (FAILED(hr))
+	{
+		CApp::ShowError(m_hWnd, hr, CApp::ErrSrc::HResult, L"IFileOpenDialogåˆ›å»ºå¤±è´¥");
+		return;
+	}
+	pfod->SetOptions(FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM | FOS_PATHMUSTEXIST);
+	if (FAILED(pfod->Show(m_hWnd)))
+	{
+		pfod->Release();
+		return;
+	}
+	IShellItem* psi;
+	hr = pfod->GetResult(&psi);
+	if (FAILED(hr))
+	{
+		pfod->Release();
+		return;
+	}
+	PWSTR pszPath;
+	hr = psi->GetDisplayName(SIGDN_DESKTOPABSOLUTEPARSING, &pszPath);
+	psi->Release();
+	pfod->Release();
+	if (FAILED(hr))
+		return;
+
+	const int cchPath = (int)wcslen(pszPath);
+	PWSTR pszFindingPattern = (PWSTR)_malloca(eck::Cch2Cb(cchPath + 10));
+	EckAssert(pszFindingPattern);
+	wcscpy(pszFindingPattern, pszPath);
+
+	constexpr PCWSTR c_szExt[]
+	{
+		L"*\\.mp1",L"\\*.mp2",L"\\*.xm",L"\\*.mp3",L"\\*.flac",L"\\*.wma",
+		L"\\*.wav",L"\\*.m4a",L"\\*.ogg",L"\\*.acc",L"\\*.ape",L"\\*.aiff"
+	};
+
+	WIN32_FIND_DATAW wfd;
+	HANDLE hFind;
+
+	PWSTR pszTemp = (PWSTR)_malloca(eck::Cch2Cb(cchPath + MAX_PATH + 10));
+	EckAssert(pszTemp);
+	wcscpy(pszTemp, pszPath);
+
+	int cchFileName;
+	LISTFILEITEM_1 Info{};
+	auto& pl = App->GetPlayer().GetList();
+
+	int idx = m_LVList.GetCurrSel();
+	if (idx < 0)
+		idx = m_LVList.GetItemCount();
+	const int idxBegin = idx;
+	for (auto pszExt : c_szExt)
+	{
+		wcscpy(pszFindingPattern + cchPath, pszExt);
+		hFind = FindFirstFileW(pszFindingPattern, &wfd);
+		if (hFind == INVALID_HANDLE_VALUE)
+			continue;
+		do
+		{
+			cchFileName = (int)wcslen(wfd.cFileName);
+			*(pszTemp + cchPath) = L'\\';
+			wcscpy(pszTemp + cchPath + 1, wfd.cFileName);
+
+			Info.cchFile = cchPath + cchFileName + 1;
+			pl.Insert(idx, Info, NULL, NULL, pszTemp);
+			++idx;
+
+		} while (FindNextFileW(hFind, &wfd));
+		FindClose(hFind);
+	}
+	CoTaskMemFree(pszPath);
+	_freea(pszTemp);
+	_freea(pszFindingPattern);
+	App->GetPlayer().OnItemInserted(idxBegin, idx - idxBegin);
+	m_LVList.SetItemCount(pl.GetCount());
 }
 
 void CWndList::OnCmdLoadList()
@@ -242,10 +355,10 @@ void CWndList::OnCmdLoadList()
 		CPlayListFileReader ListFile{};
 		if (!ListFile.Open(Param.rsRetFile.Data()))
 		{
-			CApp::ShowError(m_hWnd, std::nullopt, CApp::ErrSrc::Win32, L"´ò¿ªÁÐ±íÎÄ¼þÊ§°Ü");
+			CApp::ShowError(m_hWnd, std::nullopt, CApp::ErrSrc::Win32, L"æ‰“å¼€åˆ—è¡¨æ–‡ä»¶å¤±è´¥");
 			return;
 		}
-		
+
 		List.Reserve(ListFile.GetItemCount());
 		ListFile.For([&List](const LISTFILEITEM_1* pItem, PCWSTR pszName, PCWSTR pszFile, PCWSTR pszTime)->BOOL
 			{
@@ -272,7 +385,7 @@ void CWndList::OnCmdSaveList()
 		CPlayListFileWriter ListFile{};
 		if (!ListFile.Open(Param.rsRetFile.Data()))
 		{
-			CApp::ShowError(m_hWnd, std::nullopt, CApp::ErrSrc::Win32, L"´ò¿ªÁÐ±íÎÄ¼þÊ§°Ü");
+			CApp::ShowError(m_hWnd, std::nullopt, CApp::ErrSrc::Win32, L"æ‰“å¼€åˆ—è¡¨æ–‡ä»¶å¤±è´¥");
 			return;
 		}
 
@@ -301,15 +414,10 @@ void CWndList::OnCmdSaveList()
 	}
 }
 
-void CWndList::OnLVNGetDispInfo(NMLVDISPINFOW* pnmlvdi)
+void CWndList::OnCmdEmpty()
 {
-	auto& pl = App->GetPlayer().GetList();
-	switch (pnmlvdi->item.iSubItem)
-	{
-	case 0:
-		pnmlvdi->item.pszText = pl.At(pnmlvdi->item.iItem).rsName.Data();
-		break;
-	}
+	App->GetPlayer().GetList().Delete(-1);
+	App->GetPlayer().OnItemDeleted(-1);
 }
 
 void CWndList::OnLVNDbLClick(NMITEMACTIVATE* pnmia)
@@ -329,7 +437,8 @@ LRESULT CWndList::OnLVNCustomDraw(NMLVCUSTOMDRAW* pnmlvcd)
 	{
 		HDC hDC = pnmlvcd->nmcd.hdc;
 		int iState;
-		if (SendMessageW(pnmlvcd->nmcd.hdr.hwndFrom, LVM_GETITEMSTATE, pnmlvcd->nmcd.dwItemSpec, LVIS_SELECTED) == LVIS_SELECTED)//Ñ¡ÖÐ
+		if (SendMessageW(pnmlvcd->nmcd.hdr.hwndFrom, LVM_GETITEMSTATE,
+			pnmlvcd->nmcd.dwItemSpec, LVIS_SELECTED) == LVIS_SELECTED)// é€‰ä¸­
 		{
 			if (pnmlvcd->nmcd.uItemState & CDIS_HOT)
 				iState = LISS_HOTSELECTED;
@@ -343,19 +452,19 @@ LRESULT CWndList::OnLVNCustomDraw(NMLVCUSTOMDRAW* pnmlvcd)
 
 		HBRUSH hBrush;
 
-		if (pnmlvcd->nmcd.dwItemSpec % 2)//½»ÌæÐÐÉ«
+		if (pnmlvcd->nmcd.dwItemSpec % 2)// äº¤æ›¿è¡Œè‰²
 		{
 			hBrush = CreateSolidBrush(0xF3F3F3);
 			FillRect(hDC, &pnmlvcd->nmcd.rc, hBrush);
 			DeleteObject(hBrush);
 		}
-		if (pnmlvcd->nmcd.dwItemSpec == App->GetPlayer().GetCurrFile())//±ê¼ÇÏÖÐÐ²¥·ÅÏî
+		if (pnmlvcd->nmcd.dwItemSpec == App->GetPlayer().GetCurrFile())// æ ‡è®°çŽ°è¡Œæ’­æ”¾é¡¹
 		{
 			hBrush = CreateSolidBrush(0xE6E8B1);
 			FillRect(hDC, &pnmlvcd->nmcd.rc, hBrush);
 			DeleteObject(hBrush);
 		}
-		if (iState)//»­±íÏî¿ò
+		if (iState)// ç”»è¡¨é¡¹æ¡†
 			DrawThemeBackground(m_hThemeLV, hDC, LVP_LISTITEM, iState, &pnmlvcd->nmcd.rc, NULL);
 
 		auto& Item = App->GetPlayer().GetList().At((int)pnmlvcd->nmcd.dwItemSpec);
@@ -372,7 +481,7 @@ LRESULT CWndList::OnLVNCustomDraw(NMLVCUSTOMDRAW* pnmlvcd)
 		rc.left = rc.right;
 		rc.right = pnmlvcd->nmcd.rc.right;
 		DrawTextW(hDC, Item.rsTime.Data(), Item.rsTime.Size(), &rc, DT_SINGLELINE | DT_VCENTER | DT_CENTER | DT_END_ELLIPSIS);
-	
+
 		if (Item.bBookmark)
 		{
 			auto& bm = App->GetPlayer().GetList().AtBookmark((int)pnmlvcd->nmcd.dwItemSpec);
@@ -383,6 +492,105 @@ LRESULT CWndList::OnLVNCustomDraw(NMLVCUSTOMDRAW* pnmlvcd)
 		}
 	}
 	return CDRF_SKIPDEFAULT;
+	}
+	return CDRF_SKIPDEFAULT;
+}
+
+void CWndList::OnLVNRClick(NMITEMACTIVATE* pnmia)
+{
+	POINT pt;
+	GetCursorPos(&pt);
+
+	BOOL bItemValid = pnmia->iItem >= 0;
+	EnableMenuItem(m_hMenuLV, IDMI_PLAY, bItemValid);
+	EnableMenuItem(m_hMenuLV, IDMI_DELETE_FROM_LIST, bItemValid);
+	EnableMenuItem(m_hMenuLV, IDMI_DELETE_FROM_DISK, bItemValid);
+	EnableMenuItem(m_hMenuLV, IDMI_OPEN_IN_EXPLORER, bItemValid);
+	EnableMenuItem(m_hMenuLV, IDMI_RENAME, bItemValid);
+	EnableMenuItem(m_hMenuLV, IDMI_INFO, bItemValid);
+	EnableMenuItem(m_hMenuLV, IDMI_BOOKMARK, bItemValid);
+	EnableMenuItem(m_hMenuLV, IDMI_NEXTBOOKMARK, bItemValid);
+	EnableMenuItem(m_hMenuLV, IDMI_PREVBOOKMARK, bItemValid);
+	EnableMenuItem(m_hMenuLV, IDMI_IGNORE, bItemValid);
+	EnableMenuItem(m_hMenuLV, IDMI_PLAYLATER, bItemValid);
+
+	int iRet = TrackPopupMenu(m_hMenuLV, TPM_NONOTIFY | TPM_RETURNCMD | TPM_VERNEGANIMATION | TPM_RIGHTBUTTON,
+		pt.x, pt.y, 0, m_hWnd, NULL);
+	auto& Player = App->GetPlayer();
+	switch (iRet)
+	{
+	case IDMI_PLAY:
+		Player.Play(pnmia->iItem);
+		return;
+	case IDMI_PLAYLATER:
+		return;
+	case IDMI_OPEN_IN_EXPLORER:
+		OnMenuOpenInExplorer();
+		return;
+	case IDMI_DELETE_FROM_LIST:
+		Player.GetList().Delete(pnmia->iItem);
+		Player.OnItemDeleted(pnmia->iItem, 1);
+		return;
+	}
+}
+
+void CWndList::OnMenuOpenInExplorer()
+{
+	std::unordered_map<std::wstring_view, int> hmPaths{};// æ–‡ä»¶å¤¹è·¯å¾„->vPIDLç´¢å¼•
+	std::vector<std::pair<LPITEMIDLIST, std::vector<LPITEMIDLIST>>> vPIDL{};// { æ–‡ä»¶å¤¹PIDL,{æ–‡ä»¶PIDL} }
+	std::wstring_view svTemp{};
+	LPITEMIDLIST pIDL;
+	const int cItems = m_LVList.GetItemCount();
+	int idxCurr = 0;
+
+	auto& pl = App->GetPlayer().GetList();
+	PWSTR pszFileName;
+	PCWSTR pszPath;
+	EckCounter(cItems, i)
+	{
+		if (m_LVList.GetItemState(i, LVIS_SELECTED) == LVIS_SELECTED)
+		{
+			auto& plu = pl.At(i);
+			pszPath = plu.rsFile.Data();
+			pszFileName = PathFindFileNameW(pszPath);
+			if (pszFileName != pszPath)
+			{
+				svTemp = std::wstring_view(pszPath, pszFileName - pszPath);
+				auto it = hmPaths.find(svTemp);
+				if (it == hmPaths.end())
+				{
+					WCHAR ch = *(pszFileName - 1);
+					*(pszFileName - 1) = L'\0';
+					if (FAILED(SHParseDisplayName(pszPath, NULL, &pIDL, 0, NULL)))// æ–‡ä»¶å¤¹è½¬PIDL
+					{
+						*(pszFileName - 1) = ch;
+						continue;
+					}
+					*(pszFileName - 1) = ch;
+
+					it = hmPaths.insert(std::make_pair(svTemp, idxCurr)).first;
+					++idxCurr;
+
+					auto& x = vPIDL.emplace_back(pIDL, std::vector<LPITEMIDLIST>());
+					if (FAILED(SHParseDisplayName(pszPath, NULL, &pIDL, 0, NULL)))// æ–‡ä»¶è½¬PIDL
+						continue;
+					x.second.emplace_back(pIDL);
+				}
+				else
+				{
+					SHParseDisplayName(pszPath, NULL, &pIDL, 0, NULL);// æ–‡ä»¶è½¬PIDL
+					vPIDL[it->second].second.emplace_back(pIDL);
+				}
+			}
+		}
+	}
+
+	for (auto& x : vPIDL)
+	{
+		SHOpenFolderAndSelectItems(x.first, (UINT)x.second.size(), (LPCITEMIDLIST*)x.second.data(), 0);
+		CoTaskMemFree(x.first);
+		for (auto pidl : x.second)
+			CoTaskMemFree(pidl);
 	}
 }
 
@@ -412,9 +620,14 @@ void CWndList::PlayListItem(int idx)
 {
 	auto& Player = App->GetPlayer();
 	int idxOld = Player.GetCurrFile();
-	Player.Play(idx);
+	BOOL b= Player.Play(idx);
 	if (idxOld >= 0)
 		m_LVList.RedrawItems(idxOld, idxOld);
-	m_LVList.RedrawItems(idx, idx);
-	m_WndMain.SetText((Player.GetList().At(idx).rsName + L" - PlayerNew").Data());
+	if (b)
+	{
+		m_LVList.RedrawItems(idx, idx);
+		m_WndMain.SetText((Player.GetList().At(idx).rsName + L" - PlayerNew").Data());
+	}
+	else
+		m_WndMain.SetText(c_szDefMainWndText);
 }

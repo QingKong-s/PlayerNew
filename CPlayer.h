@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "CBass.h"
 #include "CPlayList.h"
 #include "Utils.h"
@@ -31,11 +31,15 @@ private:
 
 	}
 public:
-	void Play(int idx);
+	BOOL Play(int idx);
 
 	void Stop();
 
 	void PlayNext();
+
+	void OnItemInserted(int idxPos, int cItems);
+
+	void OnItemDeleted(int idxItem, int cItems);
 
 	PNInline CBass& GetBass() { return m_Bass; }
 

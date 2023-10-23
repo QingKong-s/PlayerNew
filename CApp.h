@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <Windows.h>
 #include <windowsx.h>
 #include <d2d1_1.h>
@@ -21,6 +21,8 @@
 #include "eck\CWnd.h"
 
 constexpr inline int c_cyLVItem = 24;
+
+constexpr PCWSTR c_szDefMainWndText = L"未播放 - PlayerNew";
 
 class CApp;
 extern CApp* App;

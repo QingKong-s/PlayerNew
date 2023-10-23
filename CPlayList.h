@@ -1,9 +1,10 @@
-#pragma once
+Ôªø#pragma once
 #include "CPlayListFile.h"
 
 #include <unordered_set>
 #include <algorithm>
 #include <vector>
+#include <unordered_map>
 
 #include <Shlwapi.h>
 
@@ -36,12 +37,12 @@ public:
 	constexpr static int SF_IDXPART = 17;
 	enum SortFlags :UINT
 	{
-		// µÕ16Œª
+		// ‰Ωé16‰Ωç
 		SF_NAME = 1,
 		SF_TIME = 2,
 		SF_FILE = 3,
 		SF_REVERSE = 4,
-		// ∏ﬂ16Œª
+		// È´ò16‰Ωç
 		SF_ASCENDING = 1 << SF_IDXPART,
 		SF_DESCENDING = 1 << (SF_IDXPART + 1),
 		SF_DEFAULT = 1 << (SF_IDXPART + 2),
@@ -49,8 +50,6 @@ public:
 private:
 	std::vector<PLAYLISTUNIT> m_PlayList;
 	std::unordered_map<int, BOOKMAEKLISTUNIT> m_BookmarkList;
-
-	int m_idxLaterPlay = -1;
 
 	void SortInternal(int idxBegin, int idxEnd, const FSortProc& fnProc);
 

@@ -1,4 +1,4 @@
-#include "CPlayList.h"
+﻿#include "CPlayList.h"
 
 void CPlayList::SortInternal(int idxBegin, int idxEnd, const FSortProc& fnProc)
 {
@@ -94,9 +94,9 @@ int CPlayList::Delete(int idxItem)
 	if (idxItem < 0)
 	{
 		m_PlayList.clear();
+		m_BookmarkList.clear();
 		return 0;
 	}
-
 	EckAssert(idxItem < (int)m_PlayList.size());
 
 	auto it = m_PlayList.begin() + idxItem;

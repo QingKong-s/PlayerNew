@@ -1,17 +1,18 @@
-#include "CPlayer.h"
+ï»¿#include "CPlayer.h"
 #include "CApp.h"
 #include "COptionsMgr.h"
 
-void CPlayer::Play(int idx)
+BOOL CPlayer::Play(int idx)
 {
+	EckAssert(idx >= 0 && idx < m_List.GetCount());
 	Stop();
 	auto& Item = m_List.At(idx);
 
 	m_Bass.Open(Item.rsFile.Data());
 	if (!m_Bass.GetHStream())
 	{
-		CApp::ShowError(NULL, m_Bass.GetError(), CApp::ErrSrc::Bass, L"²¥·ÅÊ§°Ü");
-		return;
+		CApp::ShowError(NULL, m_Bass.GetError(), CApp::ErrSrc::Bass, L"æ’­æ”¾å¤±è´¥");
+		return FALSE;
 	}
 	m_rsCurrFile = Item.rsFile;
 	m_idxCurrFile = idx;
@@ -25,6 +26,7 @@ void CPlayer::Play(int idx)
 	Utils::ParseLrc(m_rsCurrFile.Data(), 0u, m_vLrc, m_vLrcLabel, COptionsMgr::GetInst().iLrcFileEncoding);
 	if (!m_vLrc.size())
 		Utils::ParseLrc(m_MusicInfo.rsLrc.Data(), m_MusicInfo.rsLrc.ByteSize(), m_vLrc, m_vLrcLabel, Utils::LrcEncoding::UTF16LE);
+	return FALSE;
 }
 
 void CPlayer::Stop()
@@ -44,4 +46,20 @@ void CPlayer::PlayNext()
 	if (idx > m_List.GetCount())
 		idx = 0;
 	Play(idx);
+}
+
+void CPlayer::OnItemInserted(int idxPos, int cItems)
+{
+	if (m_idxCurrFile >= idxPos)
+		m_idxCurrFile += cItems;
+}
+
+void CPlayer::OnItemDeleted(int idxItem, int cItems)
+{
+	if (idxItem == m_idxCurrFile)
+		Stop();
+	else if (idxItem < m_idxCurrFile)
+	{
+		m_idxCurrFile -= cItems;
+	}
 }

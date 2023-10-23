@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "CApp.h"
 #include "CPlayList.h"
 
@@ -26,6 +26,7 @@ private:
 	HFONT m_hFontListName = NULL;
 
 	HMENU m_hMenuAdd = NULL;
+	HMENU m_hMenuLV = NULL;
 
 	int m_iDpi = USER_DEFAULT_SCREEN_DPI;
 
@@ -43,7 +44,7 @@ private:
 		TBBTI_MANAGE,
 	};
 
-	enum
+	enum// 控件ID
 	{
 		IDC_LA_LIST_NAME = 100,
 		IDC_ED_SEARCH,
@@ -51,7 +52,7 @@ private:
 		IDC_LV_LIST,
 		IDC_TB_MANAGE
 	};
-	enum
+	enum// 工具条按钮ID
 	{
 		TBCID_LOCATE = 200,
 		TBCID_ADD,
@@ -60,10 +61,23 @@ private:
 		TBCID_EMPTY,
 		TBCID_MANAGE,
 	};
-	enum
+	enum// 菜单ID
 	{
 		IDMI_ADDFILE = 300,
-		IDMI_ADDDIR
+		IDMI_ADDDIR,
+
+
+		IDMI_PLAY,
+		IDMI_DELETE_FROM_LIST,
+		IDMI_DELETE_FROM_DISK,
+		IDMI_OPEN_IN_EXPLORER,
+		IDMI_RENAME,
+		IDMI_INFO,
+		IDMI_BOOKMARK,
+		IDMI_NEXTBOOKMARK,
+		IDMI_PREVBOOKMARK,
+		IDMI_IGNORE,
+		IDMI_PLAYLATER,
 	};
 
 	ECK_DS_BEGIN(DPIS)
@@ -82,9 +96,9 @@ private:
 		m_iDpi = iDpi;
 		eck::UpdateDpiSize(m_Ds, iDpi);
 		DeleteObject(m_hFont);
-		m_hFont = eck::EzFont(L"΢���ź�", 9);
+		m_hFont = eck::EzFont(L"微软雅黑", 9);
 		DeleteObject(m_hFontListName);
-		m_hFontListName = eck::EzFont(L"΢���ź�", 13);
+		m_hFontListName = eck::EzFont(L"微软雅黑", 13);
 	}
 
 	PNInline void UpdateDpi(int iDpi)
@@ -99,6 +113,8 @@ private:
 
 	void OnSize(HWND hWnd, UINT state, int cx, int cy);
 
+	void OnDestroy(HWND hWnd);
+
 	void OnCmdLocate();
 
 	void OnMenuAddFile();
@@ -109,11 +125,15 @@ private:
 
 	void OnCmdSaveList();
 
-	void OnLVNGetDispInfo(NMLVDISPINFOW* pnmlvdi);
+	void OnCmdEmpty();
 
 	void OnLVNDbLClick(NMITEMACTIVATE* pnmia);
 
 	LRESULT OnLVNCustomDraw(NMLVCUSTOMDRAW* pnmlvcd);
+
+	void OnLVNRClick(NMITEMACTIVATE* pnmia);
+
+	void OnMenuOpenInExplorer();
 public:
 	CWndList(CWndMain& Main) :m_WndMain(Main) {}
 
