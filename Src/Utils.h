@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "eck\Utility.h"
 #include "eck\CFile.h"
 
@@ -31,30 +31,30 @@ struct MUSICINFO
 
 #pragma pack (push)
 #pragma pack (1)
-struct ID3v2_Header		// ID3v2±êÇ©Í·
+struct ID3v2_Header		// ID3v2æ ‡ç­¾å¤´
 {
     CHAR Header[3];		// "ID3"
-    BYTE Ver;			// °æ±¾ºÅ
-    BYTE Revision;		// ¸±°æ±¾ºÅ
-    BYTE Flags;			// ±êÖ¾
-    BYTE Size[4];		// ±êÇ©´óĞ¡£¬28Î»Êı¾İ£¬Ã¿¸ö×Ö½Ú×î¸ßÎ»²»Ê¹ÓÃ£¬°üÀ¨±êÇ©Í·µÄ10¸ö×Ö½ÚºÍËùÓĞµÄ±êÇ©Ö¡
+    BYTE Ver;			// ç‰ˆæœ¬å·
+    BYTE Revision;		// å‰¯ç‰ˆæœ¬å·
+    BYTE Flags;			// æ ‡å¿—
+    BYTE Size[4];		// æ ‡ç­¾å¤§å°ï¼Œ28ä½æ•°æ®ï¼Œæ¯ä¸ªå­—èŠ‚æœ€é«˜ä½ä¸ä½¿ç”¨ï¼ŒåŒ…æ‹¬æ ‡ç­¾å¤´çš„10ä¸ªå­—èŠ‚å’Œæ‰€æœ‰çš„æ ‡ç­¾å¸§
 };
 
-struct ID3v2_ExtHeader  // ID3v2À©Õ¹Í·
+struct ID3v2_ExtHeader  // ID3v2æ‰©å±•å¤´
 {
-    BYTE ExtHeaderSize[4];  // À©Õ¹Í·´óĞ¡
-    BYTE Flags[2];          // ±êÖ¾
-    BYTE PaddingSize[4];    // ¿Õ°×´óĞ¡
+    BYTE ExtHeaderSize[4];  // æ‰©å±•å¤´å¤§å°
+    BYTE Flags[2];          // æ ‡å¿—
+    BYTE PaddingSize[4];    // ç©ºç™½å¤§å°
 };
 
-struct ID3v2_FrameHeader// ID3v2Ö¡Í·
+struct ID3v2_FrameHeader// ID3v2å¸§å¤´
 {
-    CHAR ID[4];			// Ö¡±êÊ¶
-    BYTE Size[4];		// Ö¡ÄÚÈİµÄ´óĞ¡£¬32Î»Êı¾İ£¬²»°üÀ¨Ö¡Í·
-    BYTE Flags[2];		// ´æ·Å±êÖ¾
+    CHAR ID[4];			// å¸§æ ‡è¯†
+    BYTE Size[4];		// å¸§å†…å®¹çš„å¤§å°ï¼Œ32ä½æ•°æ®ï¼Œä¸åŒ…æ‹¬å¸§å¤´
+    BYTE Flags[2];		// å­˜æ”¾æ ‡å¿—
 };
 
-struct FLAC_Header      // FlacÍ·
+struct FLAC_Header      // Flacå¤´
 {
     BYTE by;
     BYTE bySize[3];
@@ -75,8 +75,8 @@ enum class LrcEncoding
 };
 struct LRCINFO
 {
-	PWSTR pszLrc = NULL;// ¸è´Ê
-    PWSTR pszTranslation = NULL;// ·­Òë£¬Ö¸ÏòpszLrcµÄÖĞ¼ä£¬¿ÉÄÜÎªNULL
+	PWSTR pszLrc = NULL;// æ­Œè¯
+    PWSTR pszTranslation = NULL;// ç¿»è¯‘ï¼ŒæŒ‡å‘pszLrcçš„ä¸­é—´ï¼Œå¯èƒ½ä¸ºNULL
     float fTime = 0.f;
     int cchTotal = 0;
     int cchLrc = 0;
@@ -90,6 +90,7 @@ struct LRCINFO
     {
         memcpy(this, &li, sizeof(LRCINFO));
         pszLrc = (PWSTR)malloc(eck::Cch2Cb(cchTotal));
+        EckAssert(pszLrc);
         pszTranslation = pszLrc + cchLrc;
         wcscpy(pszLrc, li.pszLrc);
 	}
@@ -106,6 +107,7 @@ struct LRCINFO
         free(pszLrc);
 		memcpy(this, &li, sizeof(LRCINFO));
         pszLrc = (PWSTR)malloc(eck::Cch2Cb(cchTotal));
+        EckAssert(pszLrc);
 		pszTranslation = pszLrc + cchLrc;
 		wcscpy(pszLrc, li.pszLrc);
 		return *this;
@@ -138,16 +140,38 @@ struct LRCLABEL
 };
 
 /// <summary>
-/// ½âÎöLRC¡£
-/// Ö§³ÖÑ¹ËõLRC£¬Ö§³ÖÎŞ»»ĞĞLRC£¬Ö§³Ö¸è´ÊÄÚÇ¶ÈëÖĞÀ¨ºÅ
+/// è§£æLRCã€‚
+/// æ”¯æŒå‹ç¼©LRCï¼Œæ”¯æŒæ— æ¢è¡ŒLRCï¼Œæ”¯æŒæ­Œè¯å†…åµŒå…¥ä¸­æ‹¬å·
 /// </summary>
-/// <param name="p">ÎÄ¼şÃû»òLRC×Ö½ÚÁ÷</param>
-/// <param name="cbMem">ÈôÎª0£¬ÔòÖ¸Ê¾pÎªÎÄ¼şÃû£¬·ñÔòpÎªLRC×Ö½ÚÁ÷</param>
-/// <param name="Result">½âÎö½á¹û</param>
-/// <param name="Label">ÆäËû±êÇ©µÄ½âÎö½á¹û</param>
-/// <param name="iDefTextEncoding">Ä¬ÈÏÎÄ±¾±àÂë</param>
+/// <param name="p">æ–‡ä»¶åæˆ–LRCå­—èŠ‚æµ</param>
+/// <param name="cbMem">è‹¥ä¸º0ï¼Œåˆ™æŒ‡ç¤ºpä¸ºæ–‡ä»¶åï¼Œå¦åˆ™pä¸ºLRCå­—èŠ‚æµ</param>
+/// <param name="Result">è§£æç»“æœ</param>
+/// <param name="Label">å…¶ä»–æ ‡ç­¾çš„è§£æç»“æœ</param>
+/// <param name="iDefTextEncoding">é»˜è®¤æ–‡æœ¬ç¼–ç </param>
 /// <returns></returns>
 BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result,
     std::vector<LRCLABEL>& Label, LrcEncoding uTextEncoding = LrcEncoding::Auto);
 #pragma endregion
+
+enum
+{
+    MBBID_1 = 10001,
+    MBBID_2,
+    MBBID_3
+};
+
+UINT MsgBox(
+    PCWSTR pszMainInstruction,
+    PCWSTR pszContent = NULL,
+    PCWSTR pszWndTitle = NULL,
+    UINT cButtons = 1,
+    HICON hIcon = NULL,
+    HWND hParent = NULL,
+    UINT iDefButton = 1,
+    BOOL bCenterPos = FALSE,
+    PCWSTR pszCheckBoxTitle = NULL,
+    PCWSTR pszButton1Title = NULL,
+    PCWSTR pszButton2Title = NULL,
+    PCWSTR pszButton3Title = NULL,
+    BOOL* pbCheck = NULL);
 UTILS_NAMESPACE_END

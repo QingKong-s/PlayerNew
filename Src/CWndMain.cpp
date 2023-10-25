@@ -74,7 +74,7 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 			return 0;
 		});
 	m_Sl.Create(NULL, WS_CHILD | WS_VISIBLE | WS_BORDER, 0, 100, 100, 500, 700, hWnd, 0);
-	m_Sl.SetItemCount(m_vStr.size());
+	m_Sl.SetItemCount((int)m_vStr.size());
 	return TRUE;
 }
 

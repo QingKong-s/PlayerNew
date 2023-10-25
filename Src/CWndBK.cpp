@@ -1,4 +1,4 @@
-#include "CWndBK.h"
+ï»¿#include "CWndBK.h"
 constexpr static D2D_COLOR_F c_D2DClrCyanDeeper{ 0.f,0.3764f,0.7529f,1.f };
 constexpr D2D1_COLOR_F c_D2DCrUIProgBarTempMark{ 0.0f,0.502f,1.0f,1.0f };
 #define MYCLR_BTHOT				0xE6E8B1
@@ -9,21 +9,21 @@ constexpr D2D1_COLOR_F c_D2DCrUIProgBarTempMark{ 0.0f,0.502f,1.0f,1.0f };
 
 constexpr PCWSTR c_szBtmTip[]
 {
-    L"ÉÏÒ»Çú",
-    L"²¥·Å/ÔİÍ£",
-    L"Í£Ö¹",
-    L"ÏÂÒ»Çú",
-    L"¸è´Ê",
-    L"Ñ­»··½Ê½",
-    L"²¥·ÅÉèÖÃ",
-    L"ÏÔÊ¾/Òş²Ø²¥·ÅÁĞ±í",
-    L"ÉèÖÃ",
-    L"¹ØÓÚ",
-    L"Ñ­»··½Ê½£ºÕûÌåÑ­»·",
-    L"Ñ­»··½Ê½£ºËæ»ú²¥·Å",
-    L"Ñ­»··½Ê½£ºµ¥Çú²¥·Å",
-    L"Ñ­»··½Ê½£ºµ¥ÇúÑ­»·",
-    L"Ñ­»··½Ê½£ºÕûÌå²¥·Å"
+    L"ä¸Šä¸€æ›²",
+    L"æ’­æ”¾/æš‚åœ",
+    L"åœæ­¢",
+    L"ä¸‹ä¸€æ›²",
+    L"æ­Œè¯",
+    L"å¾ªç¯æ–¹å¼",
+    L"æ’­æ”¾è®¾ç½®",
+    L"æ˜¾ç¤º/éšè—æ’­æ”¾åˆ—è¡¨",
+    L"è®¾ç½®",
+    L"å…³äº",
+    L"å¾ªç¯æ–¹å¼ï¼šæ•´ä½“å¾ªç¯",
+    L"å¾ªç¯æ–¹å¼ï¼šéšæœºæ’­æ”¾",
+    L"å¾ªç¯æ–¹å¼ï¼šå•æ›²æ’­æ”¾",
+    L"å¾ªç¯æ–¹å¼ï¼šå•æ›²å¾ªç¯",
+    L"å¾ªç¯æ–¹å¼ï¼šæ•´ä½“æ’­æ”¾"
 };
 
 LRESULT CWndBK::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -71,18 +71,18 @@ BOOL CWndBK::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 		&DxgiSwapChainDesc,
 		NULL,
 		NULL,
-		&m_pSwapChain)))// ´´½¨½»»»Á´
+		&m_pSwapChain)))// åˆ›å»ºäº¤æ¢é“¾
 	{
 		assert(FALSE);
 	}
 
-	if (FAILED(hr = App->m_pD2dDevice->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &m_pDC)))// ´´½¨Éè±¸ÉÏÏÂÎÄ
+	if (FAILED(hr = App->m_pD2dDevice->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &m_pDC)))// åˆ›å»ºè®¾å¤‡ä¸Šä¸‹æ–‡
 	{
 		assert(FALSE);
 	}
 
 	IDXGISurface1* pSurface;
-	if (FAILED(hr = m_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pSurface))))// È¡»º³åÇø
+	if (FAILED(hr = m_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pSurface))))// å–ç¼“å†²åŒº
 	{
 		assert(FALSE);
 	}
@@ -96,7 +96,7 @@ BOOL CWndBK::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 		NULL
 	};
 
-	if (FAILED(hr = m_pDC->CreateBitmapFromDxgiSurface(pSurface, &D2dBmpProp, &m_pBmpBK)))// ´´½¨Î»Í¼×ÔDXGI±íÃæ
+	if (FAILED(hr = m_pDC->CreateBitmapFromDxgiSurface(pSurface, &D2dBmpProp, &m_pBmpBK)))// åˆ›å»ºä½å›¾è‡ªDXGIè¡¨é¢
 	{
 		assert(FALSE);
 	}
@@ -112,7 +112,7 @@ void CWndBK::OnSize(HWND hWnd, UINT state, int cx, int cy)
 	m_cxClient = cx;
 	m_cyClient = cy;
 
-	m_pDC->SetTarget(NULL);// ÒÆ³ıÒıÓÃ
+	m_pDC->SetTarget(NULL);// ç§»é™¤å¼•ç”¨
 	m_pBmpBK->Release();
 
 	HRESULT hr;
@@ -236,8 +236,8 @@ void CUIAlbum::Redraw()
     int cx0 = m_pBK->m_cxAlbum, cy0 = m_pBK->m_cyAlbum;
     D2D1_RECT_F rcF;
     
-    // »¹µÃÊÇ×æ´«´úÂëºÃÓÃ
-    if ((float)m_cx / (float)m_cy > (float)cx0 / (float)cy0)// y¶ÔÆë
+    // è¿˜å¾—æ˜¯ç¥–ä¼ ä»£ç å¥½ç”¨
+    if ((float)m_cx / (float)m_cy > (float)cx0 / (float)cy0)// yå¯¹é½
     {
         iSize = cx0 * m_cy / cy0;
         rcF.left = m_rcF.left + (m_cx - iSize) / 2;
@@ -245,7 +245,7 @@ void CUIAlbum::Redraw()
         rcF.top = m_rcF.top;
         rcF.bottom = rcF.top + m_cy;
     }
-    else// x¶ÔÆë
+    else// xå¯¹é½
     {
         iSize = m_cx * cy0 / cx0;
         rcF.left = m_rcF.left;
@@ -253,7 +253,7 @@ void CUIAlbum::Redraw()
         rcF.top = m_rcF.top + (m_cy - iSize) / 2;
         rcF.bottom = rcF.top + (FLOAT)iSize;
     }
-    ////////////»­·âÃæÍ¼
+    ////////////ç”»å°é¢å›¾
     pDC->DrawBitmap(m_pBK->m_pBmpAlbum, &rcF);
 
     BkDbg_DrawElemFrame();
@@ -288,12 +288,12 @@ void CUIAlbumRotating::UpdateAlbumBrush()
         float fSize = fRadius * 2;
         float fScaleFactor;
         D2D1_SIZE_F D2DSize = pBmp->GetSize();
-        if (D2DSize.width > D2DSize.height)// ¿í¶È½Ï´ó
+        if (D2DSize.width > D2DSize.height)// å®½åº¦è¾ƒå¤§
         {
             fScaleFactor = fSize / D2DSize.height;
             xStart -= ((D2DSize.width - D2DSize.height) / 2.f * fSize / D2DSize.height);
         }
-        else// ¸ß¶È½Ï´ó
+        else// é«˜åº¦è¾ƒå¤§
         {
             fScaleFactor = fSize / D2DSize.width;
             yStart -= ((D2DSize.height - D2DSize.width) / 2.f * fSize / D2DSize.width);
@@ -301,13 +301,13 @@ void CUIAlbumRotating::UpdateAlbumBrush()
 
         D2D1_MATRIX_3X2_F Matrix, Matrix2;
 
-        Matrix = D2D1::Matrix3x2F::Translation(xStart, yStart);// ÖÆÆ½ÒÆ¾ØÕó
-        D2D1::Matrix3x2F* MatrixObj1 = D2D1::Matrix3x2F::ReinterpretBaseType(&Matrix);// ×ªÀà
+        Matrix = D2D1::Matrix3x2F::Translation(xStart, yStart);// åˆ¶å¹³ç§»çŸ©é˜µ
+        D2D1::Matrix3x2F* MatrixObj1 = D2D1::Matrix3x2F::ReinterpretBaseType(&Matrix);// è½¬ç±»
 
-        Matrix2 = D2D1::Matrix3x2F::Scale(fScaleFactor, fScaleFactor, D2D1::Point2F(xStart, yStart));// ÖÆËõ·Å¾ØÕó
-        D2D1::Matrix3x2F* MatrixObj2 = D2D1::Matrix3x2F::ReinterpretBaseType(&Matrix2);// ×ªÀà
+        Matrix2 = D2D1::Matrix3x2F::Scale(fScaleFactor, fScaleFactor, D2D1::Point2F(xStart, yStart));// åˆ¶ç¼©æ”¾çŸ©é˜µ
+        D2D1::Matrix3x2F* MatrixObj2 = D2D1::Matrix3x2F::ReinterpretBaseType(&Matrix2);// è½¬ç±»
 
-        Matrix = ((*MatrixObj1) * (*MatrixObj2));// ¾ØÕóÏà³Ë
+        Matrix = ((*MatrixObj1) * (*MatrixObj2));// çŸ©é˜µç›¸ä¹˜
 
         D2D1_BRUSH_PROPERTIES D2DBrushProp = { 1.f,Matrix };
         m_pBK->m_pDC->CreateBitmapBrush(pBmp, NULL, &D2DBrushProp, &m_pBrAlbum);
@@ -317,24 +317,23 @@ void CUIAlbumRotating::UpdateAlbumBrush()
 void CUIAlbumRotating::Redraw()
 {
     auto pDC = m_pBK->m_pDC;
-    pDC->PushAxisAlignedClip(&m_rcF, D2D1_ANTIALIAS_MODE_ALIASED);// Éè¸ö¼ô¼­Çø£¬·ÀÖ¹±ßÔµ²ĞÁô
-    pDC->DrawBitmap(m_pBK->m_pBmpBKStatic, &m_rcF, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &m_rcF);// Ë¢±³¾°
+    pDC->PushAxisAlignedClip(&m_rcF, D2D1_ANTIALIAS_MODE_ALIASED);// è®¾ä¸ªå‰ªè¾‘åŒºï¼Œé˜²æ­¢è¾¹ç¼˜æ®‹ç•™
+    pDC->DrawBitmap(m_pBK->m_pBmpBKStatic, &m_rcF, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &m_rcF);// åˆ·èƒŒæ™¯
 
     DWORD dwLevel = -1;
-    D2D1_POINT_2F D2DPt1, D2DPt2;
     float cx = m_rcF.right - m_rcF.left, cy = m_rcF.bottom - m_rcF.top;
     const int iAlbumLevel = m_pBK->m_Ds.sizeAlbumLevel;
     if (App->GetPlayer().GetBass().GetHStream())
     {
         dwLevel = App->GetPlayer().GetBass().GetLevel();
-        /////////////////////////////»­·âÃæ±ßÔµ
+        /////////////////////////////ç”»å°é¢è¾¹ç¼˜
         D2D1_ELLIPSE D2DEllipse;
         D2DEllipse.point = { m_rcF.left + cx / 2.f,m_rcF.top + cy / 2.f };
         float fRadius;
         fRadius = std::min(cx / 2.f, cy / 2.f);
         D2DEllipse.radiusX = D2DEllipse.radiusY = fRadius;
 
-        pDC->FillEllipse(&D2DEllipse, m_pBrUV);// »­ÍâÈ¦
+        pDC->FillEllipse(&D2DEllipse, m_pBrUV);// ç”»å¤–åœˆ
         float fOffset = 0.f;
         fRadius -= iAlbumLevel;
 
@@ -343,19 +342,19 @@ void CUIAlbumRotating::Redraw()
             fOffset = ((float)(LOWORD(dwLevel) + HIWORD(dwLevel)) / 2.f) / 32768.f * iAlbumLevel;
             fRadius += fOffset;
             D2DEllipse.radiusX = D2DEllipse.radiusY = fRadius;
-            pDC->FillEllipse(&D2DEllipse, m_pBrUV2);// »­µçÆ½Ö¸Ê¾
+            pDC->FillEllipse(&D2DEllipse, m_pBrUV2);// ç”»ç”µå¹³æŒ‡ç¤º
         }
 
-        /////////////////////////////»­·âÃæ
-        D2D1_MATRIX_3X2_F Matrix = D2D1::Matrix3x2F::Rotation(m_fAngle, D2DEllipse.point);// ÖÆĞı×ª¾ØÕó
-        pDC->SetTransform(Matrix);// ÖÃĞı×ª±ä»»
+        /////////////////////////////ç”»å°é¢
+        D2D1_MATRIX_3X2_F Matrix = D2D1::Matrix3x2F::Rotation(m_fAngle, D2DEllipse.point);// åˆ¶æ—‹è½¬çŸ©é˜µ
+        pDC->SetTransform(Matrix);// ç½®æ—‹è½¬å˜æ¢
 
         fRadius = fRadius - fOffset;
         D2DEllipse.radiusX = D2DEllipse.radiusY = fRadius;
         pDC->FillEllipse(&D2DEllipse, m_pBrAlbum);
 
         Matrix = D2D1::Matrix3x2F::Identity();
-        pDC->SetTransform(Matrix);// »¹Ô­¿Õ±ä»»
+        pDC->SetTransform(Matrix);// è¿˜åŸç©ºå˜æ¢
     }
     else
     {
@@ -365,7 +364,7 @@ void CUIAlbumRotating::Redraw()
         fRadius = std::min(cx / 2.f, cy / 2.f);
         D2DEllipse.radiusX = D2DEllipse.radiusY = fRadius;
 
-        pDC->FillEllipse(&D2DEllipse, m_pBrUV);// »­ÍâÈ¦
+        pDC->FillEllipse(&D2DEllipse, m_pBrUV);// ç”»å¤–åœˆ
 
         fRadius -= iAlbumLevel;
         D2DEllipse.radiusX = D2DEllipse.radiusY = fRadius;
@@ -424,7 +423,7 @@ void CUIWaves::GetWavesData()
         {
             CBass Bass;
             Bass.Open(p->GetPlayer().GetCurrFileName().Data(), BASS_STREAM_DECODE, BASS_MUSIC_DECODE | BASS_MUSIC_PRESCAN);
-            ULONGLONG ullLength = Bass.GetLength() * 1000.;
+            ULONGLONG ullLength = (ULONGLONG)(Bass.GetLength() * 1000.);
             if (ullLength == 0)
             {
                 EckDbgPrint(CBass::GetError());
@@ -436,6 +435,12 @@ void CUIWaves::GetWavesData()
             m_vWavesData.resize(cBars);
 
             HANDLE hEvent = OpenEventW(EVENT_ALL_ACCESS, FALSE, c_szWaveEventName);
+            if (!hEvent)
+            {
+                EckDbgPrintFormatMessage(GetLastError());
+                m_ThreadState = ThreadState::Error;
+                return;
+            }
             EckCounter(cBars, i)
             {
                 m_vWavesData[i] = Bass.GetLevel();
@@ -467,11 +472,11 @@ BOOL CUIWaves::InitElem()
     auto pDC = m_pBK->m_pDC;
     pDC->CreateSolidColorBrush(c_D2DClrCyanDeeper, &m_pBrLine);
     pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Red), &m_pBrCenterMark);
-    App->m_pDwFactory->CreateTextFormat(L"Î¢ÈíÑÅºÚ", NULL,
+    App->m_pDwFactory->CreateTextFormat(L"å¾®è½¯é›…é»‘", NULL,
         DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
         13, L"zh-cn", &m_pTfTip);
     m_pTfTip->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-    m_pTfTip->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);// Ë®Æ½´¹Ö±¶¼¾ÓÖĞ
+    m_pTfTip->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);// æ°´å¹³å‚ç›´éƒ½å±…ä¸­
     return TRUE;
 }
 
@@ -484,17 +489,17 @@ CUIWaves::~CUIWaves()
 void CUIWaves::Redraw()
 {
     auto pDC = m_pBK->m_pDC;
-    pDC->DrawBitmap(m_pBK->m_pBmpBKStatic, &m_rcF, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &m_rcF);// Ë¢±³¾°
+    pDC->DrawBitmap(m_pBK->m_pBmpBKStatic, &m_rcF, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &m_rcF);// åˆ·èƒŒæ™¯
 
     PCWSTR pszText = NULL;
-	if (m_hThread && WaitForSingleObject(m_hThread, 0) != WAIT_OBJECT_0)// ÕıÔÚ¼ÓÔØ
-        pszText = L"ÕıÔÚ¼ÓÔØ...";
-    else if (!App->GetPlayer().GetBass().GetHStream())// ÒÑÍ£Ö¹
-        pszText = L"Î´²¥·Å";
-    else if (m_ThreadState == ThreadState::Error)// ³ö´í
-        pszText = L"´íÎó£¡";
+	if (m_hThread && WaitForSingleObject(m_hThread, 0) != WAIT_OBJECT_0)// æ­£åœ¨åŠ è½½
+        pszText = L"æ­£åœ¨åŠ è½½...";
+    else if (!App->GetPlayer().GetBass().GetHStream())// å·²åœæ­¢
+        pszText = L"æœªæ’­æ”¾";
+    else if (m_ThreadState == ThreadState::Error)// å‡ºé”™
+        pszText = L"é”™è¯¯ï¼";
 
-    if (pszText)// Ó¦µ±ÏÔÊ¾ÌáÊ¾
+    if (pszText)// åº”å½“æ˜¾ç¤ºæç¤º
     {
         SetRedraw(FALSE);
         pDC->DrawTextW(pszText, lstrlenW(pszText), m_pTfTip, &m_rcF, m_pBrLine);
@@ -502,7 +507,7 @@ void CUIWaves::Redraw()
 		return;
 	}
 
-	const int idxCurr = m_pBK->m_ullMusicPos / 20ull;// ËãÊı×éË÷Òı    20msÒ»µ¥Î»
+    const int idxCurr = (int)(m_pBK->m_ullMusicPos / 20ull);// ç®—æ•°ç»„ç´¢å¼•    20msä¸€å•ä½
     const int cBars = (int)m_vWavesData.size();
 	if (idxCurr > cBars - 1)
 		return;
@@ -514,8 +519,8 @@ void CUIWaves::Redraw()
 
 	pDC->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 	pDC->PushAxisAlignedClip(&m_rcF, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
-	// ÉÏÃæÊÇÓÒÉùµÀ£¬ÏÂÃæÊÇ×óÉùµÀ
-	while (TRUE)// ÏòÓÒ»­
+	// ä¸Šé¢æ˜¯å³å£°é“ï¼Œä¸‹é¢æ˜¯å·¦å£°é“
+	while (TRUE)// å‘å³ç”»
 	{
 		PtF1 = { (float)x, (float)(y - HIWORD(m_vWavesData[i]) * m_cyHalf / 32768) };
 		PtF2 = { (float)x, (float)(y + LOWORD(m_vWavesData[i]) * m_cyHalf / 32768) };
@@ -527,7 +532,7 @@ void CUIWaves::Redraw()
 	}
 	i = idxCurr;
 	x = m_rc.left + m_cxHalf;
-	while (TRUE)// Ïò×ó»­
+	while (TRUE)// å‘å·¦ç”»
 	{
 		PtF1 = { (FLOAT)x, (FLOAT)(y - HIWORD(m_vWavesData[i]) * m_cyHalf / 32768) };
 		PtF2 = { (FLOAT)x, (FLOAT)(y + LOWORD(m_vWavesData[i]) * m_cyHalf / 32768) };
@@ -578,41 +583,41 @@ void CUISpe::Redraw()
         ZeroMemory(fData, sizeof(fData));
     }
 
-    pDC->DrawBitmap(m_pBK->m_pBmpBKStatic, &m_rcF, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &m_rcF);// Ë¢±³¾°
+    pDC->DrawBitmap(m_pBK->m_pBmpBKStatic, &m_rcF, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &m_rcF);// åˆ·èƒŒæ™¯
     for (int i = 0; i < m_iCount; i++)
     {
         ++m_piTime[i];
         m_piHeight[i] = abs((int)(fData[i] * 300.0f));
 
-        //////////////////ÆµÆ×Ìõ
-        if (m_piHeight[i] > m_cy)// ³¬¸ß
-            m_piHeight[i] = m_cy;// »ØÀ´
+        //////////////////é¢‘è°±æ¡
+        if (m_piHeight[i] > m_cy)// è¶…é«˜
+            m_piHeight[i] = m_cy;// å›æ¥
 #define SPESTEP_BAR					7
 #define SPESTEP_MAX					11
-        if (m_piHeight[i] > m_piOldHeight[i])// µ±Ç°µÄ´óÓÚÏÈÇ°µÄ
-            m_piOldHeight[i] = m_piHeight[i];// ¶¥ÉÏÈ¥
+        if (m_piHeight[i] > m_piOldHeight[i])// å½“å‰çš„å¤§äºå…ˆå‰çš„
+            m_piOldHeight[i] = m_piHeight[i];// é¡¶ä¸Šå»
         else
-            m_piOldHeight[i] -= SPESTEP_BAR;// Èç¹û²»´óÓÚ¾Í¼ÌĞøÂä
+            m_piOldHeight[i] -= SPESTEP_BAR;// å¦‚æœä¸å¤§äºå°±ç»§ç»­è½
 
-        if (m_piOldHeight[i] < 3)// Ì«µÍÁË
-            m_piOldHeight[i] = 3;// »ØÀ´
+        if (m_piOldHeight[i] < 3)// å¤ªä½äº†
+            m_piOldHeight[i] = 3;// å›æ¥
 
-        //////////////////·åÖµ
-        if (m_piTime[i] > 10)// Ê±¼äÒÑµ½
-            m_piOldMaxPos[i] -= SPESTEP_MAX;// ÏÂÂä
+        //////////////////å³°å€¼
+        if (m_piTime[i] > 10)// æ—¶é—´å·²åˆ°
+            m_piOldMaxPos[i] -= SPESTEP_MAX;// ä¸‹è½
 
-        if (m_piOldHeight[i] > m_piOldMaxPos[i])// ÆµÆ×Ìõ´óÓÚ·åÖµ
+        if (m_piOldHeight[i] > m_piOldMaxPos[i])// é¢‘è°±æ¡å¤§äºå³°å€¼
         {
-            m_piOldMaxPos[i] = m_piOldHeight[i];// ·åÖµ¶¥ÉÏÈ¥£¬ÖØÖÃÊ±¼ä
+            m_piOldMaxPos[i] = m_piOldHeight[i];// å³°å€¼é¡¶ä¸Šå»ï¼Œé‡ç½®æ—¶é—´
             m_piTime[i] = 0;
         }
 
-        if (m_piOldMaxPos[i] < 3)// Ì«µÍÁË
-            m_piOldMaxPos[i] = 3;// »ØÀ´
+        if (m_piOldMaxPos[i] < 3)// å¤ªä½äº†
+            m_piOldMaxPos[i] = 3;// å›æ¥
 
-        //////////////////»æÖÆ
+        //////////////////ç»˜åˆ¶
 
-        //////////ÆµÆ×Ìõ
+        //////////é¢‘è°±æ¡
         D2D_RECT_F D2DRectF;
         D2DRectF.left = (FLOAT)(m_rcF.left + (m_cxBar + m_cxGap) * i);
         D2DRectF.top = (FLOAT)(m_rcF.top + m_cy - m_piOldHeight[i]);
@@ -622,7 +627,7 @@ void CUISpe::Redraw()
             break;
         pDC->FillRectangle(&D2DRectF, m_pBrBar);
 
-        //////////·åÖµÖ¸Ê¾
+        //////////å³°å€¼æŒ‡ç¤º
         D2DRectF.top = (FLOAT)(m_rcF.top + m_cy - m_piOldMaxPos[i]);
         D2DRectF.bottom = D2DRectF.top + 3;
         pDC->FillRectangle(&D2DRectF, m_pBrBar);
@@ -637,7 +642,7 @@ void CUISpe::SetCount(int i)
     if (i > 0)
     {
         // c * cxBar + (c - 1) * cxDiv = cx
-        // ½âµÃ£ºcxBar = (cx - (c - 1) * cxDiv) / c
+        // è§£å¾—ï¼šcxBar = (cx - (c - 1) * cxDiv) / c
         m_iCount = i;
         m_cxBar = (m_cx - (i - 1) * m_cxGap) / i;
         if (m_cxBar <= 0)
@@ -653,7 +658,8 @@ void CUISpe::SetCount(int i)
         return;
     }
 Fail:
-    m_iCount = m_cxBar = 0.f;
+    m_iCount = 0;
+    m_cxBar = 0.f;
     m_cbDataUnit = 0;
     m_pBaseData = m_piOldHeight = m_piHeight = m_piOldMaxPos = m_piTime = NULL;
 }
@@ -718,9 +724,9 @@ CUISpe2::~CUISpe2()
 void CUISpe2::Redraw()
 {
     auto pDC = m_pBK->m_pDC;
-    pDC->DrawBitmap(m_pBK->m_pBmpBKStatic, &m_rcF, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &m_rcF);// Ë¢±³¾°
+    pDC->DrawBitmap(m_pBK->m_pBmpBKStatic, &m_rcF, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &m_rcF);// åˆ·èƒŒæ™¯
 
-	App->GetPlayer().GetBass().GetData(m_pfBuf, m_cbBuf);// È¡ÆµÆ×Êı¾İ
+	App->GetPlayer().GetBass().GetData(m_pfBuf, (DWORD)m_cbBuf);// å–é¢‘è°±æ•°æ®
 
     D2D1_POINT_2F PtF1, PtF2;
     int k, l;
@@ -728,7 +734,7 @@ void CUISpe2::Redraw()
     {
         for (int i = 0; i < m_cSample - 1; ++i)
         {
-            k = (int)((1 - m_pfBuf[i * 2 + j]) * m_cy / 2);// Ö±½Ó´ÓBassÊ¾ÀıÀïºİºİµØ³­
+            k = (int)((1 - m_pfBuf[i * 2 + j]) * m_cy / 2);// ç›´æ¥ä»Bassç¤ºä¾‹é‡Œç‹ ç‹ åœ°æŠ„
             if (k < 0)
                 k = 0;
             else if (k > m_cy)
@@ -741,7 +747,7 @@ void CUISpe2::Redraw()
             else if (l > m_cy)
                 l = m_cy;
             PtF2 = { m_rcF.left + (i + 1) * m_cxStep,m_rcF.top + l };
-            pDC->DrawLine(PtF1, PtF2, m_pBrLine, m_pBK->m_Ds.cxSepLine);
+            pDC->DrawLine(PtF1, PtF2, m_pBrLine, (float)m_pBK->m_Ds.cxSepLine);
         }
     }
 
@@ -764,7 +770,7 @@ void CUISpe2::SetSampleCount(int i)
         m_cbBuf = 0;
         m_pfBuf = NULL;
         m_cxStep = 0.f;
-        EckDbgPrint(L"Ñù±¾Êı²»ÕıÈ·");
+        EckDbgPrint(L"æ ·æœ¬æ•°ä¸æ­£ç¡®");
         EckDbgBreak();
     }
 }
@@ -905,7 +911,7 @@ LRESULT CUIProgBar::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case WM_KEYDOWN:
     {
-        if (wParam == VK_ESCAPE)// Esc³·Ïú½ø¶Èµ÷½Ú
+        if (wParam == VK_ESCAPE)// Escæ’¤é”€è¿›åº¦è°ƒèŠ‚
         {
             if (m_bLBtnDown)
             {
@@ -981,7 +987,7 @@ CUIToolBar::CUIToolBar()
     m_uFlags = UIEF_WANTTIMEREVENT;
     HWND hWndBK = m_pBK->m_hWnd;
     m_hToolTip = CreateWindowExW(0, TOOLTIPS_CLASSW, NULL, TTS_NOPREFIX | TTS_ALWAYSTIP,
-        0, 0, 0, 0, hWndBK, NULL, NULL, NULL);// ´´½¨¹¤¾ßÌáÊ¾
+        0, 0, 0, 0, hWndBK, NULL, NULL, NULL);// åˆ›å»ºå·¥å…·æç¤º
 
     m_ti = { sizeof(TTTOOLINFOW),TTF_TRACK | TTF_IDISHWND | TTF_ABSOLUTE,hWndBK,(UINT_PTR)hWndBK,{0},App->GetHInstance(),NULL,0};
     SendMessageW(m_hToolTip, TTM_ADDTOOLW, 0, (LPARAM)&m_ti);
@@ -1016,7 +1022,7 @@ BOOL CUIToolBar::InitElem()
     pDC->CreateSolidColorBrush(D2D1::ColorF(eck::ReverseColorref(MYCLR_BTHOT)), &m_pBrBtnHot);
     pDC->CreateSolidColorBrush(D2D1::ColorF(eck::ReverseColorref(MYCLR_BTPUSHED)), &m_pBrBtnPushed);
     pDC->CreateSolidColorBrush(D2D1::ColorF(eck::ReverseColorref(MYCLR_BTCHECKED)), &m_pBrBtnChecked);
-    App->m_pDwFactory->CreateTextFormat(L"Î¢ÈíÑÅºÚ", NULL,
+    App->m_pDwFactory->CreateTextFormat(L"å¾®è½¯é›…é»‘", NULL,
         DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
         9, L"zh-cn", &m_pTfTime);
     m_pTfTime->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
@@ -1106,7 +1112,7 @@ void CUIToolBar::Redraw()
 //
 //    for (HICON hIcon : hi)
 //    {
-//        DrawIconEx(hDC, x + iIconOffest, y, hIcon, 0, 0, 0, NULL, DI_NORMAL);// 6 Ñ­»··½Ê½
+//        DrawIconEx(hDC, x + iIconOffest, y, hIcon, 0, 0, 0, NULL, DI_NORMAL);// 6 å¾ªç¯æ–¹å¼
 //        x += GC.cyBT;
 //    }
 //
@@ -1259,7 +1265,7 @@ void CUIToolBar::DoCmd(UITOOLBARBTNINDEX i)
 {
     //switch (i)
     //{
-    //case TBBI_PREV:// ÉÏÒ»Çú
+    //case TBBI_PREV:// ä¸Šä¸€æ›²
     //{
     //    if (g_iCurrFileIndex == -1)
     //        return;
@@ -1267,7 +1273,7 @@ void CUIToolBar::DoCmd(UITOOLBARBTNINDEX i)
     //}
     //return;
 
-    //case TBBI_PLAY:// ²¥·Å/ÔİÍ£
+    //case TBBI_PLAY:// æ’­æ”¾/æš‚åœ
     //{
     //    if (g_iCurrFileIndex == -1)
     //        if (g_ItemData->iCount > 0)
@@ -1278,7 +1284,7 @@ void CUIToolBar::DoCmd(UITOOLBARBTNINDEX i)
     //}
     //return;
 
-    //case TBBI_STOP:// Í£Ö¹
+    //case TBBI_STOP:// åœæ­¢
     //{
     //    if (g_iCurrFileIndex == -1)
     //        return;
@@ -1286,7 +1292,7 @@ void CUIToolBar::DoCmd(UITOOLBARBTNINDEX i)
     //}
     //return;
 
-    //case TBBI_NEXT:// ÏÂÒ»Çú
+    //case TBBI_NEXT:// ä¸‹ä¸€æ›²
     //{
     //    if (g_iCurrFileIndex == -1)
     //        return;
@@ -1294,7 +1300,7 @@ void CUIToolBar::DoCmd(UITOOLBARBTNINDEX i)
     //}
     //return;
 
-    //case TBBI_LRC:// ¸è´Ê
+    //case TBBI_LRC:// æ­Œè¯
     //{
     //    LrcWnd_Show();
     //    if (IsWindow(g_hLrcWnd))
@@ -1304,7 +1310,7 @@ void CUIToolBar::DoCmd(UITOOLBARBTNINDEX i)
     //}
     //return;
 
-    //case TBBI_REPEATMODE:// Ñ­»··½Ê½
+    //case TBBI_REPEATMODE:// å¾ªç¯æ–¹å¼
     //{
     //    m_iRepeatMode++;
     //    if (m_iRepeatMode > 4)
@@ -1313,7 +1319,7 @@ void CUIToolBar::DoCmd(UITOOLBARBTNINDEX i)
     //}
     //return;
 
-    //case TBBI_PLAYINGOPT:// ²¥·ÅÉèÖÃ
+    //case TBBI_PLAYINGOPT:// æ’­æ”¾è®¾ç½®
     //{
     //    static HWND hDlgEffect = NULL;
     //    if (IsWindow(hDlgEffect) && GetWindowThreadProcessId(hDlgEffect, NULL) == GetCurrentThreadId())
@@ -1328,11 +1334,11 @@ void CUIToolBar::DoCmd(UITOOLBARBTNINDEX i)
     //}
     //return;
 
-    //case TBBI_PLAYLIST:// ²¥·ÅÁĞ±í
+    //case TBBI_PLAYLIST:// æ’­æ”¾åˆ—è¡¨
     //{
     //    HMENU hMenu = CreatePopupMenu();
-    //    AppendMenuW(hMenu, g_bListSeped ? MF_CHECKED : 0, IDMI_PL_SEPARATE, L"½«ÁĞ±í´ÓÖ÷´°¿Ú²ğÀë");
-    //    AppendMenuW(hMenu, g_bListHidden ? 0 : MF_CHECKED, IDMI_PL_SHOW, L"ÏÔÊ¾²¥·ÅÁĞ±í");
+    //    AppendMenuW(hMenu, g_bListSeped ? MF_CHECKED : 0, IDMI_PL_SEPARATE, L"å°†åˆ—è¡¨ä»ä¸»çª—å£æ‹†ç¦»");
+    //    AppendMenuW(hMenu, g_bListHidden ? 0 : MF_CHECKED, IDMI_PL_SHOW, L"æ˜¾ç¤ºæ’­æ”¾åˆ—è¡¨");
 
     //    int iRet = TrackPopupMenu(hMenu, TPM_RETURNCMD,
     //        m_rc.left + (int)m_rcFTimeLabel.right + GC.cyBT * TBBI_PLAYLIST, m_rc.top + (int)m_rcFTimeLabel.bottom, 0, m_BK.m_hWnd, NULL);
@@ -1350,11 +1356,11 @@ void CUIToolBar::DoCmd(UITOOLBARBTNINDEX i)
     //}
     //return;
 
-    //case TBBI_OPTIONS:// ÉèÖÃ
+    //case TBBI_OPTIONS:// è®¾ç½®
     //    DialogBoxParamW(g_hInst, MAKEINTRESOURCEW(IDD_OPTIONS), g_hMainWnd, DlgProc_Options, 0);
     //    return;
 
-    //case TBBI_ABOUT: // ¹ØÓÚ
+    //case TBBI_ABOUT: // å…³äº
     //    DialogBoxParamW(g_hInst, MAKEINTRESOURCEW(IDD_ABOUT), g_hMainWnd, DlgProc_About, 0);
     //    return;
     //}
@@ -1393,6 +1399,8 @@ LRESULT CUIToolBar::OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam
         return lResult;
     }
     }
+
+    return DefElemEventProc(uEvent, wParam, lParam);
 }
 
 
@@ -1400,30 +1408,30 @@ void CUIInfo::UpdateTF()
 {
     SAFE_RELEASE(m_pTfTitle);
     SAFE_RELEASE(m_pTfTip);
-    App->m_pDwFactory->CreateTextFormat(L"Î¢ÈíÑÅºÚ", NULL,
+    App->m_pDwFactory->CreateTextFormat(L"å¾®è½¯é›…é»‘", NULL,
         DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
         13, L"zh-cn", &m_pTfTitle);
-    App->m_pDwFactory->CreateTextFormat(L"Î¢ÈíÑÅºÚ", NULL,
+    App->m_pDwFactory->CreateTextFormat(L"å¾®è½¯é›…é»‘", NULL,
         DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
         9, L"zh-cn", &m_pTfTip);
 
-    DWRITE_TRIMMING DWTrimming =
+    DWRITE_TRIMMING DWTrimming
     {
-        DWRITE_TRIMMING_GRANULARITY_CHARACTER,// °´×Ö·û²Ã¼ô
+        DWRITE_TRIMMING_GRANULARITY_CHARACTER,// æŒ‰å­—ç¬¦è£å‰ª
         0,
         0
     };
-    IDWriteInlineObject* pDWInlineObj;// Ê¡ÂÔºÅ²Ã¼ôÄÚÁª¶ÔÏó
-    App->m_pDwFactory->CreateEllipsisTrimmingSign(m_pTfTitle, &pDWInlineObj);// ´´½¨Ê¡ÂÔºÅ²Ã¼ô
+    IDWriteInlineObject* pDWInlineObj;// çœç•¥å·è£å‰ªå†…è”å¯¹è±¡
+    App->m_pDwFactory->CreateEllipsisTrimmingSign(m_pTfTitle, &pDWInlineObj);// åˆ›å»ºçœç•¥å·è£å‰ª
     if (!pDWInlineObj)
         return;
-    ///////////ÖÃÎÄ±¾¸ñÊ½
+    ///////////ç½®æ–‡æœ¬æ ¼å¼
     m_pTfTitle->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-    m_pTfTitle->SetTrimming(&DWTrimming, pDWInlineObj);// ÖÃÒç³ö²Ã¼ô
-    m_pTfTitle->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);// ²»»»ĞĞ
+    m_pTfTitle->SetTrimming(&DWTrimming, pDWInlineObj);// ç½®æº¢å‡ºè£å‰ª
+    m_pTfTitle->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);// ä¸æ¢è¡Œ
     m_pTfTip->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-    m_pTfTip->SetTrimming(&DWTrimming, pDWInlineObj);// ÖÃÒç³ö²Ã¼ô
-    m_pTfTip->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);// ²»»»ĞĞ
+    m_pTfTip->SetTrimming(&DWTrimming, pDWInlineObj);// ç½®æº¢å‡ºè£å‰ª
+    m_pTfTip->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);// ä¸æ¢è¡Œ
     pDWInlineObj->Release();
 }
 
@@ -1436,7 +1444,7 @@ CUIInfo::CUIInfo()
 void CUIInfo::Redraw()
 {
 	auto pDC = m_pBK->m_pDC;
-	////////////////////»­¶¥²¿ÌáÊ¾ĞÅÏ¢
+	////////////////////ç”»é¡¶éƒ¨æç¤ºä¿¡æ¯
 	PCWSTR psz;
 	if (App->GetPlayer().IsFileActive())
 	{
@@ -1444,17 +1452,17 @@ void CUIInfo::Redraw()
 		psz = Item.rsName.Data();
 	}
 	else
-		psz = L"Î´²¥·Å";
-    ///////////»­´ó±êÌâ
+		psz = L"æœªæ’­æ”¾";
+    ///////////ç”»å¤§æ ‡é¢˜
     D2D1_RECT_F rcF{ m_rcF.left,m_rcF.top,m_rcF.right,m_rcF.top + (FLOAT)m_pBK->m_Ds.cyTopTitle };
     pDC->DrawTextW(psz, lstrlenW(psz), m_pTfTitle, &rcF, m_pBrBigTip);
-    ///////////»­ÆäËûĞÅÏ¢
+    ///////////ç”»å…¶ä»–ä¿¡æ¯
     const PCWSTR pszTip[4] =
     {
-        L"±êÌâ£º",
-        L"ÒÕÊõ¼Ò£º",
-        L"×¨¼­£º",
-        L"±¸×¢£º"
+        L"æ ‡é¢˜ï¼š",
+        L"è‰ºæœ¯å®¶ï¼š",
+        L"ä¸“è¾‘ï¼š",
+        L"å¤‡æ³¨ï¼š"
     };
 
     const auto& MusicInfo = App->GetPlayer().GetMusicInfo();

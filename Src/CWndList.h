@@ -27,6 +27,7 @@ private:
 
 	HMENU m_hMenuAdd = NULL;
 	HMENU m_hMenuLV = NULL;
+	HMENU m_hMenuManage = NULL;
 
 	int m_iDpi = USER_DEFAULT_SCREEN_DPI;
 
@@ -42,6 +43,8 @@ private:
 		TBBTI_SAVELIST,
 		TBBTI_EMPTY,
 		TBBTI_MANAGE,
+
+		TBBTCOUNT
 	};
 
 	enum// 控件ID
@@ -66,7 +69,6 @@ private:
 		IDMI_ADDFILE = 300,
 		IDMI_ADDDIR,
 
-
 		IDMI_PLAY,
 		IDMI_DELETE_FROM_LIST,
 		IDMI_DELETE_FROM_DISK,
@@ -78,6 +80,19 @@ private:
 		IDMI_PREVBOOKMARK,
 		IDMI_IGNORE,
 		IDMI_PLAYLATER,
+
+		IDMI_SORT_DEF,
+		IDMI_SORT_FILENAME,
+		IDMI_SORT_NAME,
+		IDMI_SORT_CREATE_TIME,
+		IDMI_SORT_MODIFY_TIME,
+		IDMI_SORT_REVERSE,
+		IDMI_SORT_ASCENDING,
+		IDMI_SORT_DESCENDING,
+		IDMI_FIXSORT,
+		
+		IDMI_DETAIL,
+		IDMI_BOOKMARK_MGR,
 	};
 
 	ECK_DS_BEGIN(DPIS)
@@ -88,26 +103,21 @@ private:
 		ECK_DS_ENTRY(cxToolBtn, 60)
 		ECK_DS_ENTRY(iGap, 4)
 		ECK_DS_ENTRY(cxLVTextSpace, 4)
+		ECK_DS_ENTRY(cyLVItem, c_cyLVItem)
 		;
 	ECK_DS_END_VAR(m_Ds);
+
+	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	PNInline void UpdateDpiInit(int iDpi)
 	{
 		m_iDpi = iDpi;
 		eck::UpdateDpiSize(m_Ds, iDpi);
-		DeleteObject(m_hFont);
-		m_hFont = eck::EzFont(L"微软雅黑", 9);
-		DeleteObject(m_hFontListName);
-		m_hFontListName = eck::EzFont(L"微软雅黑", 13);
 	}
 
-	PNInline void UpdateDpi(int iDpi)
-	{
-		UpdateDpiInit(iDpi);
-		eck::SetFontForWndAndCtrl(m_hWnd, m_hFont, TRUE);
-	}
+	void UpdateDpi(int iDpi);
 
-	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	void UpdateUISize();
 
 	BOOL OnCreate(HWND hWnd, CREATESTRUCTW* pcs);
 
@@ -127,13 +137,17 @@ private:
 
 	void OnCmdEmpty();
 
+	void OnCmdManage();
+
 	void OnLVNDbLClick(NMITEMACTIVATE* pnmia);
 
 	LRESULT OnLVNCustomDraw(NMLVCUSTOMDRAW* pnmlvcd);
 
-	void OnLVNRClick(NMITEMACTIVATE* pnmia);
+	BOOL OnLVNRClick(NMITEMACTIVATE* pnmia);
 
 	void OnMenuOpenInExplorer();
+
+	void OnEDNChanged();
 public:
 	CWndList(CWndMain& Main) :m_WndMain(Main) {}
 

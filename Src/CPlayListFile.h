@@ -1,89 +1,88 @@
-#pragma once
+ï»¿#pragma once
 #include "Utils.h"
 #include "eck\CFile.h"
 
 #include <functional>
 
-//////////////////////////////////¾É°æ±¾µÄ²¥·ÅÁÐ±íÎÄ¼þ//////////////////////////////////
+//////////////////////////////////æ—§ç‰ˆæœ¬çš„æ’­æ”¾åˆ—è¡¨æ–‡ä»¶//////////////////////////////////
 #pragma pack(push)
 #pragma pack(4)
-struct LISTFILEHEADER_0	// ²¥·ÅÁÐ±íÎÄ¼þÍ·
+struct LISTFILEHEADER_0	// æ’­æ”¾åˆ—è¡¨æ–‡ä»¶å¤´
 {
-	CHAR cHeader[4];	// ÎÄ¼þÆðÊ¼±ê¼Ç£¬ASCII×Ö·û´®"QKPL"
-	int iCount;			// ÏîÄ¿Êý
-	DWORD dwVer;		// ´æµµÎÄ¼þ°æ±¾£¬QKLFVER_³£Á¿£¨¼ûÏÂ£©
-	DWORD dwReserved;	// ±£Áô£¬±ØÐëÎª0
+	CHAR cHeader[4];	// æ–‡ä»¶èµ·å§‹æ ‡è®°ï¼ŒASCIIå­—ç¬¦ä¸²"QKPL"
+	int iCount;			// é¡¹ç›®æ•°
+	DWORD dwVer;		// å­˜æ¡£æ–‡ä»¶ç‰ˆæœ¬ï¼ŒQKLFVER_å¸¸é‡ï¼ˆè§ä¸‹ï¼‰
+	DWORD dwReserved;	// ä¿ç•™ï¼Œå¿…é¡»ä¸º0
 };
 
-#define QKLFVER_1				0// Õâ¸ö°æ±¾µÄÁÐ±íÎÄ¼þ»¹Ã»ÓÐ¼ÇÂ¼Ê±¼äµÄ¹¦ÄÜ£¬µ«ÊÇ×÷ÕßÒÑ¾­°Ñ×Ô¼ºµÄÁÐ±íÅÅÐòºÃÁË£¬ÒòÎª²»ÏëÖØÅÅ£¨ÀÁ£©ËùÒÔ¼ÓÁËÕâ¸ö°æ±¾¿ØÖÆ£¨Áô±£Áô×Ö¶Î¹ûÈ»ÊÇÃ÷ÖÇµÄÑ¡Ôñ2333£©
+#define QKLFVER_1				0
 #define QKLFVER_2				1
 
-struct LISTFILEITEM_0	// ²¥·ÅÁÐ±íÎÄ¼þÏîÄ¿Í·
+struct LISTFILEITEM_0	// æ’­æ”¾åˆ—è¡¨æ–‡ä»¶é¡¹ç›®å¤´
 {
-	UINT uFlags;		// ÏîÄ¿±êÖ¾
-	DWORD dwReserved1;	// ±£Áô£¬±ØÐëÎª0
-	DWORD dwReserved2;	// ±£Áô£¬±ØÐëÎª0
+	UINT uFlags;		// é¡¹ç›®æ ‡å¿—
+	DWORD dwReserved1;	// ä¿ç•™ï¼Œå¿…é¡»ä¸º0
+	DWORD dwReserved2;	// ä¿ç•™ï¼Œå¿…é¡»ä¸º0
 };
 
-#define QKLIF_INVALID			0x00000001// ÏîÄ¿ÎÞÐ§
-#define QKLIF_IGNORED			0x00000002// ºöÂÔ
-#define QKLIF_BOOKMARK			0x00000004// ÓÐÊéÇ©
-#define QKLIF_DRAGMARK_CURRFILE	0x00000008// ½öÔÚÍÏ·ÅÊ±ÓÐÐ§£¬ÏÖÐÐ²¥·Å±êÖ¾£¬»¹Ô­Ë÷ÒýÓÃ
-#define QKLIF_TIME				0x00000010// ½öÔÚ´æµµ»ò¶ÁÈ¡ÎÄ¼þÊ±ÓÐÐ§£¬ÒÑÓÐÊ±³¤×Ö·û´®
-#define QKLIF_DRAGMARK_PLLATER	0x00000020// ½öÔÚÍÏ·ÅÊ±ÓÐÐ§£¬ÉÔºó²¥·Å±êÖ¾£¬»¹Ô­Ë÷ÒýÓÃ
+#define QKLIF_INVALID			0x00000001// é¡¹ç›®æ— æ•ˆ
+#define QKLIF_IGNORED			0x00000002// å¿½ç•¥
+#define QKLIF_BOOKMARK			0x00000004// æœ‰ä¹¦ç­¾
+#define QKLIF_DRAGMARK_CURRFILE	0x00000008// ä»…åœ¨æ‹–æ”¾æ—¶æœ‰æ•ˆï¼ŒçŽ°è¡Œæ’­æ”¾æ ‡å¿—ï¼Œè¿˜åŽŸç´¢å¼•ç”¨
+#define QKLIF_TIME				0x00000010// ä»…åœ¨å­˜æ¡£æˆ–è¯»å–æ–‡ä»¶æ—¶æœ‰æ•ˆï¼Œå·²æœ‰æ—¶é•¿å­—ç¬¦ä¸²
+#define QKLIF_DRAGMARK_PLLATER	0x00000020// ä»…åœ¨æ‹–æ”¾æ—¶æœ‰æ•ˆï¼Œç¨åŽæ’­æ”¾æ ‡å¿—ï¼Œè¿˜åŽŸç´¢å¼•ç”¨
 #pragma pack(pop)
 /*
 * LISTFILEHEADER_0
 * {
 *	LISTFILEITEM_0
-*	Ãû³Æ\0
-*	ÎÄ¼þÃû\0
-*	opt : // ½öµ±¾ßÓÐQKLIF_BOOKMARKÊ±
-*		ÊéÇ©ÑÕÉ« : COLORREF
-*		ÊéÇ©Ãû³Æ\0
-*		ÊéÇ©±¸×¢\0
-* 	[½ö°æ±¾2] :
-*		Ê±¼ä\0
+*	åç§°\0
+*	æ–‡ä»¶å\0
+*	opt : // ä»…å½“å…·æœ‰QKLIF_BOOKMARKæ—¶
+*		ä¹¦ç­¾é¢œè‰² : COLORREF
+*		ä¹¦ç­¾åç§°\0
+*		ä¹¦ç­¾å¤‡æ³¨\0
+* 	[ä»…ç‰ˆæœ¬2] :
+*		æ—¶é—´\0
 * }
 */
 
-//////////////////////////////////ÐÂ°æ±¾µÄ²¥·ÅÁÐ±íÎÄ¼þ//////////////////////////////////
+//////////////////////////////////æ–°ç‰ˆæœ¬çš„æ’­æ”¾åˆ—è¡¨æ–‡ä»¶//////////////////////////////////
 #pragma pack(push, 4)
 constexpr inline int
 PNLFVER_0 = 0,
 PNBMVER_0 = 0;
-struct LISTFILEHEADER_1	// ²¥·ÅÁÐ±íÎÄ¼þÍ·
+struct LISTFILEHEADER_1	// æ’­æ”¾åˆ—è¡¨æ–‡ä»¶å¤´
 {
-	CHAR chHeader[4];	// ÎÄ¼þÆðÊ¼±ê¼Ç£¬ASCII×Ö·û´®"PNPL"
-	int iVer;			// ´æµµÎÄ¼þ°æ±¾£¬PNLFVER_³£Á¿
-	UINT ocbBookMark;	// ÊéÇ©ÐÅÏ¢Æ«ÒÆ
-	int cItems;			// ÏîÄ¿Êý
+	CHAR chHeader[4];	// æ–‡ä»¶èµ·å§‹æ ‡è®°ï¼ŒASCIIå­—ç¬¦ä¸²"PNPL"
+	int iVer;			// å­˜æ¡£æ–‡ä»¶ç‰ˆæœ¬ï¼ŒPNLFVER_å¸¸é‡
+	UINT ocbBookMark;	// ä¹¦ç­¾ä¿¡æ¯åç§»
+	int cItems;			// é¡¹ç›®æ•°
 };
 
-struct LISTFILEITEM_1	// ²¥·ÅÁÐ±íÎÄ¼þÏîÄ¿Í·
+struct LISTFILEITEM_1	// æ’­æ”¾åˆ—è¡¨æ–‡ä»¶é¡¹ç›®å¤´
 {
-	int cchName;		// Ãû³Æ³¤¶È£¬²»°üÀ¨½áÎ²µÄ\0
-	int cchTime;		// Ê±¼ä³¤¶È£¬²»°üÀ¨½áÎ²µÄ\0
-	int cchFile;		// ÎÄ¼þÃû³¤¶È£¬²»°üÀ¨½áÎ²µÄ\0
+	int cchName;		// åç§°é•¿åº¦ï¼Œä¸åŒ…æ‹¬ç»“å°¾çš„\0
+	int cchTime;		// æ—¶é—´é•¿åº¦ï¼Œä¸åŒ…æ‹¬ç»“å°¾çš„\0
+	int cchFile;		// æ–‡ä»¶åé•¿åº¦ï¼Œä¸åŒ…æ‹¬ç»“å°¾çš„\0
 	BITBOOL bIgnore : 1;
-	BITBOOL bDelayPlaying : 1;
 	BITBOOL bBookmark : 1;
 	// WCHAR szName[];
 	// WCHAR szFile[];
 	// WCHAR szTime[];
 };
 
-struct BOOKMARKHEADER	// ÊéÇ©ÐÅÏ¢Í·
+struct BOOKMARKHEADER	// ä¹¦ç­¾ä¿¡æ¯å¤´
 {
-	int iVer;			// ÊéÇ©ÐÅÏ¢°æ±¾£¬PNBMVER_³£Á¿
-	int cBookmarks;		// ÊéÇ©Êý
+	int iVer;			// ä¹¦ç­¾ä¿¡æ¯ç‰ˆæœ¬ï¼ŒPNBMVER_å¸¸é‡
+	int cBookmarks;		// ä¹¦ç­¾æ•°
 };
 
-struct BOOKMARKITEM		// ÊéÇ©ÐÅÏ¢ÏîÄ¿Í·
+struct BOOKMARKITEM		// ä¹¦ç­¾ä¿¡æ¯é¡¹ç›®å¤´
 {
-	int idxItem;		// ÊéÇ©ËùÊôÏîÄ¿µÄË÷Òý£¬È¡Öµ·¶Î§Îª0µ½cItems£¬½«ÏÔÊ¾ÔÚÖ¸¶¨Ë÷ÒýÖ®Ç°
-	COLORREF cr;		// ÊéÇ©ÑÕÉ«
-	int cchName;		// ÊéÇ©Ãû³Æ³¤¶È£¬²»°üÀ¨½áÎ²µÄ\0
+	int idxItem;		// ä¹¦ç­¾æ‰€å±žé¡¹ç›®çš„ç´¢å¼•ï¼Œå–å€¼èŒƒå›´ä¸º0åˆ°cItemsï¼Œå°†æ˜¾ç¤ºåœ¨æŒ‡å®šç´¢å¼•ä¹‹å‰
+	COLORREF cr;		// ä¹¦ç­¾é¢œè‰²
+	int cchName;		// ä¹¦ç­¾åç§°é•¿åº¦ï¼Œä¸åŒ…æ‹¬ç»“å°¾çš„\0
 	// WCHAR szName[];
 };
 #pragma pack(pop)

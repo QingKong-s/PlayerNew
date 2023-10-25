@@ -1,4 +1,4 @@
-#include "CDlgListFile.h"
+ï»¿#include "CDlgListFile.h"
 
 LRESULT CALLBACK CDlgListFile::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -7,6 +7,7 @@ LRESULT CALLBACK CDlgListFile::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	{
 	case WM_NOTIFY:
 	{
+#pragma warning (suppress:26454)// ç®—æœ¯æº¢å‡º
 		if (((NMHDR*)lParam)->code == LVN_ITEMCHANGED &&
 			((NMHDR*)lParam)->idFrom == IDC_LV_FILE)
 		{
@@ -59,7 +60,7 @@ LRESULT CALLBACK CDlgListFile::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 void CDlgListFile::OnInitDialog(HWND hWnd)
 {
 	UpdateDpiInit(eck::GetDpi(hWnd));
-	m_hFont = eck::EzFont(L"Î¢ÈíÑÅºÚ", 9, 400, FALSE, FALSE, FALSE, m_hWnd);
+	m_hFont = eck::EzFont(L"å¾®è½¯é›…é»‘", 9, 400, FALSE, FALSE, FALSE, m_hWnd);
 	m_EDFile.Create(NULL, WS_TABSTOP | WS_GROUP | WS_CHILD | WS_VISIBLE | (m_pParam->uType == Type::Load ? ES_READONLY : 0), 0,
 		m_Ds.iMargin, m_Ds.iMargin, 0, 0, hWnd, IDC_ED_FILE);
 	m_EDFile.SetFrameType(1);
@@ -72,8 +73,8 @@ void CDlgListFile::OnInitDialog(HWND hWnd)
 	m_LVFile.SetLVExtendStyle(dwExLVStyle);
 	m_LVFile.SetExplorerTheme();
 	m_LVFile.EnableGroupView(TRUE);
-	m_LVFile.InsertColumn(L"ÎÄ¼þÃû", 0, m_Ds.cxColumn1);
-	m_LVFile.InsertColumn(L"ÐÞ¸ÄÊ±¼ä", 1, m_Ds.cxColumn2);
+	m_LVFile.InsertColumn(L"æ–‡ä»¶å", 0, m_Ds.cxColumn1);
+	m_LVFile.InsertColumn(L"ä¿®æ”¹æ—¶é—´", 1, m_Ds.cxColumn2);
 
 	const auto& vPath = COptionsMgr::GetInst().vListPath;
 
@@ -91,7 +92,7 @@ void CDlgListFile::OnInitDialog(HWND hWnd)
 	WIN32_FIND_DATAW wfd;
 	HANDLE hFind;
 	int idx = 0;
-	EckCounter(vPath.size(), i)
+	EckCounter((int)vPath.size(), i)
 	{
 		lvg.pszHeader = vPath[i].Data();
 		lvg.iGroupId = i;
@@ -125,9 +126,9 @@ void CDlgListFile::OnInitDialog(HWND hWnd)
 	}
 	m_LVFile.Show(SW_SHOWNOACTIVATE);
 
-	m_BTOk.Create(L"È·¶¨", WS_TABSTOP | WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 0,
+	m_BTOk.Create(L"ç¡®å®š", WS_TABSTOP | WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 0,
 		0, 0, m_Ds.cxBtn, m_Ds.cyBtn, hWnd, IDC_BT_OK);
-	m_BTCancel.Create(L"È¡Ïû", WS_TABSTOP | WS_CHILD | WS_VISIBLE, 0,
+	m_BTCancel.Create(L"å–æ¶ˆ", WS_TABSTOP | WS_CHILD | WS_VISIBLE, 0,
 		0, 0, m_Ds.cxBtn, m_Ds.cyBtn, hWnd, IDC_BT_CANCEL);
 	eck::SetFontForWndAndCtrl(hWnd, m_hFont);
 
@@ -227,12 +228,14 @@ void CDlgListFile::UpdateDpiInit(int iDpi)
 
 void CDlgListFile::UpdateDpi(int iDpi)
 {
-	int iDpiOld = m_iDpi;
+	const int iDpiOld = m_iDpi;
 	UpdateDpiInit(iDpi);
 
-	m_hFont = eck::ReCreateFontForDpiChanged(m_hFont, iDpi, iDpiOld, TRUE);
-
+	const HFONT hOldFont = m_hFont;
+	m_hFont = eck::ReCreateFontForDpiChanged(m_hFont, iDpi, iDpiOld);
 	eck::SetFontForWndAndCtrl(m_hWnd, m_hFont);
+	DeleteObject(hOldFont);
+
 	eck::LVSetItemHeight(m_LVFile, m_Ds.cyLVItem);
 	HDWP hDwp = BeginDeferWindowPos(4);
 	hDwp = DeferWindowPos(hDwp, m_EDFile.GetHWND(), NULL,
@@ -251,7 +254,7 @@ void CDlgListFile::UpdateDpi(int iDpi)
 
 INT_PTR CDlgListFile::DlgBox(HWND hParent, void* pData)
 {
-	HWND hOwner = PreModal(hParent);
+	const HWND hOwner = PreModal(hParent);
 	BOOL bNeedEnableOwner;
 	if (hOwner && hOwner != GetDesktopWindow() && IsWindowEnabled(hOwner))
 	{
@@ -262,7 +265,7 @@ INT_PTR CDlgListFile::DlgBox(HWND hParent, void* pData)
 		bNeedEnableOwner = FALSE;
 
 	m_pParam = (PARAM*)pData;
-	constexpr PCWSTR c_szTile[]{ L"¶ÁÈëÁÐ±í",L"±£´æÁÐ±í" };
+	constexpr PCWSTR c_szTile[]{ L"è¯»å…¥åˆ—è¡¨",L"ä¿å­˜åˆ—è¡¨" };
 	RECT rc;
 	if (hParent)
 		GetWindowRect(hParent, &rc);
@@ -282,7 +285,7 @@ INT_PTR CDlgListFile::DlgBox(HWND hParent, void* pData)
 	MSG msg;
 	while (GetMessageW(&msg, NULL, 0, 0))
 	{
-		if (!IsDialogMessageW(msg.hwnd, &msg))
+		if (!IsDialogMessageW(m_hWnd, &msg))
 		{
 			TranslateMessage(&msg);
 			DispatchMessageW(&msg);
@@ -294,6 +297,7 @@ INT_PTR CDlgListFile::DlgBox(HWND hParent, void* pData)
 	if (hParent)
 		SetActiveWindow(hParent);
 	Destroy();
+	PostModal();
 
 	return m_bRet && m_pParam->rsRetFile.Size();
 }

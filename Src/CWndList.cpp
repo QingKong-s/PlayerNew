@@ -19,8 +19,7 @@ LRESULT CWndList::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				p->OnLVNDbLClick((NMITEMACTIVATE*)lParam);
 				return 0;
 			case NM_RCLICK:
-				p->OnLVNRClick((NMITEMACTIVATE*)lParam);
-				return 0;// 返回0默认处理
+				return p->OnLVNRClick((NMITEMACTIVATE*)lParam);
 			}
 	}
 	break;
@@ -42,7 +41,7 @@ LRESULT CWndList::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				RECT rc;
 				p->m_TBManage.GetRect(TBCID_ADD, &rc);
 				eck::ClientToScreen(p->m_TBManage.GetHWND(), &rc);
-				int iRet = TrackPopupMenu(p->m_hMenuAdd, TPM_NONOTIFY | TPM_RETURNCMD | TPM_VERNEGANIMATION | TPM_RIGHTBUTTON,
+				const int iRet = TrackPopupMenu(p->m_hMenuAdd, TPM_NONOTIFY | TPM_RETURNCMD | TPM_VERNEGANIMATION | TPM_RIGHTBUTTON,
 					rc.left, rc.bottom, 0, hWnd, NULL);
 				switch (iRet)
 				{
@@ -64,6 +63,9 @@ LRESULT CWndList::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			case TBCID_EMPTY:
 				p->OnCmdEmpty();
 				return 0;
+			case TBCID_MANAGE:
+				p->OnCmdManage();
+				return 0;
 			}
 		}
 		else
@@ -80,8 +82,60 @@ LRESULT CWndList::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		return HANDLE_WM_CREATE(hWnd, wParam, lParam, p->OnCreate);
 	case WM_DESTROY:
 		return HANDLE_WM_DESTROY(hWnd, wParam, lParam, p->OnDestroy);
+	case WM_DPICHANGED:
+	{
+		auto prc = (RECT*)lParam;
+		p->UpdateDpi(LOWORD(wParam));
+		SetWindowPos(hWnd, NULL, prc->left, prc->top, prc->right - prc->left, prc->bottom - prc->top,
+			SWP_NOZORDER | SWP_NOACTIVATE);
+	}
+	return 0;
+	case WM_DPICHANGED_BEFOREPARENT:
+		p->UpdateDpi(eck::GetDpi(hWnd));
+		return 0;
 	}
 	return DefWindowProcW(hWnd, uMsg, wParam, lParam);
+}
+
+void CWndList::UpdateDpi(int iDpi)
+{
+	const int iDpiOld = m_iDpi;
+	UpdateDpiInit(iDpi);
+
+	const HFONT hOldFont1 = m_hFont, hOldFont2 = m_hFontListName;
+	m_hFont = eck::ReCreateFontForDpiChanged(m_hFont, iDpi, iDpiOld);
+	eck::SetFontForWndAndCtrl(m_hWnd, m_hFont);
+	DeleteObject(hOldFont1);
+	m_hFontListName = eck::ReCreateFontForDpiChanged(m_hFontListName, iDpi, iDpiOld);
+	m_LAListName.SetFont(m_hFontListName);
+	DeleteObject(hOldFont2);
+
+	UpdateUISize();
+}
+
+void CWndList::UpdateUISize()
+{
+	HDWP hDwp = BeginDeferWindowPos(10);
+	hDwp = DeferWindowPos(hDwp, m_LAListName.GetHWND(), NULL,
+		0,
+		m_Ds.iGap,
+		0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+	hDwp = DeferWindowPos(hDwp, m_EDSearch.GetHWND(), NULL,
+		0,
+		m_Ds.cyListName + m_Ds.iGap * 2,
+		0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+	hDwp = DeferWindowPos(hDwp, m_TBManage.GetHWND(), NULL,
+		0,
+		m_Ds.cySearch + m_Ds.cyListName + m_Ds.iGap * 3,
+		0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+	hDwp = DeferWindowPos(hDwp, m_BTSearch.GetHWND(), NULL, 0, 0,
+		m_Ds.cySearch,
+		m_Ds.cySearch,
+		SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
+	EndDeferWindowPos(hDwp);
+
+	eck::LVSetItemHeight(m_LVList, m_Ds.cyLVItem);
+	m_TBManage.SetButtonSize(m_Ds.cxToolBtn, m_Ds.cyTool);
 }
 
 BOOL CWndList::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
@@ -109,23 +163,39 @@ BOOL CWndList::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	AppendMenuW(m_hMenuLV, 0, IDMI_NEXTBOOKMARK, L"跳到下一书签");
 	AppendMenuW(m_hMenuLV, 0, IDMI_BOOKMARK, L"添加/删除书签");
 
-	int y = m_Ds.iGap;
-	m_LAListName.Create(c_szDefListName, WS_VISIBLE, 0, 0, y, 0, 0, hWnd, IDC_LA_LIST_NAME);
+	m_hMenuManage = CreatePopupMenu();
+	AppendMenuW(m_hMenuManage, 0, IDMI_SORT_DEF, L"默认排序");
+	AppendMenuW(m_hMenuManage, 0, IDMI_SORT_FILENAME, L"按文件名排序");
+	AppendMenuW(m_hMenuManage, 0, IDMI_SORT_NAME, L"按名称排序");
+	AppendMenuW(m_hMenuManage, 0, IDMI_SORT_CREATE_TIME, L"按创建时间排序");
+	AppendMenuW(m_hMenuManage, 0, IDMI_SORT_MODIFY_TIME, L"按修改时间排序");
+	AppendMenuW(m_hMenuManage, 0, IDMI_SORT_REVERSE, L"倒置排序");
+	AppendMenuW(m_hMenuManage, MF_SEPARATOR, 0, NULL);
+	AppendMenuW(m_hMenuManage, 0, IDMI_SORT_ASCENDING, L"升序");
+	AppendMenuW(m_hMenuManage, 0, IDMI_SORT_DESCENDING, L"降序");
+	AppendMenuW(m_hMenuManage, 0, IDMI_FIXSORT, L"固定为默认排序");
+	AppendMenuW(m_hMenuManage, MF_SEPARATOR, 0, NULL);
+	AppendMenuW(m_hMenuManage, 0, IDMI_BOOKMARK, L"书签...");
+	AppendMenuW(m_hMenuManage, 0, IDMI_DETAIL, L"详细信息...");
+
+
+	m_hFont = eck::EzFont(L"微软雅黑", 9);
+	m_hFontListName = eck::EzFont(L"微软雅黑", 13);
+
+	m_LAListName.Create(c_szDefListName, WS_VISIBLE, 0, 0, 0, 0, 0, hWnd, IDC_LA_LIST_NAME);
 	m_LAListName.SetTransparent(TRUE);
 	m_LAListName.SetClr(0, eck::Colorref::CyanBlue);
-	y += (m_Ds.cyListName + m_Ds.iGap);
 
 	m_EDSearch.SetMultiLine(FALSE);
-	m_EDSearch.Create(NULL, WS_VISIBLE | ES_AUTOHSCROLL, 0, 0, y, 0, 0, hWnd, IDC_ED_SEARCH);
+	m_EDSearch.Create(NULL, WS_VISIBLE | ES_AUTOHSCROLL, 0, 0, 0, 0, 0, hWnd, IDC_ED_SEARCH);
 	m_EDSearch.SetFrameType(1);
 
-	m_BTSearch.Create(L"搜索", WS_VISIBLE, 0, 0, y, m_Ds.cySearch, m_Ds.cySearch, hWnd, IDC_BT_SEARCH);
-	y += (m_Ds.cySearch + m_Ds.iGap);
+	m_BTSearch.Create(L"搜索", WS_VISIBLE, 0, 0, 0, m_Ds.cySearch, m_Ds.cySearch, hWnd, IDC_BT_SEARCH);
 
 	m_TBManage.Create(NULL,
 		TBSTYLE_LIST | TBSTYLE_TRANSPARENT | TBSTYLE_WRAPABLE |
 		CCS_NORESIZE | CCS_NOPARENTALIGN | CCS_NODIVIDER, 0,
-		0, y, 0, 0, hWnd, IDC_TB_MANAGE);
+		0, 0, 0, 0, hWnd, IDC_TB_MANAGE);
 	m_TBManage.SetButtonStructSize();
 	TBBUTTON TBBtns[]
 	{
@@ -138,9 +208,8 @@ BOOL CWndList::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	};
 	m_TBManage.AddButtons(ARRAYSIZE(TBBtns), TBBtns);
 	m_TBManage.Show(SW_SHOWNOACTIVATE);
-	y += (m_Ds.cyTool + m_Ds.iGap);
 
-	m_LVList.Create(NULL, WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS | LVS_OWNERDATA, 0, 0, y, 0, 0, hWnd, IDC_LV_LIST);
+	m_LVList.Create(NULL, WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS | LVS_OWNERDATA, 0, 0, 0, 0, 0, hWnd, IDC_LV_LIST);
 	constexpr DWORD dwLVExStyle = LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER;
 	m_LVList.SetLVExtendStyle(dwLVExStyle);
 	m_LVList.InsertColumn(L"名称", 0, 300);
@@ -148,11 +217,10 @@ BOOL CWndList::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	m_LVList.SetExplorerTheme();
 	m_hThemeLV = OpenThemeData(m_LVList.GetHWND(), L"ListView");
 
-	eck::LVSetItemHeight(m_LVList, eck::DpiScale(24, m_iDpi));
-
 	eck::SetFontForWndAndCtrl(hWnd, m_hFont);
 	m_LAListName.SetFont(m_hFontListName);
-	m_TBManage.SetButtonSize(m_Ds.cxToolBtn, m_Ds.cyTool);
+
+	UpdateUISize();
 	return TRUE;
 }
 
@@ -172,16 +240,27 @@ void CWndList::OnSize(HWND hWnd, UINT state, int cx, int cy)
 		cx - m_Ds.cySearch,
 		m_Ds.cyListName + m_Ds.iGap * 2,
 		0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+	const int cBtnsPerRow = cx / m_Ds.cxToolBtn;
+	int cRows;
+	if (cBtnsPerRow > 0)
+	{
+		cRows = TBBTCOUNT / cBtnsPerRow;
+		if (cRows * cBtnsPerRow < TBBTCOUNT)
+			++cRows;
+	}
+	else
+		cRows = 0;
+	const int cyTB = m_Ds.cyTool * cRows;
 	hDwp = DeferWindowPos(hDwp, m_TBManage.GetHWND(), NULL, 0, 0,
 		cx,
-		m_Ds.cyTool,
+		cyTB,
 		SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
 	hDwp = DeferWindowPos(hDwp, m_LVList.GetHWND(), NULL,
 		0,
-		0,
+		m_Ds.cyListName + m_Ds.cySearch + cyTB + m_Ds.iGap * 4,
 		cx,
-		cy - (m_Ds.cyListName + m_Ds.cySearch + m_Ds.cyTool + m_Ds.iGap * 4),
-		SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
+		cy - (m_Ds.cyListName + m_Ds.cySearch + cyTB + m_Ds.iGap * 4),
+		SWP_NOZORDER | SWP_NOACTIVATE);
 	EndDeferWindowPos(hDwp);
 }
 
@@ -189,6 +268,7 @@ void CWndList::OnDestroy(HWND hWnd)
 {
 	DestroyMenu(m_hMenuAdd);
 	DestroyMenu(m_hMenuLV);
+	DestroyMenu(m_hMenuManage);
 	DeleteObject(m_hFont);
 	DeleteObject(m_hFontListName);
 }
@@ -237,9 +317,10 @@ void CWndList::OnMenuAddFile()
 	IShellItem* psi;
 	PWSTR pszFile;
 
-	auto& pl = App->GetPlayer().GetList();
+	auto& Player = App->GetPlayer();
+	auto& List = Player.GetList();
 	LISTFILEITEM_1 Info{};
-	pl.Reserve(pl.GetCount() + cItems);
+	List.Reserve(List.GetCount() + cItems);
 	int idx = m_LVList.GetCurrSel();
 	if (idx < 0)
 		idx = m_LVList.GetItemCount();
@@ -251,7 +332,7 @@ void CWndList::OnMenuAddFile()
 		if (pszFile)
 		{
 			Info.cchFile = (int)wcslen(pszFile);
-			pl.Insert(idx, Info, NULL, NULL, pszFile);
+			Player.Insert(idx, Info, NULL, NULL, pszFile);
 			++idx;
 			CoTaskMemFree(pszFile);
 		}
@@ -259,8 +340,7 @@ void CWndList::OnMenuAddFile()
 	}
 	psia->Release();
 	pfod->Release();
-	App->GetPlayer().OnItemInserted(idxBegin, cItems);
-	m_LVList.SetItemCount(pl.GetCount());
+	m_LVList.SetItemCount(List.GetCount());
 }
 
 void CWndList::OnMenuAddDir()
@@ -312,7 +392,7 @@ void CWndList::OnMenuAddDir()
 
 	int cchFileName;
 	LISTFILEITEM_1 Info{};
-	auto& pl = App->GetPlayer().GetList();
+	auto& Player = App->GetPlayer();
 
 	int idx = m_LVList.GetCurrSel();
 	if (idx < 0)
@@ -331,7 +411,7 @@ void CWndList::OnMenuAddDir()
 			wcscpy(pszTemp + cchPath + 1, wfd.cFileName);
 
 			Info.cchFile = cchPath + cchFileName + 1;
-			pl.Insert(idx, Info, NULL, NULL, pszTemp);
+			Player.Insert(idx, Info, NULL, NULL, pszTemp);
 			++idx;
 
 		} while (FindNextFileW(hFind, &wfd));
@@ -340,8 +420,7 @@ void CWndList::OnMenuAddDir()
 	CoTaskMemFree(pszPath);
 	_freea(pszTemp);
 	_freea(pszFindingPattern);
-	App->GetPlayer().OnItemInserted(idxBegin, idx - idxBegin);
-	m_LVList.SetItemCount(pl.GetCount());
+	m_LVList.SetItemCount(Player.GetList().GetCount());
 }
 
 void CWndList::OnCmdLoadList()
@@ -397,7 +476,6 @@ void CWndList::OnCmdSaveList()
 			Info.cchTime = x.rsTime.Size();
 			Info.cchFile = x.rsFile.Size();
 			Info.bBookmark = x.bBookmark;
-			Info.bDelayPlaying = x.bDelayPlaying;
 			Info.bIgnore = x.bIgnore;
 			ListFile.PushBack(Info, x.rsName.Data(), x.rsFile.Data(), x.rsTime.Data());
 		}
@@ -416,8 +494,38 @@ void CWndList::OnCmdSaveList()
 
 void CWndList::OnCmdEmpty()
 {
-	App->GetPlayer().GetList().Delete(-1);
-	App->GetPlayer().OnItemDeleted(-1);
+	if (Utils::MsgBox(L"确定要清空列表？", NULL, L"确认删除", 2, (HICON)TD_WARNING_ICON, m_hWnd) == Utils::MBBID_1)
+	{
+		App->GetPlayer().Delete(-1);
+		m_LVList.SetItemCount(0);
+	}
+}
+
+void CWndList::OnCmdManage()
+{
+	auto& Player = App->GetPlayer();
+	RECT rc;
+	m_TBManage.GetRect(TBCID_MANAGE, &rc);
+	eck::ClientToScreen(m_TBManage.GetHWND(), &rc);
+	const BOOL bSorting = Player.GetList().IsSorting();
+	EnableMenuItem(m_hMenuManage, IDMI_SORT_DEF, bSorting ? MF_ENABLED : MF_GRAYED);
+	const int iRet = TrackPopupMenu(m_hMenuManage, TPM_NONOTIFY | TPM_RETURNCMD | TPM_VERNEGANIMATION | TPM_RIGHTBUTTON,
+		rc.left, rc.bottom, 0, m_hWnd, NULL);
+	switch (iRet)
+	{
+	case IDMI_SORT_DEF:
+		Player.CancelSort();
+		m_LVList.Redraw();
+		return;
+	case IDMI_SORT_FILENAME:
+		Player.Sort(PNSF_FILE);
+		m_LVList.Redraw();
+		return;
+	case IDMI_SORT_NAME:
+		Player.Sort(PNSF_NAME);
+		m_LVList.Redraw();
+		return;
+	}
 }
 
 void CWndList::OnLVNDbLClick(NMITEMACTIVATE* pnmia)
@@ -496,42 +604,43 @@ LRESULT CWndList::OnLVNCustomDraw(NMLVCUSTOMDRAW* pnmlvcd)
 	return CDRF_SKIPDEFAULT;
 }
 
-void CWndList::OnLVNRClick(NMITEMACTIVATE* pnmia)
+BOOL CWndList::OnLVNRClick(NMITEMACTIVATE* pnmia)
 {
 	POINT pt;
 	GetCursorPos(&pt);
 
-	BOOL bItemValid = pnmia->iItem >= 0;
-	EnableMenuItem(m_hMenuLV, IDMI_PLAY, bItemValid);
-	EnableMenuItem(m_hMenuLV, IDMI_DELETE_FROM_LIST, bItemValid);
-	EnableMenuItem(m_hMenuLV, IDMI_DELETE_FROM_DISK, bItemValid);
-	EnableMenuItem(m_hMenuLV, IDMI_OPEN_IN_EXPLORER, bItemValid);
-	EnableMenuItem(m_hMenuLV, IDMI_RENAME, bItemValid);
-	EnableMenuItem(m_hMenuLV, IDMI_INFO, bItemValid);
-	EnableMenuItem(m_hMenuLV, IDMI_BOOKMARK, bItemValid);
-	EnableMenuItem(m_hMenuLV, IDMI_NEXTBOOKMARK, bItemValid);
-	EnableMenuItem(m_hMenuLV, IDMI_PREVBOOKMARK, bItemValid);
-	EnableMenuItem(m_hMenuLV, IDMI_IGNORE, bItemValid);
-	EnableMenuItem(m_hMenuLV, IDMI_PLAYLATER, bItemValid);
+	const BOOL bItemValid = pnmia->iItem >= 0;
+	const UINT uFlags = (bItemValid ? MF_ENABLED : MF_GRAYED);
+	EnableMenuItem(m_hMenuLV, IDMI_PLAY, uFlags);
+	EnableMenuItem(m_hMenuLV, IDMI_DELETE_FROM_LIST, uFlags);
+	EnableMenuItem(m_hMenuLV, IDMI_DELETE_FROM_DISK, uFlags);
+	EnableMenuItem(m_hMenuLV, IDMI_OPEN_IN_EXPLORER, uFlags);
+	EnableMenuItem(m_hMenuLV, IDMI_RENAME, uFlags);
+	EnableMenuItem(m_hMenuLV, IDMI_INFO, uFlags);
+	EnableMenuItem(m_hMenuLV, IDMI_BOOKMARK, uFlags);
+	EnableMenuItem(m_hMenuLV, IDMI_NEXTBOOKMARK, uFlags);
+	EnableMenuItem(m_hMenuLV, IDMI_PREVBOOKMARK, uFlags);
+	EnableMenuItem(m_hMenuLV, IDMI_IGNORE, uFlags);
+	EnableMenuItem(m_hMenuLV, IDMI_PLAYLATER, uFlags);
 
-	int iRet = TrackPopupMenu(m_hMenuLV, TPM_NONOTIFY | TPM_RETURNCMD | TPM_VERNEGANIMATION | TPM_RIGHTBUTTON,
+	const int iRet = TrackPopupMenu(m_hMenuLV, TPM_NONOTIFY | TPM_RETURNCMD | TPM_VERNEGANIMATION | TPM_RIGHTBUTTON,
 		pt.x, pt.y, 0, m_hWnd, NULL);
 	auto& Player = App->GetPlayer();
 	switch (iRet)
 	{
 	case IDMI_PLAY:
 		Player.Play(pnmia->iItem);
-		return;
+		break;
 	case IDMI_PLAYLATER:
-		return;
+		break;
 	case IDMI_OPEN_IN_EXPLORER:
 		OnMenuOpenInExplorer();
-		return;
+		break;
 	case IDMI_DELETE_FROM_LIST:
-		Player.GetList().Delete(pnmia->iItem);
-		Player.OnItemDeleted(pnmia->iItem, 1);
-		return;
+		Player.Delete(pnmia->iItem);
+		break;
 	}
+	return FALSE;
 }
 
 void CWndList::OnMenuOpenInExplorer()
@@ -594,7 +703,6 @@ void CWndList::OnMenuOpenInExplorer()
 	}
 }
 
-
 ATOM CWndList::RegisterWndClass()
 {
 	WNDCLASSEX wcex{ sizeof(WNDCLASSEX) };
@@ -620,13 +728,13 @@ void CWndList::PlayListItem(int idx)
 {
 	auto& Player = App->GetPlayer();
 	int idxOld = Player.GetCurrFile();
-	BOOL b= Player.Play(idx);
+	auto uRet = Player.Play(idx);
 	if (idxOld >= 0)
 		m_LVList.RedrawItems(idxOld, idxOld);
-	if (b)
+	if (uRet == PlayOpErr::Ok)
 	{
 		m_LVList.RedrawItems(idx, idx);
-		m_WndMain.SetText((Player.GetList().At(idx).rsName + L" - PlayerNew").Data());
+		m_WndMain.SetText(Player.GetList().At(idx).rsName.Data());
 	}
 	else
 		m_WndMain.SetText(c_szDefMainWndText);

@@ -1,11 +1,11 @@
-#include "Utils.h"
+ï»¿#include "Utils.h"
 
 UTILS_NAMESPACE_BEGIN
 /// <summary>
-/// Í¬²½°²È«ÕûÊıµ½32Î»Ğ¡¶ËÕûÊı
+/// åŒæ­¥å®‰å…¨æ•´æ•°åˆ°32ä½å°ç«¯æ•´æ•°
 /// </summary>
-/// <param name="p">ÊäÈë×Ö½ÚÁ÷</param>
-/// <returns>×ª»»½á¹û</returns>
+/// <param name="p">è¾“å…¥å­—èŠ‚æµ</param>
+/// <returns>è½¬æ¢ç»“æœ</returns>
 PNInline DWORD SynchSafeIntToDWORD(BYTE* p)
 {
 	return ((p[0] & 0x7F) << 21) | ((p[1] & 0x7F) << 14) | ((p[2] & 0x7F) << 7) | (p[3] & 0x7F);
@@ -14,15 +14,15 @@ PNInline DWORD SynchSafeIntToDWORD(BYTE* p)
 BOOL IsTextUTF8(char* str, ULONGLONG length)
 {
 	int i;
-	DWORD nBytes = 0;//UFT8¿ÉÓÃ1-6¸ö×Ö½Ú±àÂë,ASCIIÓÃÒ»¸ö×Ö½Ú
+	DWORD nBytes = 0;//UFT8å¯ç”¨1-6ä¸ªå­—èŠ‚ç¼–ç ,ASCIIç”¨ä¸€ä¸ªå­—èŠ‚
 	UCHAR chr;
-	BOOL bAllAscii = TRUE; //Èç¹ûÈ«²¿¶¼ÊÇASCII, ËµÃ÷²»ÊÇUTF-8
+	BOOL bAllAscii = TRUE; //å¦‚æœå…¨éƒ¨éƒ½æ˜¯ASCII, è¯´æ˜ä¸æ˜¯UTF-8
 	for (i = 0; i < length; i++)
 	{
 		chr = *(str + i);
-		if ((chr & 0x80) != 0) // ÅĞ¶ÏÊÇ·ñASCII±àÂë,Èç¹û²»ÊÇ,ËµÃ÷ÓĞ¿ÉÄÜÊÇUTF-8,ASCIIÓÃ7Î»±àÂë,µ«ÓÃÒ»¸ö×Ö½Ú´æ,×î¸ßÎ»±ê¼ÇÎª0,o0xxxxxxx
+		if ((chr & 0x80) != 0) // åˆ¤æ–­æ˜¯å¦ASCIIç¼–ç ,å¦‚æœä¸æ˜¯,è¯´æ˜æœ‰å¯èƒ½æ˜¯UTF-8,ASCIIç”¨7ä½ç¼–ç ,ä½†ç”¨ä¸€ä¸ªå­—èŠ‚å­˜,æœ€é«˜ä½æ ‡è®°ä¸º0,o0xxxxxxx
 			bAllAscii = FALSE;
-		if (nBytes == 0) //Èç¹û²»ÊÇASCIIÂë,Ó¦¸ÃÊÇ¶à×Ö½Ú·û,¼ÆËã×Ö½ÚÊı
+		if (nBytes == 0) //å¦‚æœä¸æ˜¯ASCIIç ,åº”è¯¥æ˜¯å¤šå­—èŠ‚ç¬¦,è®¡ç®—å­—èŠ‚æ•°
 		{
 			if (chr >= 0x80)
 			{
@@ -43,7 +43,7 @@ BOOL IsTextUTF8(char* str, ULONGLONG length)
 				nBytes--;
 			}
 		}
-		else //¶à×Ö½Ú·ûµÄ·ÇÊ××Ö½Ú,Ó¦Îª 10xxxxxx
+		else //å¤šå­—èŠ‚ç¬¦çš„éé¦–å­—èŠ‚,åº”ä¸º 10xxxxxx
 		{
 			if ((chr & 0xC0) != 0x80)
 			{
@@ -52,11 +52,11 @@ BOOL IsTextUTF8(char* str, ULONGLONG length)
 			nBytes--;
 		}
 	}
-	if (nBytes > 0) //Î¥·µ¹æÔò
+	if (nBytes > 0) //è¿è¿”è§„åˆ™
 	{
 		return FALSE;
 	}
-	if (bAllAscii) //Èç¹ûÈ«²¿¶¼ÊÇASCII, ËµÃ÷²»ÊÇUTF-8
+	if (bAllAscii) //å¦‚æœå…¨éƒ¨éƒ½æ˜¯ASCII, è¯´æ˜ä¸æ˜¯UTF-8
 	{
 		return FALSE;
 	}
@@ -64,19 +64,19 @@ BOOL IsTextUTF8(char* str, ULONGLONG length)
 }
 
 /// <summary>
-/// [½âÎöID3v2¸¨Öúº¯Êı]°´Ö¸¶¨±àÂë´¦ÀíÎÄ±¾
+/// [è§£æID3v2è¾…åŠ©å‡½æ•°]æŒ‰æŒ‡å®šç¼–ç å¤„ç†æ–‡æœ¬
 /// </summary>
-/// <param name="pStream">×Ö½ÚÁ÷Ö¸Õë£»Î´Ö¸¶¨iTextEncodingÊ±Ö¸ÏòÕû¸öÎÄ±¾Ö¡£¬Ö¸¶¨iTextEncodingÊ±Ö¸Ïò×Ö·û´®</param>
-/// <param name="iLength">³¤¶È£»Î´Ö¸¶¨iTextEncodingÊ±±íÊ¾Õû¸öÎÄ±¾Ö¡³¤¶È£¨°üÀ¨1BµÄ±àÂë±ê¼Ç£¬²»º¬½áÎ²NULL£©£¬Ö¸¶¨iTextEncodingÊ±±íÊ¾×Ö·û´®³¤¶È£¨²»º¬½áÎ²NULL£©</param>
-/// <param name="iTextEncoding">×Ô¶¨ÒåÎÄ±¾±àÂë£»-1£¨È±Ê¡£©Ö¸Ê¾´¦ÀíµÄÊÇÎÄ±¾Ö¡</param>
-/// <returns>·µ»Ø´¦ÀíÍê±ÏµÄÎÄ±¾</returns>
+/// <param name="pStream">å­—èŠ‚æµæŒ‡é’ˆï¼›æœªæŒ‡å®šiTextEncodingæ—¶æŒ‡å‘æ•´ä¸ªæ–‡æœ¬å¸§ï¼ŒæŒ‡å®šiTextEncodingæ—¶æŒ‡å‘å­—ç¬¦ä¸²</param>
+/// <param name="iLength">é•¿åº¦ï¼›æœªæŒ‡å®šiTextEncodingæ—¶è¡¨ç¤ºæ•´ä¸ªæ–‡æœ¬å¸§é•¿åº¦ï¼ˆåŒ…æ‹¬1Bçš„ç¼–ç æ ‡è®°ï¼Œä¸å«ç»“å°¾NULLï¼‰ï¼ŒæŒ‡å®šiTextEncodingæ—¶è¡¨ç¤ºå­—ç¬¦ä¸²é•¿åº¦ï¼ˆä¸å«ç»“å°¾NULLï¼‰</param>
+/// <param name="iTextEncoding">è‡ªå®šä¹‰æ–‡æœ¬ç¼–ç ï¼›-1ï¼ˆç¼ºçœï¼‰æŒ‡ç¤ºå¤„ç†çš„æ˜¯æ–‡æœ¬å¸§</param>
+/// <returns>è¿”å›å¤„ç†å®Œæ¯•çš„æ–‡æœ¬</returns>
 eck::CRefStrW GetMP3ID3v2_ProcString(BYTE* pStream, int cb, int iTextEncoding = -1)
 {
 	int iType = 0, cchBuf;
 	if (iTextEncoding == -1)
 	{
 		memcpy(&iType, pStream, 1);
-		++pStream;// Ìø¹ıÎÄ±¾±àÂë±êÖ¾
+		++pStream;// è·³è¿‡æ–‡æœ¬ç¼–ç æ ‡å¿—
 		--cb;
 	}
 	else
@@ -86,7 +86,7 @@ eck::CRefStrW GetMP3ID3v2_ProcString(BYTE* pStream, int cb, int iTextEncoding = 
 
 	switch (iType)
 	{
-	case 0:// ISO-8859-1£¬¼´Latin-1£¨À­¶¡Óï-1£©
+	case 0:// ISO-8859-1ï¼Œå³Latin-1ï¼ˆæ‹‰ä¸è¯­-1ï¼‰
 		cchBuf = MultiByteToWideChar(CP_ACP, 0, (PCCH)pStream, cb, NULL, 0);
 		if (cchBuf == 0)
 			return {};
@@ -94,7 +94,7 @@ eck::CRefStrW GetMP3ID3v2_ProcString(BYTE* pStream, int cb, int iTextEncoding = 
 		MultiByteToWideChar(CP_ACP, 0, (PCCH)pStream, cb, rsResult.Data(), cchBuf);
 		break;
 	case 1:// UTF-16LE
-		if (*(PWSTR)pStream == L'\xFEFF')// ÌøBOM£¨Òª²»ÊÇËã³öÀ´¹şÏ£Öµ²»Ò»ÑùÎÒ¿ÉÄÜ»¹Õæ·¢ÏÖ²»ÁËÕâ¸öBOMµÄÎÊÌâ.....£©
+		if (*(PWSTR)pStream == L'\xFEFF')// è·³BOMï¼ˆè¦ä¸æ˜¯ç®—å‡ºæ¥å“ˆå¸Œå€¼ä¸ä¸€æ ·æˆ‘å¯èƒ½è¿˜çœŸå‘ç°ä¸äº†è¿™ä¸ªBOMçš„é—®é¢˜.....ï¼‰
 		{
 			pStream += sizeof(WCHAR);
 			cb -= sizeof(WCHAR);
@@ -104,7 +104,7 @@ eck::CRefStrW GetMP3ID3v2_ProcString(BYTE* pStream, int cb, int iTextEncoding = 
 		wcsncpy(rsResult.Data(), (PWSTR)pStream, cchBuf);
 		break;
 	case 2:// UTF-16BE
-		if (*(PWSTR)pStream == L'\xFFFE')// ÌøBOM
+		if (*(PWSTR)pStream == L'\xFFFE')// è·³BOM
 		{
 			pStream += sizeof(WCHAR);
 			cb -= sizeof(WCHAR);
@@ -112,7 +112,7 @@ eck::CRefStrW GetMP3ID3v2_ProcString(BYTE* pStream, int cb, int iTextEncoding = 
 		cchBuf = cb / sizeof(WCHAR);
 		rsResult.ReSizeAbs(cchBuf);
 		LCMapStringEx(LOCALE_NAME_USER_DEFAULT, LCMAP_BYTEREV,
-			(PCWSTR)pStream, cchBuf, rsResult.Data(), cchBuf, NULL, NULL, 0);// ·´×ª×Ö½ÚĞò
+			(PCWSTR)pStream, cchBuf, rsResult.Data(), cchBuf, NULL, NULL, 0);// åè½¬å­—èŠ‚åº
 		break;
 	case 3:// UTF-8
 		cchBuf = MultiByteToWideChar(CP_UTF8, 0, (PCCH)pStream, cb, NULL, 0);
@@ -137,7 +137,7 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 	DWORD cbFile = File.GetSize32();
 
 	BYTE by[4];
-	File >> by;// ¶ÁÎÄ¼şÍ·
+	File >> by;// è¯»æ–‡ä»¶å¤´
 	if (memcmp(by, "ID3", 3) == 0)// ID3v2
 	{
 		if (cbFile < sizeof(ID3v2_Header))
@@ -148,7 +148,7 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 
 		ID3v2_Header* pHeader;
 		r.SkipPointer(pHeader);
-		DWORD cbTotal = SynchSafeIntToDWORD(pHeader->Size);// 28Î»Êı¾İ£¬°üÀ¨±êÇ©Í·ºÍÀ©Õ¹Í·
+		DWORD cbTotal = SynchSafeIntToDWORD(pHeader->Size);// 28ä½æ•°æ®ï¼ŒåŒ…æ‹¬æ ‡ç­¾å¤´å’Œæ‰©å±•å¤´
 		if (cbTotal > cbFile)
 			return FALSE;
 
@@ -158,14 +158,14 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 
 		if (pHeader->Ver == 3)// 2.3
 		{
-			if (pHeader->Flags & 0x20)// ÓĞÀ©Õ¹Í·
+			if (pHeader->Flags & 0x20)// æœ‰æ‰©å±•å¤´
 				r += (4 + eck::ReverseDWORD(pExtHeader->ExtHeaderSize));
 		}
 		else if (pHeader->Ver = 4)// 2.4
 		{
-			if (pHeader->Flags & 0x20)// ÓĞÀ©Õ¹Í·
+			if (pHeader->Flags & 0x20)// æœ‰æ‰©å±•å¤´
 				r += SynchSafeIntToDWORD(pExtHeader->ExtHeaderSize);
-			// 2.4Àï±ä³ÉÁËÍ¬²½°²È«ÕûÊı£¬¶øÇÒÕâ¸ö³ß´ç°üº¬ÁË¼ÇÂ¼³ß´çµÄËÄ¸ö×Ö½Ú
+			// 2.4é‡Œå˜æˆäº†åŒæ­¥å®‰å…¨æ•´æ•°ï¼Œè€Œä¸”è¿™ä¸ªå°ºå¯¸åŒ…å«äº†è®°å½•å°ºå¯¸çš„å››ä¸ªå­—èŠ‚
 		}
 
 		DWORD cbUnit;
@@ -175,113 +175,113 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 			r.SkipPointer(pFrame);
 
 			if (pHeader->Ver == 3)
-				cbUnit = eck::ReverseDWORD(pFrame->Size);// 2.3£º32Î»Êı¾İ£¬²»°üÀ¨Ö¡Í·£¨Æ«4B£©
+				cbUnit = eck::ReverseDWORD(pFrame->Size);// 2.3ï¼š32ä½æ•°æ®ï¼Œä¸åŒ…æ‹¬å¸§å¤´ï¼ˆå4Bï¼‰
 			else if (pHeader->Ver = 4)
-				cbUnit = SynchSafeIntToDWORD(pFrame->Size);//2.4£º28Î»Êı¾İ£¨Í¬²½°²È«ÕûÊı£©
+				cbUnit = SynchSafeIntToDWORD(pFrame->Size);//2.4ï¼š28ä½æ•°æ®ï¼ˆåŒæ­¥å®‰å…¨æ•´æ•°ï¼‰
 
-			if (memcmp(pFrame->ID, "TIT2", 4) == 0)// ±êÌâ
+			if (memcmp(pFrame->ID, "TIT2", 4) == 0)// æ ‡é¢˜
 			{
 				mi.rsTitle = GetMP3ID3v2_ProcString(r, cbUnit);
 				r += cbUnit;
 			}
-			else if (memcmp(pFrame->ID, "TPE1", 4) == 0)// ×÷Õß
+			else if (memcmp(pFrame->ID, "TPE1", 4) == 0)// ä½œè€…
 			{
 				mi.rsArtist = GetMP3ID3v2_ProcString(r, cbUnit);
 				r += cbUnit;
 			}
-			else if (memcmp(pFrame->ID, "TALB", 4) == 0)// ×¨¼­
+			else if (memcmp(pFrame->ID, "TALB", 4) == 0)// ä¸“è¾‘
 			{
 				mi.rsAlbum = GetMP3ID3v2_ProcString(r, cbUnit);
 				r += cbUnit;
 			}
-			else if (memcmp(pFrame->ID, "USLT", 4) == 0)// ²»Í¬²½¸è´Ê
+			else if (memcmp(pFrame->ID, "USLT", 4) == 0)// ä¸åŒæ­¥æ­Œè¯
 			{
 				/*
-				<Ö¡Í·>£¨Ö¡±êÊ¶ÎªUSLT£©
-				ÎÄ±¾±àÂë						$xx
-				×ÔÈ»ÓïÑÔ´úÂë					$xx xx xx
-				ÄÚÈİÃèÊö						<×Ö·û´®> $00 (00)
-				¸è´Ê							<×Ö·û´®>
+				<å¸§å¤´>ï¼ˆå¸§æ ‡è¯†ä¸ºUSLTï¼‰
+				æ–‡æœ¬ç¼–ç 						$xx
+				è‡ªç„¶è¯­è¨€ä»£ç 					$xx xx xx
+				å†…å®¹æè¿°						<å­—ç¬¦ä¸²> $00 (00)
+				æ­Œè¯							<å­—ç¬¦ä¸²>
 				*/
 				DWORD cb = cbUnit;
 
 				BYTE byEncodeingType;
-				r >> byEncodeingType;// ¶ÁÎÄ±¾±àÂë
+				r >> byEncodeingType;// è¯»æ–‡æœ¬ç¼–ç 
 
 				CHAR byLangCode[3];
-				r >> byLangCode;// ¶Á×ÔÈ»ÓïÑÔ´úÂë
+				r >> byLangCode;// è¯»è‡ªç„¶è¯­è¨€ä»£ç 
 
 				int t;
-				if (byEncodeingType == 0 || byEncodeingType == 3)// ISO-8859-1»òUTF-8
+				if (byEncodeingType == 0 || byEncodeingType == 3)// ISO-8859-1æˆ–UTF-8
 					t = (int)strlen((PCSTR)r.m_pMem) + 1;
-				else// UTF-16LE»òUTF-16BE
+				else// UTF-16LEæˆ–UTF-16BE
 					t = ((int)wcslen((PCWSTR)r.m_pMem) + 1) * sizeof(WCHAR);
-				r += t;// Ìø¹ıÄÚÈİÃèÊö
+				r += t;// è·³è¿‡å†…å®¹æè¿°
 
 				cb -= (t + 4);
 
 				mi.rsLrc = GetMP3ID3v2_ProcString(r, cb, byEncodeingType);
 				r += cb;
 			}
-			else if (memcmp(pFrame->ID, "COMM", 4) == 0)// ±¸×¢
+			else if (memcmp(pFrame->ID, "COMM", 4) == 0)// å¤‡æ³¨
 			{
 				/*
-				<Ö¡Í·>£¨Ö¡±êÊ¶ÎªCOMM£©
-				ÎÄ±¾±àÂë						$xx
-				×ÔÈ»ÓïÑÔ´úÂë					$xx xx xx
-				±¸×¢ÕªÒª						<×Ö·û´®> $00 (00)
-				±¸×¢							<×Ö·û´®>
+				<å¸§å¤´>ï¼ˆå¸§æ ‡è¯†ä¸ºCOMMï¼‰
+				æ–‡æœ¬ç¼–ç 						$xx
+				è‡ªç„¶è¯­è¨€ä»£ç 					$xx xx xx
+				å¤‡æ³¨æ‘˜è¦						<å­—ç¬¦ä¸²> $00 (00)
+				å¤‡æ³¨							<å­—ç¬¦ä¸²>
 				*/
 				DWORD cb = cbUnit;
 
 				BYTE byEncodeingType;
-				r >> byEncodeingType;// ¶ÁÎÄ±¾±àÂë
+				r >> byEncodeingType;// è¯»æ–‡æœ¬ç¼–ç 
 
 				CHAR byLangCode[3];
-				r >> byLangCode;// ¶Á×ÔÈ»ÓïÑÔ´úÂë
+				r >> byLangCode;// è¯»è‡ªç„¶è¯­è¨€ä»£ç 
 
 				int t;
-				if (byEncodeingType == 0 || byEncodeingType == 3)// ISO-8859-1»òUTF-8
+				if (byEncodeingType == 0 || byEncodeingType == 3)// ISO-8859-1æˆ–UTF-8
 					t = (int)strlen((PCSTR)pFrame) + 1;
-				else// UTF-16LE»òUTF-16BE
+				else// UTF-16LEæˆ–UTF-16BE
 					t = ((int)wcslen((PCWSTR)pFrame) + 1) * sizeof(WCHAR);
-				r += t;// Ìø¹ı±¸×¢ÕªÒª
+				r += t;// è·³è¿‡å¤‡æ³¨æ‘˜è¦
 
 				cb -= (t + 4);
-				// ´ËÊ±pFrameÖ¸Ïò±¸×¢×Ö·û´®
+				// æ­¤æ—¶pFrameæŒ‡å‘å¤‡æ³¨å­—ç¬¦ä¸²
 				mi.rsComment = GetMP3ID3v2_ProcString(r, cb, byEncodeingType);
 				r += cb;
 			}
-			else if (memcmp(pFrame->ID, "APIC", 4) == 0)// Í¼Æ¬
+			else if (memcmp(pFrame->ID, "APIC", 4) == 0)// å›¾ç‰‡
 			{
 				/*
-				<Ö¡Í·>£¨Ö¡±êÊ¶ÎªAPIC£©
-				ÎÄ±¾±àÂë                        $xx
-				MIME ÀàĞÍ                       <ASCII×Ö·û´®>$00£¨Èç'image/bmp'£©
-				Í¼Æ¬ÀàĞÍ                        $xx
-				ÃèÊö                            <×Ö·û´®>$00(00)
-				<Í¼Æ¬Êı¾İ>
+				<å¸§å¤´>ï¼ˆå¸§æ ‡è¯†ä¸ºAPICï¼‰
+				æ–‡æœ¬ç¼–ç                         $xx
+				MIME ç±»å‹                       <ASCIIå­—ç¬¦ä¸²>$00ï¼ˆå¦‚'image/bmp'ï¼‰
+				å›¾ç‰‡ç±»å‹                        $xx
+				æè¿°                            <å­—ç¬¦ä¸²>$00(00)
+				<å›¾ç‰‡æ•°æ®>
 				*/
 				DWORD cb = cbUnit;
 
 				BYTE byEncodeingType;
-				r >> byEncodeingType;// ¶ÁÎÄ±¾±àÂë
+				r >> byEncodeingType;// è¯»æ–‡æœ¬ç¼–ç 
 
 				int t;
 				t = (int)strlen((PCSTR)r.m_pMem);
-				r += (t + 2);// Ìø¹ıMIMEÀàĞÍ×Ö·û´®ºÍÍ¼Æ¬ÀàĞÍ
+				r += (t + 2);// è·³è¿‡MIMEç±»å‹å­—ç¬¦ä¸²å’Œå›¾ç‰‡ç±»å‹
 
 				cb -= (t + 3);
 
-				if (byEncodeingType == 0 || byEncodeingType == 3)// ISO-8859-1»òUTF-8
+				if (byEncodeingType == 0 || byEncodeingType == 3)// ISO-8859-1æˆ–UTF-8
 					t = (int)strlen((PCSTR)r.m_pMem) + 1;
-				else// UTF-16LE»òUTF-16BE
+				else// UTF-16LEæˆ–UTF-16BE
 					t = ((int)wcslen((PCWSTR)r.m_pMem) + 1) * sizeof(WCHAR);
 
 				r += t;
-				cb -= t;// Ìø¹ıÃèÊö×Ö·û´®ºÍ½áÎ²NULL
+				cb -= t;// è·³è¿‡æè¿°å­—ç¬¦ä¸²å’Œç»“å°¾NULL
 
-				mi.pCoverData = SHCreateMemStream(r, cb);// ´´½¨Á÷¶ÔÏó
+				mi.pCoverData = SHCreateMemStream(r, cb);// åˆ›å»ºæµå¯¹è±¡
 				r += cb;
 			}
 		}
@@ -298,28 +298,28 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 			cbBlock = Header.bySize[2] | Header.bySize[1] << 8 | Header.bySize[0] << 16;
 			switch (Header.by & 0x7F)
 			{
-			case 4:// ±êÇ©ĞÅÏ¢£¬×¢Òâ£ºÕâÒ»²¿·ÖÊÇĞ¡¶ËĞò
+			case 4:// æ ‡ç­¾ä¿¡æ¯ï¼Œæ³¨æ„ï¼šè¿™ä¸€éƒ¨åˆ†æ˜¯å°ç«¯åº
 			{
-				File >> t;// ±àÂëÆ÷ĞÅÏ¢´óĞ¡
-				File += t;// Ìø¹ı±àÂëÆ÷ĞÅÏ¢
+				File >> t;// ç¼–ç å™¨ä¿¡æ¯å¤§å°
+				File += t;// è·³è¿‡ç¼–ç å™¨ä¿¡æ¯
 
 				UINT uCount;
-				File >> uCount;// ±êÇ©ÊıÁ¿
+				File >> uCount;// æ ‡ç­¾æ•°é‡
 
 				for (UINT i = 0; i < uCount; ++i)
 				{
-					File >> t;// ±êÇ©´óĞ¡
+					File >> t;// æ ‡ç­¾å¤§å°
 
 					pBuffer = new char[t + 1];
-					File.Read(pBuffer, t);// ¶Á±êÇ©
+					File.Read(pBuffer, t);// è¯»æ ‡ç­¾
 					*(pBuffer + t) = '\0';
 
 					t = MultiByteToWideChar(CP_UTF8, 0, pBuffer, -1, NULL, 0);
 					PWSTR pszLabel = new WCHAR[t];
-					MultiByteToWideChar(CP_UTF8, 0, pBuffer, -1, pszLabel, t);// ×ª»»±àÂë£¬UTF-8µ½UTF-16LE
+					MultiByteToWideChar(CP_UTF8, 0, pBuffer, -1, pszLabel, t);// è½¬æ¢ç¼–ç ï¼ŒUTF-8åˆ°UTF-16LE
 					delete[] pBuffer;
 
-					int iPos = eck::FindStr(pszLabel, L"=");// ÕÒµÈºÅ
+					int iPos = eck::FindStr(pszLabel, L"=");// æ‰¾ç­‰å·
 					if (iPos != eck::INVALID_STR_POS)
 					{
 						int cch = t - iPos;
@@ -354,32 +354,32 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 				}
 			}
 			break;
-			case 6:// Í¼Æ¬£¨´ó¶ËĞò£©
+			case 6:// å›¾ç‰‡ï¼ˆå¤§ç«¯åºï¼‰
 			{
-				File += 4;// Ìø¹ıÍ¼Æ¬ÀàĞÍ
+				File += 4;// è·³è¿‡å›¾ç‰‡ç±»å‹
 
-				File >> t;// MIMEÀàĞÍ×Ö·û´®³¤¶È
-				t = eck::ReverseDWORD(t);// ´ó¶ËĞò×Ö½Úµ½ÕûÊı£¬ÏÂÍ¬
-				File += t;// Ìø¹ıMIMEÀàĞÍ×Ö·û´®
+				File >> t;// MIMEç±»å‹å­—ç¬¦ä¸²é•¿åº¦
+				t = eck::ReverseDWORD(t);// å¤§ç«¯åºå­—èŠ‚åˆ°æ•´æ•°ï¼Œä¸‹åŒ
+				File += t;// è·³è¿‡MIMEç±»å‹å­—ç¬¦ä¸²
 
-				File >> t;// ÃèÊö×Ö·û´®³¤¶È
+				File >> t;// æè¿°å­—ç¬¦ä¸²é•¿åº¦
 				t = eck::ReverseDWORD(t);
-				File += (t + 16);// Ìø¹ıÃèÊö×Ö·û´®¡¢¿í¶È¡¢¸ß¶È¡¢É«Éî¡¢Ë÷ÒıÍ¼ÑÕÉ«Êı
+				File += (t + 16);// è·³è¿‡æè¿°å­—ç¬¦ä¸²ã€å®½åº¦ã€é«˜åº¦ã€è‰²æ·±ã€ç´¢å¼•å›¾é¢œè‰²æ•°
 
-				File >> t;// Í¼Æ¬Êı¾İ³¤¶È
-				t = eck::ReverseDWORD(t);// Í¼Æ¬Êı¾İ³¤¶È
+				File >> t;// å›¾ç‰‡æ•°æ®é•¿åº¦
+				t = eck::ReverseDWORD(t);// å›¾ç‰‡æ•°æ®é•¿åº¦
 
 				pBuffer = new char[t];
 				File.Read(pBuffer, t);
-				mi.pCoverData = SHCreateMemStream((const BYTE*)pBuffer, t);// ´´½¨Á÷¶ÔÏó
+				mi.pCoverData = SHCreateMemStream((const BYTE*)pBuffer, t);// åˆ›å»ºæµå¯¹è±¡
 				delete[] pBuffer;
 			}
 			break;
 			default:
-				File += cbBlock;// Ìø¹ı¿é
+				File += cbBlock;// è·³è¿‡å—
 			}
 
-		} while (!(Header.by & 0x80));// ¼ì²é×î¸ßÎ»£¬ÅĞ¶ÏÊÇ²»ÊÇ×îºóÒ»¸ö¿é
+		} while (!(Header.by & 0x80));// æ£€æŸ¥æœ€é«˜ä½ï¼Œåˆ¤æ–­æ˜¯ä¸æ˜¯æœ€åä¸€ä¸ªå—
 	}
 	return TRUE;
 }
@@ -398,8 +398,8 @@ void ParseLrc_ProcTimeLabel(std::vector<LRCINFO>& Result, std::vector<LRCLABEL>&
 	const std::vector<LRCTIMELABEL>& TimeLabel, PWSTR pszLrc, int cchLrc)
 {
 #pragma warning (push)
-#pragma warning (disable: 6387)// ¿ÉÄÜÊÇNULL
-#pragma warning (disable: 6053)// ¿ÉÄÜÎ´Ìí¼ÓÖÕÖ¹NULL
+#pragma warning (disable: 6387)// å¯èƒ½æ˜¯NULL
+#pragma warning (disable: 6053)// å¯èƒ½æœªæ·»åŠ ç»ˆæ­¢NULL
 	PWSTR pTemp;
 	int M, S, MS;
 	float fTime;
@@ -407,13 +407,13 @@ void ParseLrc_ProcTimeLabel(std::vector<LRCINFO>& Result, std::vector<LRCLABEL>&
 	{
 		auto& Label = TimeLabel[i];
 
-		// È¡·ÖÖÓ
+		// å–åˆ†é’Ÿ
 		StrToIntExW(Label.pszLabel, STIF_DEFAULT, &M);
 		fTime = (float)M * 60.f;
-		// È¡Ãë
+		// å–ç§’
 		StrToIntExW(Label.pszLabel + Label.pos1 + 1, STIF_DEFAULT, &S);
 		fTime += (float)S;
-		// È¡ºÁÃë
+		// å–æ¯«ç§’
 		if (Label.pos2 > 0)
 		{
 			StrToIntExW(Label.pszLabel + Label.pos2 + 1, STIF_DEFAULT, &MS);
@@ -443,11 +443,11 @@ BOOL ParseLrc_IsTimeLabelLegal(PCWSTR pszLabel, int cchLabel, int* pposFirstDiv,
 	int pos1, pos2;
 	pos1 = eck::FindStr(pszLabel, L":");
 	if (pos1 <= 0 || pos1 >= cchLabel - 1)
-		return FALSE;// Ã»Ã°ºÅ¡¢Ã°ºÅÔÚ¿ªÍ·¡¢Ã°ºÅÔÚ½áÎ²¡¢Ã°ºÅ³¬¹ı½áÎ²¶¼²»ºÏ·¨
-	
+		return FALSE;// æ²¡å†’å·ã€å†’å·åœ¨å¼€å¤´ã€å†’å·åœ¨ç»“å°¾ã€å†’å·è¶…è¿‡ç»“å°¾éƒ½ä¸åˆæ³•
+
 	pos2 = eck::FindStr(pszLabel, L":", pos1 + 1);
 	if (pos2 == pos1 + 1)
-		return FALSE;// Á½¸öÃ°ºÅ°¤×ÅÒ²²»ºÏ·¨
+		return FALSE;// ä¸¤ä¸ªå†’å·æŒ¨ç€ä¹Ÿä¸åˆæ³•
 
 	*pbMS = TRUE;
 	if (pos2 < 0 || pos2 >= cchLabel)
@@ -455,37 +455,37 @@ BOOL ParseLrc_IsTimeLabelLegal(PCWSTR pszLabel, int cchLabel, int* pposFirstDiv,
 		pos2 = eck::FindStr(pszLabel, L".", pos1 + 1);
 		if (pos2 < 0 || pos2 >= cchLabel)
 		{
-			*pbMS = FALSE;// [·Ö:Ãë]
+			*pbMS = FALSE;// [åˆ†:ç§’]
 			pos2 = cchLabel;
 		}
-		// else [·Ö:Ãë.ºÁÃë]
+		// else [åˆ†:ç§’.æ¯«ç§’]
 	}
-	// else [·Ö:Ãë:ºÁÃë]
+	// else [åˆ†:ç§’:æ¯«ç§’]
 
 	*pposFirstDiv = pos1;
 	if (*pbMS)
 		*pposSecondDiv = pos2;
 
-	// ²âÊÔµÚÒ»¸ö×Ö¶Î
+	// æµ‹è¯•ç¬¬ä¸€ä¸ªå­—æ®µ
 	if (pos1 == 0)
-		return FALSE;// Ã»ÓĞµÚÒ»¸ö×Ö¶Î
+		return FALSE;// æ²¡æœ‰ç¬¬ä¸€ä¸ªå­—æ®µ
 
 	for (int i = 0; i < pos1; ++i)
 		if (!iswdigit(pszLabel[i]))
-			return FALSE;// µÚÒ»¸ö×Ö¶Î²»ÊÇÊı×Ö
-	// ²âÊÔµÚ¶ş¸ö×Ö¶Î
+			return FALSE;// ç¬¬ä¸€ä¸ªå­—æ®µä¸æ˜¯æ•°å­—
+	// æµ‹è¯•ç¬¬äºŒä¸ªå­—æ®µ
 	if (pos2 <= pos1 + 1)
-		return FALSE;// Ã»ÓĞµÚ¶ş¸ö×Ö¶Î
+		return FALSE;// æ²¡æœ‰ç¬¬äºŒä¸ªå­—æ®µ
 
 	for (int i = pos1 + 1; i < pos2; ++i)
 		if (!iswdigit(pszLabel[i]))
-			return FALSE;// µÚ¶ş¸ö×Ö¶Î²»ÊÇÊı×Ö
-	// ²âÊÔµÚÈı¸ö×Ö¶Î
-	if(*pbMS)
+			return FALSE;// ç¬¬äºŒä¸ªå­—æ®µä¸æ˜¯æ•°å­—
+	// æµ‹è¯•ç¬¬ä¸‰ä¸ªå­—æ®µ
+	if (*pbMS)
 	{
 		for (int i = pos2 + 1; i < cchLabel; ++i)
 			if (!iswdigit(pszLabel[i]))
-				return FALSE;// µÚÈı¸ö×Ö¶Î²»ÊÇÊı×Ö
+				return FALSE;// ç¬¬ä¸‰ä¸ªå­—æ®µä¸æ˜¯æ•°å­—
 	}
 	return TRUE;
 }
@@ -494,7 +494,7 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 {
 	Result.clear();
 	Label.clear();
-#pragma region ¶ÁÈëÊı¾İ
+#pragma region è¯»å…¥æ•°æ®
 	if (!p)
 		return FALSE;
 	BYTE* pFileData;
@@ -510,8 +510,9 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 	}
 	else
 	{
-		PWSTR pszTemp = new WCHAR[wcslen((PCWSTR)p) + 6];
+		PWSTR pszTemp = new WCHAR[wcslen((PCWSTR)p) + 10];
 		wcscpy(pszTemp, (PCWSTR)p);
+#pragma warning(suppress:6386)
 		PathRenameExtensionW(pszTemp, L".lrc");
 		eck::CFile File;
 		File.Open((PCWSTR)pszTemp);
@@ -523,17 +524,15 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 			return FALSE;
 
 		pFileData = (BYTE*)VirtualAlloc(NULL, cbMem + 2, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-		File.Read(pFileData, cbMem);
+		File.Read(pFileData, (DWORD)cbMem);
 		File.Close();
 		*(pFileData + cbMem) = '\0';
 		*(pFileData + cbMem + 1) = '\0';
 	}
 #pragma endregion
-#pragma region ÅĞ¶Ï²¢×ª»»±àÂë
+#pragma region åˆ¤æ–­å¹¶è½¬æ¢ç¼–ç 
 	PWSTR pszOrg = (PWSTR)pFileData;
-	int cchFile = cbMem / sizeof(WCHAR);
-
-	UINT uCode;
+	int cchFile = (int)(cbMem / sizeof(WCHAR));
 
 	constexpr BYTE
 		c_chBomU16LE[]{ 0xFF, 0xFE },
@@ -549,7 +548,7 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 		--cchFile;
 		pszOrg = (PWSTR)VirtualAlloc(NULL, eck::Cch2Cb(cchFile), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 		LCMapStringEx(LOCALE_NAME_USER_DEFAULT, LCMAP_BYTEREV,
-			(PCWSTR)pFileData + 1, cchFile, pszOrg, cchFile, NULL, NULL, 0);// ·´×ª×Ö½ÚĞò
+			(PCWSTR)pFileData + 1, cchFile, pszOrg, cchFile, NULL, NULL, 0);// åè½¬å­—èŠ‚åº
 		VirtualFree(pFileData, 0, MEM_RELEASE);
 		pFileData = (BYTE*)pszOrg;
 	}
@@ -557,24 +556,24 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 	{
 		int cchBuf = MultiByteToWideChar(CP_UTF8, 0, (CHAR*)pFileData + 3, -1, NULL, 0);
 		pszOrg = (PWSTR)VirtualAlloc(NULL, eck::Cch2Cb(cchBuf), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-		MultiByteToWideChar(CP_UTF8, 0, (CHAR*)pFileData + 3, -1, pszOrg, cchBuf);// ×ª»»±àÂë
+		MultiByteToWideChar(CP_UTF8, 0, (CHAR*)pFileData + 3, -1, pszOrg, cchBuf);// è½¬æ¢ç¼–ç 
 		VirtualFree(pFileData, 0, MEM_RELEASE);
 		pFileData = (BYTE*)pszOrg;
 		cchFile = cchBuf - 1;
 	}
-	else// ÎŞBOM
+	else// æ— BOM
 	{
 		switch (uTextEncoding)
 		{
 		case LrcEncoding::Auto:
 		{
 			int i = IS_TEXT_UNICODE_REVERSE_MASK | IS_TEXT_UNICODE_NULL_BYTES;
-			if (IsTextUnicode(pFileData, cbMem, &i))//  ÏÈ²âUTF-16BE£¬²»È»»á³öÎÊÌâ
+			if (IsTextUnicode(pFileData, (int)cbMem, &i))//  å…ˆæµ‹UTF-16BEï¼Œä¸ç„¶ä¼šå‡ºé—®é¢˜
 				goto GetLrc_UTF16BE;
 			else
 			{
 				i = IS_TEXT_UNICODE_UNICODE_MASK | IS_TEXT_UNICODE_NULL_BYTES;
-				if (IsTextUnicode(pFileData, cbMem, &i))
+				if (IsTextUnicode(pFileData, (int)cbMem, &i))
 					goto GetLrc_UTF16LE;
 				else if (IsTextUTF8((char*)pFileData, cbMem))
 					goto GetLrc_UTF8;
@@ -588,7 +587,7 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 		GetLrc_GB2312:
 			int cchBuf = MultiByteToWideChar(936, 0, (CHAR*)pFileData, -1, NULL, 0);
 			pszOrg = (PWSTR)VirtualAlloc(NULL, eck::Cch2Cb(cchBuf), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-			MultiByteToWideChar(936, 0, (CHAR*)pFileData, -1, pszOrg, cchBuf);// ×ª»»±àÂë
+			MultiByteToWideChar(936, 0, (CHAR*)pFileData, -1, pszOrg, cchBuf);// è½¬æ¢ç¼–ç 
 			VirtualFree(pFileData, 0, MEM_RELEASE);
 			pFileData = (BYTE*)pszOrg;
 			cchFile = cchBuf - 1;
@@ -599,7 +598,7 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 		GetLrc_UTF8:
 			int cchBuf = MultiByteToWideChar(CP_UTF8, 0, (CHAR*)pFileData, -1, NULL, 0);
 			pszOrg = (PWSTR)VirtualAlloc(NULL, eck::Cch2Cb(cchBuf), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-			MultiByteToWideChar(CP_UTF8, 0, (CHAR*)pFileData, -1, pszOrg, cchBuf);// ×ª»»±àÂë
+			MultiByteToWideChar(CP_UTF8, 0, (CHAR*)pFileData, -1, pszOrg, cchBuf);// è½¬æ¢ç¼–ç 
 			VirtualFree(pFileData, 0, MEM_RELEASE);
 			pFileData = (BYTE*)pszOrg;
 			cchFile = cchBuf - 1;
@@ -613,7 +612,7 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 		GetLrc_UTF16BE:
 			pszOrg = (PWSTR)VirtualAlloc(NULL, (cchFile + 1) * sizeof(WCHAR), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 			LCMapStringEx(LOCALE_NAME_USER_DEFAULT, LCMAP_BYTEREV,
-				(PCWSTR)pFileData, cchFile, pszOrg, cchFile, NULL, NULL, 0);// ·´×ª×Ö½ÚĞò
+				(PCWSTR)pFileData, cchFile, pszOrg, cchFile, NULL, NULL, 0);// åè½¬å­—èŠ‚åº
 			VirtualFree(pFileData, 0, MEM_RELEASE);
 			pFileData = (BYTE*)pszOrg;
 		}
@@ -621,7 +620,7 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 		}
 	}
 #pragma endregion
-#pragma region °´ĞĞ·Ö¸î
+#pragma region æŒ‰è¡Œåˆ†å‰²
 	std::vector<std::pair<PWSTR, int>> Lines{};
 	Lines.reserve(50);
 
@@ -640,21 +639,21 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 	b2 = i2 >= 0;
 	b3 = i3 >= 0;
 
-	PWSTR pszLine;// Ã¿ĞĞÄÚÈİ
-	int cchLine;// Ã¿ĞĞÄÚÈİ³¤¶È
+	PWSTR pszLine;// æ¯è¡Œå†…å®¹
+	int cchLine;// æ¯è¡Œå†…å®¹é•¿åº¦
 
 	int pos1;
 	int pos2 = 0;
 	int cchDiv;
 
-	if (!b1 && !b2 && !b3)// ÎŞ»»ĞĞ·û
+	if (!b1 && !b2 && !b3)// æ— æ¢è¡Œç¬¦
 		Lines.emplace_back(pszOrg, cchFile);
 	else
 	{
-		// ÊÊÅäÄÇĞ©»ìÓÃÈıÖÖ»»ĞĞ·ûµÄÉµ±ÆÎÄ¼ş
+		// é€‚é…é‚£äº›æ··ç”¨ä¸‰ç§æ¢è¡Œç¬¦çš„å‚»é€¼æ–‡ä»¶
 		if (b1)// CRLF
 		{
-			// Ë¼Â·£ºiStrPos1 = min(i1, i2, i3)
+			// æ€è·¯ï¼šiStrPos1 = min(i1, i2, i3)
 			pos1 = i1;
 			cchDiv = 2;
 			if (b2 && i1 >= i2)// LF
@@ -670,9 +669,9 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 		}
 		else
 		{
-			// Ë¼Â·£ºiStrPos1 = min(i2, i3)
+			// æ€è·¯ï¼šiStrPos1 = min(i2, i3)
 			cchDiv = 1;
-			if (b2 && b3)// Ã»ÓĞCRLF£¬µ«CRºÍLFÍ¬Ê±´æÔÚ
+			if (b2 && b3)// æ²¡æœ‰CRLFï¼Œä½†CRå’ŒLFåŒæ—¶å­˜åœ¨
 			{
 				if (i2 < i3)
 					pos1 = i2;
@@ -694,8 +693,8 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 				*(pszLine + cchLine) = L'\0';
 				Lines.emplace_back(pszLine, cchLine);
 			}
-			pos2 = pos1 + cchDiv;// Ìø¹ı»»ĞĞ·û
-			/////////////È¡ÏÂÒ»»»ĞĞ·ûÎ»ÖÃ
+			pos2 = pos1 + cchDiv;// è·³è¿‡æ¢è¡Œç¬¦
+			/////////////å–ä¸‹ä¸€æ¢è¡Œç¬¦ä½ç½®
 			if (b1)
 				i1 = eck::FindStr(pszOrg, c_szDiv1, pos2);
 			if (b2)
@@ -741,7 +740,7 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 				}
 			}
 		}
-		cchLine = cchFile - pos2;// ´¦ÀíÄ©Î²Ò»ĞĞÎÄ±¾
+		cchLine = cchFile - pos2;// å¤„ç†æœ«å°¾ä¸€è¡Œæ–‡æœ¬
 		if (cchLine > 0)
 		{
 			pszLine = pszOrg + pos2;
@@ -750,7 +749,7 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 		}
 	}
 #pragma endregion
-#pragma region ´¦ÀíÃ¿ĞĞ¸è´Ê
+#pragma region å¤„ç†æ¯è¡Œæ­Œè¯
 	int pos3;
 	int cchTimeLabel;
 
@@ -763,37 +762,37 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 	EckCounter(Lines.size(), i)
 	{
 		pszLine = Lines[i].first;
-		vTimeLabel.clear();// ÏàÍ¬µÄÊ±¼ä±êÇ©
+		vTimeLabel.clear();// ç›¸åŒçš„æ—¶é—´æ ‡ç­¾
 
-		pos1 = eck::FindStr(pszLine, L"[");// ÏÈÕÒ×óÖĞÀ¨ºÅ
-		if (pos1 < 0)// ÕÒ²»µ½×óÖĞÀ¨ºÅ
-			continue;// µ½Ñ­»·Î²£¨´¦ÀíÏÂÒ»ĞĞ£© 
+		pos1 = eck::FindStr(pszLine, L"[");// å…ˆæ‰¾å·¦ä¸­æ‹¬å·
+		if (pos1 < 0)// æ‰¾ä¸åˆ°å·¦ä¸­æ‹¬å·
+			continue;// åˆ°å¾ªç¯å°¾ï¼ˆå¤„ç†ä¸‹ä¸€è¡Œï¼‰ 
 
-		pos2 = eck::FindStr(pszLine, L"]", pos1 + 1);// ÕÒÏÂÒ»¸öÓÒÖĞÀ¨ºÅ
+		pos2 = eck::FindStr(pszLine, L"]", pos1 + 1);// æ‰¾ä¸‹ä¸€ä¸ªå³ä¸­æ‹¬å·
 		if (pos2 < 0)
-			continue;// ÖĞÀ¨ºÅ´íÎó£¬ÕâÊ±»¹Ã»ÓĞÊ±¼ä±êÇ©±»¶ÁÈë£¬Òò´Ë²»ÊÇ¸è´ÊÖĞ¼ä³öÏÖµÄÖĞÀ¨ºÅ£¬Ó¦¸ÃÌø¹ıÕâÒ»ĞĞ
+			continue;// ä¸­æ‹¬å·é”™è¯¯ï¼Œè¿™æ—¶è¿˜æ²¡æœ‰æ—¶é—´æ ‡ç­¾è¢«è¯»å…¥ï¼Œå› æ­¤ä¸æ˜¯æ­Œè¯ä¸­é—´å‡ºç°çš„ä¸­æ‹¬å·ï¼Œåº”è¯¥è·³è¿‡è¿™ä¸€è¡Œ
 	RetryThisLine:
 		pszTimeLabel = pszLine + pos1 + 1;
-		if(!ParseLrc_IsTimeLabelLegal(pszTimeLabel, pos2 - pos1 - 1, &posTimeDiv1, &posTimeDiv2, &bMS))
+		if (!ParseLrc_IsTimeLabelLegal(pszTimeLabel, pos2 - pos1 - 1, &posTimeDiv1, &posTimeDiv2, &bMS))
 		{
-			if (posTimeDiv1 > 0)// ²»ºÏ·¨£¬µ«ÓĞÃ°ºÅ£¬ÊÓÎªÆäËû±êÇ©
+			if (posTimeDiv1 > 0)// ä¸åˆæ³•ï¼Œä½†æœ‰å†’å·ï¼Œè§†ä¸ºå…¶ä»–æ ‡ç­¾
 			{
 				*(pszTimeLabel + posTimeDiv1) = L'\0';
 				*(pszLine + pos2) = L'\0';
 				Label.emplace_back(pszTimeLabel, pszTimeLabel + posTimeDiv1 + 1);
-				// ÍùºóÕÒ£¬ÊÇ·ñ»¹ÓĞÆäËû±êÇ©
+				// å¾€åæ‰¾ï¼Œæ˜¯å¦è¿˜æœ‰å…¶ä»–æ ‡ç­¾
 				pos1 = eck::FindStr(pszLine, L"[", pos2 + 1);
-				if(pos1>=0)
+				if (pos1 >= 0)
 				{
 					pos2 = eck::FindStr(pszLine, L"]", pos1 + 1);
 					if (pos2 >= 0)
 						goto RetryThisLine;
 				}
 			}
-			continue;// ²»ºÏ·¨£¬Ìø¹ıÕâÒ»ĞĞ
+			continue;// ä¸åˆæ³•ï¼Œè·³è¿‡è¿™ä¸€è¡Œ
 		}
 
-		for (;;)// ĞĞÖĞÑ­»·È¡±êÇ©
+		for (;;)// è¡Œä¸­å¾ªç¯å–æ ‡ç­¾
 		{
 		GetLabelLoopBegin:
 			pszTimeLabel = pszLine + pos1 + 1;
@@ -803,19 +802,19 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 				*(pszTimeLabel + posTimeDiv2) = L'\0';
 			*(pszTimeLabel + cchTimeLabel) = L'\0';
 			vTimeLabel.emplace_back(pszLine + pos1 + 1, posTimeDiv1, posTimeDiv2);
-			// µ±Ç°Ê±¼ä±êÇ©ÒÑ½âÎöÍê³É
+			// å½“å‰æ—¶é—´æ ‡ç­¾å·²è§£æå®Œæˆ
 
-			pos3 = eck::FindStr(pszLine, L"[", pos1 + cchTimeLabel + 2);// ÕÒÏÂÒ»¸ö×óÖĞÀ¨ºÅ
+			pos3 = eck::FindStr(pszLine, L"[", pos1 + cchTimeLabel + 2);// æ‰¾ä¸‹ä¸€ä¸ªå·¦ä¸­æ‹¬å·
 		TryNewBracket:
-			if (pos3 < 0)// ÕÒ²»µ½£¬Ôò±¾ĞĞ½âÎöÍê³É
+			if (pos3 < 0)// æ‰¾ä¸åˆ°ï¼Œåˆ™æœ¬è¡Œè§£æå®Œæˆ
 			{
 				ParseLrc_ProcTimeLabel(Result, Label, vTimeLabel, pszLine + pos2 + 1, Lines[i].second - pos2 - 1);
 				break;
 			}
-			else if (pos3 == pos2 + 1)// ÕÒµ½ÁË£¬¶øÇÒ½ô¸úÔÚÉÏÒ»¸öÓÒÖĞÀ¨ºÅµÄºóÃæ
+			else if (pos3 == pos2 + 1)// æ‰¾åˆ°äº†ï¼Œè€Œä¸”ç´§è·Ÿåœ¨ä¸Šä¸€ä¸ªå³ä¸­æ‹¬å·çš„åé¢
 			{
-				int posNextRightBracket = eck::FindStr(pszLine, L"]", pos3);// ÕÒÏÂÒ»¸öÓÒÖĞÀ¨ºÅ
-				if (posNextRightBracket < 0)// ÕÒ²»µ½£¬Ôò±¾ĞĞ½âÎöÍê³É
+				int posNextRightBracket = eck::FindStr(pszLine, L"]", pos3);// æ‰¾ä¸‹ä¸€ä¸ªå³ä¸­æ‹¬å·
+				if (posNextRightBracket < 0)// æ‰¾ä¸åˆ°ï¼Œåˆ™æœ¬è¡Œè§£æå®Œæˆ
 				{
 					ParseLrc_ProcTimeLabel(Result, Label, vTimeLabel, pszLine + pos2 + 1, Lines[i].second - pos2 - 1);
 					break;
@@ -826,19 +825,19 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 					{
 						pos1 = pos3;
 						pos2 = posNextRightBracket;
-						continue;// ºÏ·¨£¬¼ÌĞøÑ­»·
+						continue;// åˆæ³•ï¼Œç»§ç»­å¾ªç¯
 					}
-					else// Èç¹û²»ºÏ·¨£¬Ìø¹ıµ±Ç°×óÖĞÀ¨ºÅÖØÊÔ
+					else// å¦‚æœä¸åˆæ³•ï¼Œè·³è¿‡å½“å‰å·¦ä¸­æ‹¬å·é‡è¯•
 					{
-						pos3 = eck::FindStr(pszLine, L"[", pos3 + 1);// ÕÒÏÂÒ»¸ö×óÖĞÀ¨ºÅ
+						pos3 = eck::FindStr(pszLine, L"[", pos3 + 1);// æ‰¾ä¸‹ä¸€ä¸ªå·¦ä¸­æ‹¬å·
 						goto TryNewBracket;
 					}
 				}
 			}
-			else// ÕÒµ½ÁË£¬µ«ÀëÉÏÒ»¸öÓÒÖĞÀ¨ºÅÓĞÒ»¶Î¼ä¸ô
+			else// æ‰¾åˆ°äº†ï¼Œä½†ç¦»ä¸Šä¸€ä¸ªå³ä¸­æ‹¬å·æœ‰ä¸€æ®µé—´éš”
 			{
-				int posNextRightBracket = eck::FindStr(pszLine, L"]", pos3);// ÕÒÏÂÒ»¸öÓÒÖĞÀ¨ºÅ
-				if (posNextRightBracket < 0)// ÕÒ²»µ½£¬Ôò±¾ĞĞ½âÎöÍê³É£¬Ê£Óà²¿·ÖÊÓÎª¸è´Ê
+				int posNextRightBracket = eck::FindStr(pszLine, L"]", pos3);// æ‰¾ä¸‹ä¸€ä¸ªå³ä¸­æ‹¬å·
+				if (posNextRightBracket < 0)// æ‰¾ä¸åˆ°ï¼Œåˆ™æœ¬è¡Œè§£æå®Œæˆï¼Œå‰©ä½™éƒ¨åˆ†è§†ä¸ºæ­Œè¯
 				{
 					ParseLrc_ProcTimeLabel(Result, Label, vTimeLabel, pszLine + pos2 + 1, Lines[i].second - pos2 - 1);
 					break;
@@ -846,23 +845,23 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 				else
 				{
 					if (ParseLrc_IsTimeLabelLegal(pszLine + pos3 + 1, posNextRightBracket - pos3 - 1, &posTimeDiv1, &posTimeDiv2, &bMS))
-					{// Èç¹ûÊÇºÏ·¨µÄ£¬Ôò¼ä¸ô²¿·ÖÊÓÎª¸è´Ê
+					{// å¦‚æœæ˜¯åˆæ³•çš„ï¼Œåˆ™é—´éš”éƒ¨åˆ†è§†ä¸ºæ­Œè¯
 						ParseLrc_ProcTimeLabel(Result, Label, vTimeLabel, pszLine + pos2 + 1, pos3 - pos2 - 1);
 						vTimeLabel.clear();
 						pos1 = pos3;
 						pos2 = posNextRightBracket;
-						continue;// ¼ÌĞøÑ­»·
+						continue;// ç»§ç»­å¾ªç¯
 					}
-					else// Èç¹û²»ºÏ·¨£¬Ìø¹ıµ±Ç°×óÖĞÀ¨ºÅÖØÊÔ
+					else// å¦‚æœä¸åˆæ³•ï¼Œè·³è¿‡å½“å‰å·¦ä¸­æ‹¬å·é‡è¯•
 					{
 						for (;;)
 						{
-							pos3 = eck::FindStr(pszLine, L"[", pos3 + 1);// ÕÒÏÂÒ»¸ö×óÖĞÀ¨ºÅ
+							pos3 = eck::FindStr(pszLine, L"[", pos3 + 1);// æ‰¾ä¸‹ä¸€ä¸ªå·¦ä¸­æ‹¬å·
 							if (pos3 < 0)
 								goto NoValidTimeLabel;
 							else
 							{
-								int posNextRightBracket = eck::FindStr(pszLine, L"]", pos3);// ÕÒÏÂÒ»¸öÓÒÖĞÀ¨ºÅ
+								int posNextRightBracket = eck::FindStr(pszLine, L"]", pos3);// æ‰¾ä¸‹ä¸€ä¸ªå³ä¸­æ‹¬å·
 								if (posNextRightBracket < 0)
 									goto NoValidTimeLabel;
 								else if (ParseLrc_IsTimeLabelLegal(pszLine + pos3 + 1, posNextRightBracket - pos3 - 1,
@@ -886,7 +885,7 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 		}
 	}
 #pragma endregion
-#pragma region ºÏ²¢Ê±¼äÏàÍ¬µÄ¸è´Ê
+#pragma region åˆå¹¶æ—¶é—´ç›¸åŒçš„æ­Œè¯
 	std::stable_sort(Result.begin(), Result.end(), [](const LRCINFO& a, const LRCINFO& b)->bool
 		{
 			return a.fTime < b.fTime;
@@ -908,10 +907,10 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 				int cch1 = TopItem.cchTotal,
 					cch2 = x.cchTotal;
 
-				if (cch1 && !cch2)// Ö»ÓĞµÚÒ»¸ö
+				if (cch1 && !cch2)// åªæœ‰ç¬¬ä¸€ä¸ª
 				{
-				}// Ê²Ã´¶¼²»×ö
-				else if (!cch1 && cch2)// Ö»ÓĞµÚ¶ş¸ö
+				}// ä»€ä¹ˆéƒ½ä¸åš
+				else if (!cch1 && cch2)// åªæœ‰ç¬¬äºŒä¸ª
 				{
 					TopItem.pszLrc = x.pszLrc;
 					TopItem.pszTranslation = NULL;
@@ -920,16 +919,16 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 					TopItem.cchLrc = x.cchLrc;
 					TopItem.cchTotal = x.cchTotal;
 				}
-				else if (!cch1 && !cch2)// Á½¸ö¶¼Ã»ÓĞ
+				else if (!cch1 && !cch2)// ä¸¤ä¸ªéƒ½æ²¡æœ‰
 				{
 				}
-				else// Á½¸ö¶¼ÓĞ
+				else// ä¸¤ä¸ªéƒ½æœ‰
 				{
 #pragma warning (push)
-#pragma warning (disable: 6308)// reallocÎªNULL
+#pragma warning (disable: 6308)// reallocä¸ºNULL
 					TopItem.pszLrc = (PWSTR)realloc(TopItem.pszLrc, eck::Cch2Cb(cch1 + cch2 + 1));
 #pragma warning (pop)
-					*(TopItem.pszLrc + cch1) = L'\n';
+					* (TopItem.pszLrc + cch1) = L'\n';
 					wcscpy(TopItem.pszLrc + cch1 + 1, x.pszLrc);
 
 					TopItem.pszTranslation = TopItem.pszLrc + cch1 + 1;
@@ -954,8 +953,8 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 		{
 			x.pszLrc = (PWSTR)malloc(eck::Cch2Cb(0));
 #pragma warning (push)
-#pragma warning (disable: 6011)// ½âÒıÓÃNULL
-			*x.pszLrc = L'\0';
+#pragma warning (disable: 6011)// è§£å¼•ç”¨NULL
+			* x.pszLrc = L'\0';
 #pragma warning (pop)
 		}
 	}
@@ -964,5 +963,56 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 	Label.shrink_to_fit();
 	VirtualFree(pFileData, 0, MEM_RELEASE);
 	return TRUE;
+}
+
+UINT MsgBox(PCWSTR pszMainInstruction, PCWSTR pszContent, PCWSTR pszWndTitle, UINT cButtons, HICON hIcon, HWND hParent,
+	UINT iDefButton, BOOL bCenterPos, PCWSTR pszCheckBoxTitle, PCWSTR pszButton1Title, PCWSTR pszButton2Title,
+	PCWSTR pszButton3Title, BOOL* pbCheck)
+{
+	if (cButtons < 1 && cButtons >3)
+	{
+		EckDbgBreak();
+		return 0;
+	}
+	TASKDIALOGCONFIG tdc = { 0 };
+	tdc.cbSize = sizeof(TASKDIALOGCONFIG);
+	TASKDIALOG_BUTTON tdb[3];
+	tdc.cButtons = cButtons;
+	tdc.pButtons = tdb;
+	tdc.dwFlags = TDF_ALLOW_DIALOG_CANCELLATION | (bCenterPos ? TDF_POSITION_RELATIVE_TO_WINDOW : 0);
+	tdc.pszMainInstruction = pszMainInstruction;
+	tdc.pszContent = pszContent;
+	tdc.pszWindowTitle = pszWndTitle;
+	tdc.pszVerificationText = pszCheckBoxTitle;
+	tdc.hMainIcon = hIcon;
+	tdc.hwndParent = hParent;
+	tdc.nDefaultButton = iDefButton;
+	switch (cButtons)
+	{
+	case 1:
+		tdb[0].nButtonID = MBBID_1;
+		tdb[0].pszButtonText = !pszButton1Title ? L"ç¡®å®š(&O)" : pszButton1Title;
+		break;
+	case 2:
+		tdb[0].nButtonID = MBBID_1;
+		tdb[0].pszButtonText = !pszButton1Title ? L"æ˜¯(&Y)" : pszButton1Title;
+		tdb[1].nButtonID = MBBID_2;
+		tdb[1].pszButtonText = !pszButton2Title ? L"å¦(&N)" : pszButton2Title;
+		break;
+	case 3:
+		tdb[0].nButtonID = MBBID_1;
+		tdb[0].pszButtonText = !pszButton1Title ? L"æ˜¯(&Y)" : pszButton1Title;
+		tdb[1].nButtonID = MBBID_2;
+		tdb[1].pszButtonText = !pszButton2Title ? L"å¦(&N)" : pszButton2Title;
+		tdb[2].nButtonID = MBBID_3;
+		tdb[2].pszButtonText = !pszButton3Title ? L"å–æ¶ˆ(&C)" : pszButton3Title;
+		break;
+	}
+	int iButton, iRadio;
+	BOOL bCheckBox;
+	TaskDialogIndirect(&tdc, &iButton, &iRadio, &bCheckBox);
+	if (pbCheck)
+		*pbCheck = bCheckBox;
+	return iButton;
 }
 UTILS_NAMESPACE_END

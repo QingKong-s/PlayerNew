@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <Windows.h>
 
 #include <unordered_map>
@@ -56,7 +56,7 @@ public:
 		BASS_ChannelSetAttribute(m_hStream, BASS_ATTRIB_PAN, fPan);
 	}
 
-	PNInline void SetPosition(float fTime) const
+	PNInline void SetPosition(double fTime) const
 	{
 		BASS_ChannelSetPosition(m_hStream, BASS_ChannelSeconds2Bytes(m_hStream, fTime), BASS_POS_BYTE);
 	}

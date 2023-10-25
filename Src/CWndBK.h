@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "CApp.h"
 #include "COptionsMgr.h"
 
@@ -10,7 +10,7 @@ constexpr inline auto WCN_MAINBK = L"PlayerNew.WndClass.MainBK";
 
 constexpr inline auto c_szWaveEventName = L"PlayerNew.Event.WaveEvent";
 
-// UIÔªËØÀàĞÍ
+// UIå…ƒç´ ç±»å‹
 enum UIELEMTYPE
 {
 	UIET_INVALID,
@@ -26,24 +26,24 @@ enum UIELEMTYPE
 	UIET_INFO
 };
 
-// UIÔªËØ±êÖ¾
+// UIå…ƒç´ æ ‡å¿—
 enum UIELEMFLAGS
 {
-	UIEF_NONE = 0x00000000,// ÎŞ
-	UIEF_STATIC = 0x00000001,// ¾²Ì¬ÔªËØ
-	UIEF_NOEVENT = 0x00000002,// ÎŞĞè×ª·¢ÊÂ¼ş
-	UIEF_WANTTIMEREVENT = 0x00000004 // ĞèÒª¶¨Ê±Æ÷ÖÜÆÚÊÂ¼ş
+	UIEF_NONE = 0x00000000,// æ— 
+	UIEF_STATIC = 0x00000001,// é™æ€å…ƒç´ 
+	UIEF_NOEVENT = 0x00000002,// æ— éœ€è½¬å‘äº‹ä»¶
+	UIEF_WANTTIMEREVENT = 0x00000004 // éœ€è¦å®šæ—¶å™¨å‘¨æœŸäº‹ä»¶
 };
 
-// UIÔªËØÊÂ¼ş
+// UIå…ƒç´ äº‹ä»¶
 enum UIELEMEVENT
 {
-	UIEE_SETRECT = 1,	// (&rc,0)		¾ØĞÎ½«±»¸ü¸Ä
-	UIEE_ONPLAYINGCTRL = 2,	// (type,0)		²¥·Å¿ØÖÆ²Ù×÷ÒÑ·¢Éú
-	UIEE_ONSETTINGSCHANGE = 3,	// (0,0)		ÉèÖÃÒÑ±»¸ü¸Ä
+	UIEE_SETRECT = 1,	// (&rc,0)		çŸ©å½¢å°†è¢«æ›´æ”¹
+	UIEE_ONPLAYINGCTRL = 2,	// (type,0)		æ’­æ”¾æ§åˆ¶æ“ä½œå·²å‘ç”Ÿ
+	UIEE_ONSETTINGSCHANGE = 3,	// (0,0)		è®¾ç½®å·²è¢«æ›´æ”¹
 };
 
-// ²¥·Å¿ØÖÆÀàĞÍ
+// æ’­æ”¾æ§åˆ¶ç±»å‹
 enum PLAYINGCTRLTYPE
 {
 	PCT_PLAY,
@@ -75,8 +75,8 @@ private:
 	IDXGISwapChain1* m_pSwapChain = NULL;
 	ID2D1DeviceContext* m_pDC = NULL;
 	ID2D1Bitmap1* m_pBmpBK = NULL;
-	ID2D1Bitmap1* m_pBmpBKStatic = NULL;// ¾²Ì¬±³¾°£¬Çå³ıÇøÓòÓÃ
-	ID2D1Bitmap1* m_pBmpAlbum = NULL;// ·âÃæÔ­Ê¼Î»Í¼
+	ID2D1Bitmap1* m_pBmpBKStatic = NULL;// é™æ€èƒŒæ™¯ï¼Œæ¸…é™¤åŒºåŸŸç”¨
+	ID2D1Bitmap1* m_pBmpAlbum = NULL;// å°é¢åŸå§‹ä½å›¾
 	ID2D1SolidColorBrush* m_pBrWhite = NULL;
 	ID2D1SolidColorBrush* m_pBrWhite2 = NULL;
 
@@ -122,7 +122,7 @@ private:
 	void OnSize(HWND hWnd, UINT state, int cx, int cy);
 
 	/// <summary>
-	/// Éú³ÉÔªËØÊÂ¼ş
+	/// ç”Ÿæˆå…ƒç´ äº‹ä»¶
 	/// </summary>
 	/// <param name="uEvent"></param>
 	/// <param name="wParam"></param>
@@ -139,28 +139,28 @@ public:
 		int x, int y, int cx, int cy, HWND hParent, int nID, PCVOID pData = NULL) override;
 	
 	/// <summary>
-	/// Ìí¼ÓÔªËØ
+	/// æ·»åŠ å…ƒç´ 
 	/// </summary>
-	/// <param name="pElem">ÔªËØ¶ÔÏó</param>
+	/// <param name="pElem">å…ƒç´ å¯¹è±¡</param>
 	void AddElem(CUIElem* pElem);
 
 	/// <summary>
-	/// ĞÂ¸èÇú³õÊ¼»¯Íê±Ï
+	/// æ–°æ­Œæ›²åˆå§‹åŒ–å®Œæ¯•
 	/// </summary>
 	void OnPlayingControl(PLAYINGCTRLTYPE uType);
 
 	/// <summary>
-	/// ÉèÖÃ±»¸Ä±ä
+	/// è®¾ç½®è¢«æ”¹å˜
 	/// </summary>
 	void OnSettingsChanged() { GenElemEvent(UIEE_ONSETTINGSCHANGE, 0, 0); }
 
 	/// <summary>
-	/// ÖØ»­
+	/// é‡ç”»
 	/// </summary>
 	void Redraw();
 
 	/// <summary>
-	/// ¸üĞÂ¾²Ì¬Î»Í¼
+	/// æ›´æ–°é™æ€ä½å›¾
 	/// </summary>
 	void UpdateStaticBmp();
 
@@ -170,7 +170,7 @@ public:
 
 #ifndef NDEBUG
 #if 1
-// ¡¾µ÷ÊÔÓÃ¡¿»­ÔªËØ±ß¿ò
+// ã€è°ƒè¯•ç”¨ã€‘ç”»å…ƒç´ è¾¹æ¡†
 #define BkDbg_DrawElemFrame() \
 	{ \
 		ID2D1SolidColorBrush* UIDBG_pBrush___; \
@@ -185,12 +185,12 @@ public:
 #define BkDbg_DrawElemFrame()
 #endif // 1
 #else
-// ¡¾µ÷ÊÔÓÃ¡¿»­ÔªËØ±ß¿ò
-// ReleaseÄ£Ê½ÏÂÒÑ±»¶¨ÒåÎª¿Õºê
+// ã€è°ƒè¯•ç”¨ã€‘ç”»å…ƒç´ è¾¹æ¡†
+// Releaseæ¨¡å¼ä¸‹å·²è¢«å®šä¹‰ä¸ºç©ºå®
 #define BkDbg_DrawElemFrame()
 #endif // !NDEBUG
 
-// ÔÚUIÔªËØÀàÖĞÉùÃ÷¿ÉÖ´ĞĞÁ¢¼´ÏÔÊ¾µÄÖØ»æ·½·¨£¬ĞèÒªRedraw·½·¨
+// åœ¨UIå…ƒç´ ç±»ä¸­å£°æ˜å¯æ‰§è¡Œç«‹å³æ˜¾ç¤ºçš„é‡ç»˜æ–¹æ³•ï¼Œéœ€è¦Redrawæ–¹æ³•
 #define CUI_DeclRedrawAndPresent \
 	PNInline void Redraw(BOOL bImmdShow) override \
 	{ \
@@ -213,32 +213,32 @@ public:
 
 
 
-// UIÔªËØÀà
+// UIå…ƒç´ ç±»
 class CUIElem
 {
 protected:
 	UINT m_uType = UIET_INVALID;
 	UINT m_uFlags = UIEF_NONE;
 
-	D2D1_RECT_F		m_rcF = {};		// ÔªËØ¾ØĞÎ
-	RECT			m_rc = {};		// ÔªËØ¾ØĞÎ
-	RECT			m_rcInWnd = {};		// ÔªËØ¾ØĞÎÓë´°¿Ú¾ØĞÎµÄ½»¼¯
-	int				m_cxHalf = 0,		// ÔªËØ¿í¶ÈµÄÒ»°ë
-		m_cyHalf = 0;		// ÔªËØ¸ß¶ÈµÄÒ»°ë
-	int				m_cx = 0,		// ÔªËØ¿í¶È
-		m_cy = 0;		// ÔªËØ¸ß¶È
+	D2D1_RECT_F		m_rcF = {};		// å…ƒç´ çŸ©å½¢
+	RECT			m_rc = {};		// å…ƒç´ çŸ©å½¢
+	RECT			m_rcInWnd = {};		// å…ƒç´ çŸ©å½¢ä¸çª—å£çŸ©å½¢çš„äº¤é›†
+	int				m_cxHalf = 0,		// å…ƒç´ å®½åº¦çš„ä¸€åŠ
+		m_cyHalf = 0;		// å…ƒç´ é«˜åº¦çš„ä¸€åŠ
+	int				m_cx = 0,		// å…ƒç´ å®½åº¦
+		m_cy = 0;		// å…ƒç´ é«˜åº¦
 
 
 	BOOL			m_bShow = TRUE;
 	BOOL			m_bRedraw = TRUE;
 	CWndBK*			m_pBK = NULL;
-	int				m_iZOrder = -1;		// ´Ó0¿ªÊ¼µÄZĞò
+	int				m_iZOrder = -1;		// ä»0å¼€å§‹çš„Zåº
 
 	int				m_idxDirtyRect = -1;
 	BOOL			m_bHasFoucs = FALSE;
 
 	/// <summary>
-	/// Ä¬ÈÏÊôĞÔ¸ü¸Ä´¦Àí¹ı³Ì
+	/// é»˜è®¤å±æ€§æ›´æ”¹å¤„ç†è¿‡ç¨‹
 	/// </summary>
 	/// <param name="uEvent"></param>
 	/// <param name="wParam"></param>
@@ -251,9 +251,9 @@ public:
 	virtual ~CUIElem();
 
 	/// <summary>
-	/// Í¨ÓÃ·½·¨£ºÍ¨ÖªÔªËØÊÂ¼ş
+	/// é€šç”¨æ–¹æ³•ï¼šé€šçŸ¥å…ƒç´ äº‹ä»¶
 	/// </summary>
-	/// <param name="uEvent">ÊÂ¼ş±êÊ¶·û</param>
+	/// <param name="uEvent">äº‹ä»¶æ ‡è¯†ç¬¦</param>
 	/// <param name="wParam"></param>
 	/// <param name="lParam"></param>
 	/// <returns></returns>
@@ -263,7 +263,7 @@ public:
 	}
 
 	/// <summary>
-	/// Í¨ÓÃ·½·¨£º´¦Àí´°¿ÚÏûÏ¢
+	/// é€šç”¨æ–¹æ³•ï¼šå¤„ç†çª—å£æ¶ˆæ¯
 	/// </summary>
 	/// <param name="uMsg"></param>
 	/// <param name="wParam"></param>
@@ -272,52 +272,52 @@ public:
 	virtual LRESULT OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) { return 0; }
 
 	/// <summary>
-	/// Í¨ÓÃ·½·¨£º¶¨Ê±Æ÷ÖÜÆÚÊÂ¼ş
+	/// é€šç”¨æ–¹æ³•ï¼šå®šæ—¶å™¨å‘¨æœŸäº‹ä»¶
 	/// </summary>
-	/// <param name="uTimerID">¶¨Ê±Æ÷ID</param>
+	/// <param name="uTimerID">å®šæ—¶å™¨ID</param>
 	virtual void OnTimer(UINT uTimerID) {}
 
 	/// <summary>
-	/// Í¨ÓÃ·½·¨£ºÖØ»­
+	/// é€šç”¨æ–¹æ³•ï¼šé‡ç”»
 	/// </summary>
 	virtual void Redraw() {}
 
 	/// <summary>
-	/// Í¨ÓÃ·½·¨£ºÖØ»­¡£
-	/// ¶ÀÁ¢µ÷ÓÃBeginDraw/EndDraw
+	/// é€šç”¨æ–¹æ³•ï¼šé‡ç”»ã€‚
+	/// ç‹¬ç«‹è°ƒç”¨BeginDraw/EndDraw
 	/// </summary>
-	/// <param name="bImmdShow">ÊÇ·ñÁ¢¼´ÏÔÊ¾</param>
+	/// <param name="bImmdShow">æ˜¯å¦ç«‹å³æ˜¾ç¤º</param>
 	virtual void Redraw(BOOL bImmdShow) {}
 
 	/// <summary>
-	/// Í¨ÓÃ·½·¨£º³õÊ¼»¯ÔªËØĞÅÏ¢
+	/// é€šç”¨æ–¹æ³•ï¼šåˆå§‹åŒ–å…ƒç´ ä¿¡æ¯
 	/// </summary>
-	/// <returns>³õÊ¼»¯³É¹¦·µ»ØTRUE£¬·ñÔò·µ»ØFALSE</returns>
+	/// <returns>åˆå§‹åŒ–æˆåŠŸè¿”å›TRUEï¼Œå¦åˆ™è¿”å›FALSE</returns>
 	virtual BOOL InitElem() { return TRUE; }
 
 	/// <summary>
-	/// ÖÃÔªËØ¾ØĞÎ
+	/// ç½®å…ƒç´ çŸ©å½¢
 	/// </summary>
-	/// <param name="rc">¾ØĞÎ</param>
+	/// <param name="rc">çŸ©å½¢</param>
 	PNInline void SetElemRect(RECT rc) { OnElemEvent(UIEE_SETRECT, (WPARAM)&rc, 0); }
 
 	/// <summary>
-	/// È¡ÔªËØ¾ØĞÎ
+	/// å–å…ƒç´ çŸ©å½¢
 	/// </summary>
-	/// <param name="prc">RECTÖ¸Õë</param>
+	/// <param name="prc">RECTæŒ‡é’ˆ</param>
 	/// <returns></returns>
 	PNInline void GetElemRect(RECT* prc) { *prc = m_rc; }
 
 	/// <summary>
-	/// ÔªËØÊÇ·ñ¿É¼û
+	/// å…ƒç´ æ˜¯å¦å¯è§
 	/// </summary>
-	/// <returns>¿É¼ûĞÔ</returns>
+	/// <returns>å¯è§æ€§</returns>
 	PNInline BOOL IsElemVisible() { return m_bShow; }
 
 	/// <summary>
-	/// ÖÃÔªËØ¿É¼ûĞÔ
+	/// ç½®å…ƒç´ å¯è§æ€§
 	/// </summary>
-	/// <param name="bShow">ÊÇ·ñ¿É¼û</param>
+	/// <param name="bShow">æ˜¯å¦å¯è§</param>
 	PNInline void ShowElem(BOOL bShow) { m_bShow = bShow; }
 
 	PNInline void SetZOrder(int iZOrder) { m_iZOrder = iZOrder; }
@@ -327,14 +327,14 @@ public:
 	PNInline void SetRedraw(BOOL b) { m_bRedraw = b; }
 
 	/// <summary>
-	/// Ìí¼ÓÓ°×ÓÔªËØ¡£
-	/// ´ËÔªËØµÄÏÔÊ¾ÄÚÈİ½«±»Í¶Ó°µ½Ó°×ÓÔªËØ
+	/// æ·»åŠ å½±å­å…ƒç´ ã€‚
+	/// æ­¤å…ƒç´ çš„æ˜¾ç¤ºå†…å®¹å°†è¢«æŠ•å½±åˆ°å½±å­å…ƒç´ 
 	/// </summary>
-	/// <param name="pElem">ÔªËØ</param>
+	/// <param name="pElem">å…ƒç´ </param>
 	void AddShadow(CUIElem* pElem);
 };
 
-// ·âÃæ
+// å°é¢
 class CUIAlbum final :public CUIElem
 {
 public:
@@ -342,15 +342,15 @@ public:
 	void Redraw() override;
 };
 
-// Ğı×ª·âÃæ
+// æ—‹è½¬å°é¢
 class CUIAlbumRotating final :public CUIElem
 {
 private:
-	float m_fAngle = 0.f;// µ±Ç°Ğı×ª½Ç¶È
+	float m_fAngle = 0.f;// å½“å‰æ—‹è½¬è§’åº¦
 
-	ID2D1BitmapBrush1* m_pBrAlbum = NULL;// ·âÃæÎ»Í¼»­Ë¢
-	ID2D1SolidColorBrush* m_pBrUV = NULL;// µçÆ½»­Ë¢
-	ID2D1SolidColorBrush* m_pBrUV2 = NULL;// µçÆ½±³¾°»­Ë¢
+	ID2D1BitmapBrush1* m_pBrAlbum = NULL;// å°é¢ä½å›¾ç”»åˆ·
+	ID2D1SolidColorBrush* m_pBrUV = NULL;// ç”µå¹³ç”»åˆ·
+	ID2D1SolidColorBrush* m_pBrUV2 = NULL;// ç”µå¹³èƒŒæ™¯ç”»åˆ·
 public:
 	CUIAlbumRotating();
 	~CUIAlbumRotating();
@@ -361,22 +361,22 @@ public:
 	CUI_DeclRedrawAndPresent;
 
 	/// <summary>
-	/// ¸üĞÂÎ»Í¼»­Ë¢
+	/// æ›´æ–°ä½å›¾ç”»åˆ·
 	/// </summary>
 	void UpdateAlbumBrush();
 };
 
-// ²¨ĞÎ
+// æ³¢å½¢
 class CUIWaves final :public CUIElem
 {
 private:
-	int m_cxLine = 0;// Ïß¿í
+	int m_cxLine = 0;// çº¿å®½
 
-	ID2D1SolidColorBrush* m_pBrLine = NULL;// Ïß»­Ë¢
-	ID2D1SolidColorBrush* m_pBrCenterMark = NULL;// ÖĞÏß»­Ë¢
+	ID2D1SolidColorBrush* m_pBrLine = NULL;// çº¿ç”»åˆ·
+	ID2D1SolidColorBrush* m_pBrCenterMark = NULL;// ä¸­çº¿ç”»åˆ·
 	IDWriteTextFormat* m_pTfTip = NULL;
 
-	ThreadState m_ThreadState = ThreadState::Stopped;// Ïß³Ì×´Ì¬
+	ThreadState m_ThreadState = ThreadState::Stopped;// çº¿ç¨‹çŠ¶æ€
 	HANDLE m_hThread = NULL;
 	std::vector<DWORD> m_vWavesData{};
 
@@ -389,36 +389,36 @@ public:
 	void OnTimer(UINT uTimerID) override;
 
 	/// <summary>
-	/// ÖÃ»æÖÆÏß¿í
+	/// ç½®ç»˜åˆ¶çº¿å®½
 	/// </summary>
-	/// <param name="i">¿í¶È</param>
+	/// <param name="i">å®½åº¦</param>
 	PNInline void SetLineWidth(int i) { m_cxLine = i; }
 
 	/// <summary>
-	/// È¡»æÖÆÏß¿í
+	/// å–ç»˜åˆ¶çº¿å®½
 	/// </summary>
-	/// <returns>·µ»ØÏß¿í</returns>
+	/// <returns>è¿”å›çº¿å®½</returns>
 	PNInline int GetLineWidth() { return m_cxLine; }
 };
 
-// ÆµÆ×
+// é¢‘è°±
 class CUISpe final :public CUIElem
 {
 private:
-	int m_iCount = 0;		// ÆµÆ×ÌõÊıÁ¿
-	float m_cxBar = 0.f;		// ÆµÆ×Ìõ¿í¶È
-	float m_cxGap = 0.f;		// ¼ä¸ô¿í¶È
+	int m_iCount = 0;		// é¢‘è°±æ¡æ•°é‡
+	float m_cxBar = 0.f;		// é¢‘è°±æ¡å®½åº¦
+	float m_cxGap = 0.f;		// é—´éš”å®½åº¦
 
 
-	int* m_piOldHeight = NULL;		// ¾É¸ß¶ÈĞÅÏ¢
-	int* m_piHeight = NULL;		// ¸ß¶È
-	int* m_piOldMaxPos = NULL;		// ¾É·åÖµ
-	int* m_piTime = NULL;		// ¼ÆÊ±
+	int* m_piOldHeight = NULL;		// æ—§é«˜åº¦ä¿¡æ¯
+	int* m_piHeight = NULL;		// é«˜åº¦
+	int* m_piOldMaxPos = NULL;		// æ—§å³°å€¼
+	int* m_piTime = NULL;		// è®¡æ—¶
 
-	int* m_pBaseData = NULL;		// »º³åÇø»ùÖ¸Õë
-	SIZE_T m_cbDataUnit = 0;		// »º³åÇø×Ü´óĞ¡
+	int* m_pBaseData = NULL;		// ç¼“å†²åŒºåŸºæŒ‡é’ˆ
+	SIZE_T m_cbDataUnit = 0;		// ç¼“å†²åŒºæ€»å¤§å°
 
-	ID2D1SolidColorBrush* m_pBrBar = NULL;// ÆµÆ×Ìõ»­Ë¢
+	ID2D1SolidColorBrush* m_pBrBar = NULL;// é¢‘è°±æ¡ç”»åˆ·
 public:
 	CUISpe();
 	~CUISpe();
@@ -428,22 +428,22 @@ public:
 	void OnTimer(UINT uTimerID) override;
 
 	/// <summary>
-	/// ÖÃÆµÆ×ÌõÊıÁ¿
+	/// ç½®é¢‘è°±æ¡æ•°é‡
 	/// </summary>
-	/// <param name="i">ÊıÁ¿</param>
+	/// <param name="i">æ•°é‡</param>
 	void SetCount(int i);
 
 	/// <summary>
-	/// È¡ÆµÆ×ÌõÊıÄ¿
+	/// å–é¢‘è°±æ¡æ•°ç›®
 	/// </summary>
-	/// <returns>·µ»ØÊıÄ¿</returns>
+	/// <returns>è¿”å›æ•°ç›®</returns>
 	PNInline int GetCount() { return m_iCount; }
 
 	/// <summary>
-	/// ÖÃ¼ä¸ô¿í¶È
+	/// ç½®é—´éš”å®½åº¦
 	/// </summary>
-	/// <param name="i">¿í¶È</param>
-	PNInline void SetGapWidth(int i)
+	/// <param name="i">å®½åº¦</param>
+	PNInline void SetGapWidth(float i)
 	{
 		if (i < 0)
 			i = 0;
@@ -451,19 +451,19 @@ public:
 	}
 
 	/// <summary>
-	/// È¡¼ä¸ô¿í¶È
+	/// å–é—´éš”å®½åº¦
 	/// </summary>
-	/// <returns>·µ»Ø¼ä¸ô¿í¶È</returns>
-	PNInline int GetGapWidth() { return m_cxGap; }
+	/// <returns>è¿”å›é—´éš”å®½åº¦</returns>
+	PNInline float GetGapWidth() { return m_cxGap; }
 };
-// ÆµÆ×2
+// é¢‘è°±2
 class CUISpe2 :public CUIElem
 {
 private:
-	int m_cSample = 0;		// Ñù±¾Êı
-	float* m_pfBuf = NULL;		// Ñù±¾»º³åÇø
-	SIZE_T m_cbBuf = 0;		// »º³åÇø´óĞ¡
-	float m_cxStep = 0.f;		// Ñù±¾ÏÔÊ¾¼ä¸ô
+	int m_cSample = 0;		// æ ·æœ¬æ•°
+	float* m_pfBuf = NULL;		// æ ·æœ¬ç¼“å†²åŒº
+	SIZE_T m_cbBuf = 0;		// ç¼“å†²åŒºå¤§å°
+	float m_cxStep = 0.f;		// æ ·æœ¬æ˜¾ç¤ºé—´éš”
 
 	ID2D1SolidColorBrush* m_pBrLine = NULL;
 public:
@@ -475,15 +475,15 @@ public:
 	LRESULT OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam) override;
 
 	/// <summary>
-	/// ÖÃÑù±¾Êı
+	/// ç½®æ ·æœ¬æ•°
 	/// </summary>
-	/// <param name="i">Ñù±¾Êı</param>
+	/// <param name="i">æ ·æœ¬æ•°</param>
 	void SetSampleCount(int i);
 
 	/// <summary>
-	/// È¡Ñù±¾Êı
+	/// å–æ ·æœ¬æ•°
 	/// </summary>
-	/// <returns>·µ»ØÑù±¾Êı</returns>
+	/// <returns>è¿”å›æ ·æœ¬æ•°</returns>
 	PNInline int GetSampleCount() { return m_cSample; }
 };
 
@@ -491,7 +491,7 @@ struct LRCITEMHEIGHTDATA
 {
 	float cy;
 };
-// ¹ö¶¯¸è´Ê
+// æ»šåŠ¨æ­Œè¯
 class CUILrc :public CUIElem
 {
 private:
@@ -500,25 +500,25 @@ private:
 
 	IDWriteTextFormat* m_pTextFormat = NULL;
 
-	int		m_idxCenter = -1;// ÖĞ¼ä¸è´Ê
-	int		m_idxCurr = -1;	// µ±Ç°¸è´Ê
-	int		m_idxMouseHover = -1;	// µ±Ç°ÈÈµã¸è´Ê
-	int		m_idxLastMouseHover = -1;	// ÉÏ´ÎÈÈµã¸è´Ê
-	int		m_idxLastHighlight = -1;	// ÉÏ´Î¸ßÁÁ¸è´Ê
-	float	m_yCenterItem = 0.f;	// ÖĞ¼ä¾äË®Æ½ÖĞÏßµÄ¶¥±ß
+	int		m_idxCenter = -1;// ä¸­é—´æ­Œè¯
+	int		m_idxCurr = -1;	// å½“å‰æ­Œè¯
+	int		m_idxMouseHover = -1;	// å½“å‰çƒ­ç‚¹æ­Œè¯
+	int		m_idxLastMouseHover = -1;	// ä¸Šæ¬¡çƒ­ç‚¹æ­Œè¯
+	int		m_idxLastHighlight = -1;	// ä¸Šæ¬¡é«˜äº®æ­Œè¯
+	float	m_yCenterItem = 0.f;	// ä¸­é—´å¥æ°´å¹³ä¸­çº¿çš„é¡¶è¾¹
 
-	int		m_idxTopItem = 0;	// µÚÒ»¾ä¿É¼û¸è´Ê
-	float	m_fOffsetTopIndex = 0.f;	// µÚÒ»¾ä¿É¼û¸è´ÊµÄÕÚµ²¸ß¶È
+	int		m_idxTopItem = 0;	// ç¬¬ä¸€å¥å¯è§æ­Œè¯
+	float	m_fOffsetTopIndex = 0.f;	// ç¬¬ä¸€å¥å¯è§æ­Œè¯çš„é®æŒ¡é«˜åº¦
 
-	//LRCHSCROLLINFO  m_LrcHScrollInfo{ -1 };	// ¸è´ÊË®Æ½¹ö¶¯ĞÅÏ¢£¬½öÊÊÓÃÓÚµ±Ç°²¥·ÅĞĞ
-	//LRCVSCROLLINFO  m_LrcVScrollInfo{};		// ´¹Ö±¹ö¶¯¶¯»­ĞÅÏ¢
-	BOOL	m_bVAnOngoing = FALSE;// ´¹Ö±¹ö¶¯¶¯»­ÊÇ·ñÔÚ½øĞĞ£¬´Ë³ÉÔ±ÎªTRUEÊ±²»ÄÜ½øĞĞÔÚ¸è´ÊÇøÓòÄÚÖ´ĞĞÆäËû³ÊÏÖ½»»»Á´µÄ²Ù×÷£¬·ñÔò»áÓĞÒ»Ğ©Ææ¹ÖµÄÎÊÌâ¡£¡£¡£¡£
+	//LRCHSCROLLINFO  m_LrcHScrollInfo{ -1 };	// æ­Œè¯æ°´å¹³æ»šåŠ¨ä¿¡æ¯ï¼Œä»…é€‚ç”¨äºå½“å‰æ’­æ”¾è¡Œ
+	//LRCVSCROLLINFO  m_LrcVScrollInfo{};		// å‚ç›´æ»šåŠ¨åŠ¨ç”»ä¿¡æ¯
+	BOOL	m_bVAnOngoing = FALSE;// å‚ç›´æ»šåŠ¨åŠ¨ç”»æ˜¯å¦åœ¨è¿›è¡Œï¼Œæ­¤æˆå‘˜ä¸ºTRUEæ—¶ä¸èƒ½è¿›è¡Œåœ¨æ­Œè¯åŒºåŸŸå†…æ‰§è¡Œå…¶ä»–å‘ˆç°äº¤æ¢é“¾çš„æ“ä½œï¼Œå¦åˆ™ä¼šæœ‰ä¸€äº›å¥‡æ€ªçš„é—®é¢˜ã€‚ã€‚ã€‚ã€‚
 
 	int		m_iDrawingID = 0;
 
 	ULONGLONG m_ullLastDrawingTime = 0ull;
 
-	//int             m_iLastLrcIndex[2] = { -1,-1 };// 0£ºÉÏ´ÎÖĞĞÄ£»1£ºÉÏ´Î¸ßÁÁ
+	//int             m_iLastLrcIndex[2] = { -1,-1 };// 0ï¼šä¸Šæ¬¡ä¸­å¿ƒï¼›1ï¼šä¸Šæ¬¡é«˜äº®
 
 	int m_idxAnStart = -1;
 	int m_idxAnEnd = -1;
@@ -555,61 +555,61 @@ public:
 	LRESULT OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam) override;
 
 	/// <summary>
-	/// ´Óm_idxTopItemÏî¿ªÊ¼ÏòÏÂ»æ»­ËùÓĞ¸è´Ê
+	/// ä»m_idxTopItemé¡¹å¼€å§‹å‘ä¸‹ç»˜ç”»æ‰€æœ‰æ­Œè¯
 	/// </summary>
 	void DrawAllLrc_Top();
 
 	/// <summary>
-	/// ÒÔµ±Ç°¸è´ÊÎªÖĞ¼äÒ»¾ä»æ»­ËùÓĞ¸è´Ê£¬ÖĞ¼ä¾ä¸è´ÊÎ»ÖÃÊÜm_yCenterItem¿ØÖÆ
+	/// ä»¥å½“å‰æ­Œè¯ä¸ºä¸­é—´ä¸€å¥ç»˜ç”»æ‰€æœ‰æ­Œè¯ï¼Œä¸­é—´å¥æ­Œè¯ä½ç½®å—m_yCenterItemæ§åˆ¶
 	/// </summary>
 	void DrawAllLrc_Center();
 
 	/// <summary>
-	/// »­¹ö¶¯Ìõ
+	/// ç”»æ»šåŠ¨æ¡
 	/// </summary>
-	/// <param name="bImmdShow">ÊÇ·ñÁ¢¼´ÏÔÊ¾</param>
+	/// <param name="bImmdShow">æ˜¯å¦ç«‹å³æ˜¾ç¤º</param>
 	void RedrawSB(BOOL bImmdShow);
 
 	/// <summary>
-	/// »­Ò»¾ä¸è´Ê
+	/// ç”»ä¸€å¥æ­Œè¯
 	/// </summary>
-	/// <param name="iIndex">Ë÷Òı</param>
-	/// <param name="y">¸ß¶È£¬ÈôÒªÊ¹ÓÃÉÏ´Î¸ß¶È£¬ÉèÖÃÎªINFINITY</param>
-	/// <param name="bTop">Ö¸¶¨"y"²ÎÊıÊÇ·ñÎª¶¥±ß£¬TRUEÎª¶¥±ß£¬FALSEÎªµ×±ß£¬Èôy==INFINITY£¬Ôò´Ë²ÎÊı±ØĞëÉèÎªTRUE</param>
+	/// <param name="iIndex">ç´¢å¼•</param>
+	/// <param name="y">é«˜åº¦ï¼Œè‹¥è¦ä½¿ç”¨ä¸Šæ¬¡é«˜åº¦ï¼Œè®¾ç½®ä¸ºINFINITY</param>
+	/// <param name="bTop">æŒ‡å®š"y"å‚æ•°æ˜¯å¦ä¸ºé¡¶è¾¹ï¼ŒTRUEä¸ºé¡¶è¾¹ï¼ŒFALSEä¸ºåº•è¾¹ï¼Œè‹¥y==INFINITYï¼Œåˆ™æ­¤å‚æ•°å¿…é¡»è®¾ä¸ºTRUE</param>
 	/// <param name="bClearBK"></param>
-	/// <param name="bImmdShow">ÊÇ·ñÁ¢¼´ÏÔÊ¾</param>
-	/// <returns>¸ß¶È</returns>
+	/// <param name="bImmdShow">æ˜¯å¦ç«‹å³æ˜¾ç¤º</param>
+	/// <returns>é«˜åº¦</returns>
 	float RedrawItem(int iIndex, float y, BOOL bTop, BOOL bClearBK, BOOL bImmdShow, BOOL bCenterLine = FALSE, int* yOut = NULL);
 
 	/// <summary>
-	/// ÃüÖĞ²âÊÔ
+	/// å‘½ä¸­æµ‹è¯•
 	/// </summary>
-	/// <param name="pt">²âÊÔµã</param>
-	/// <returns>³É¹¦·µ»Ø¸è´ÊË÷Òı£¬Ê§°Ü·µ»Ø-1</returns>
+	/// <param name="pt">æµ‹è¯•ç‚¹</param>
+	/// <returns>æˆåŠŸè¿”å›æ­Œè¯ç´¢å¼•ï¼Œå¤±è´¥è¿”å›-1</returns>
 	int HitTest(POINT pt);
 
 	/// <summary>
-	/// ³õÊ¼»¯ÊúÖ±ÇĞ»»¶¯»­
+	/// åˆå§‹åŒ–ç«–ç›´åˆ‡æ¢åŠ¨ç”»
 	/// </summary>
 	void InitVAnimation();
 
 	void InitAnimation(int idxPrevCenter, int idxNewCenter);
 };
-// ½ø¶ÈÌõ
+// è¿›åº¦æ¡
 class CUIProgBar :public CUIElem
 {
 private:
-	ULONGLONG m_ullPos = 0ull;		// Î»ÖÃ
-	ULONGLONG m_ullMax = 0ull;		// ×î´óÎ»ÖÃ
+	ULONGLONG m_ullPos = 0ull;		// ä½ç½®
+	ULONGLONG m_ullMax = 0ull;		// æœ€å¤§ä½ç½®
 
-	ULONGLONG m_ullTempPos = 0ull;		// ÁÙÊ±Î»ÖÃ
-	BOOL m_bShowTempMark = FALSE;	// ÊÇ·ñÆôÓÃÁÙÊ±Î»ÖÃ
+	ULONGLONG m_ullTempPos = 0ull;		// ä¸´æ—¶ä½ç½®
+	BOOL m_bShowTempMark = FALSE;	// æ˜¯å¦å¯ç”¨ä¸´æ—¶ä½ç½®
 
-	BOOL m_bLBtnDown = FALSE;	// ×ó¼üÊÇ·ñ°´ÏÂ
+	BOOL m_bLBtnDown = FALSE;	// å·¦é”®æ˜¯å¦æŒ‰ä¸‹
 
-	ID2D1SolidColorBrush* m_pBrNormal = NULL;// ½ø¶È»­Ë¢
-	ID2D1SolidColorBrush* m_pBrBK = NULL;// ±³¾°»­Ë¢
-	ID2D1SolidColorBrush* m_pBrTempMark = NULL;// ÁÙÊ±½ø¶È»­Ë¢
+	ID2D1SolidColorBrush* m_pBrNormal = NULL;// è¿›åº¦ç”»åˆ·
+	ID2D1SolidColorBrush* m_pBrBK = NULL;// èƒŒæ™¯ç”»åˆ·
+	ID2D1SolidColorBrush* m_pBrTempMark = NULL;// ä¸´æ—¶è¿›åº¦ç”»åˆ·
 public:
 	CUIProgBar();
 	~CUIProgBar();
@@ -621,9 +621,9 @@ public:
 	CUI_DeclRedrawAndPresent;
 
 	/// <summary>
-	/// ÖÃÎ»ÖÃ
+	/// ç½®ä½ç½®
 	/// </summary>
-	/// <param name="ullPos">Î»ÖÃ</param>
+	/// <param name="ullPos">ä½ç½®</param>
 	PNInline void SetPos(ULONGLONG ullPos)
 	{
 		if (ullPos > m_ullMax)
@@ -632,50 +632,50 @@ public:
 	}
 
 	/// <summary>
-	/// È¡Î»ÖÃ
+	/// å–ä½ç½®
 	/// </summary>
-	/// <returns>·µ»ØÎ»ÖÃ</returns>
+	/// <returns>è¿”å›ä½ç½®</returns>
 	PNInline ULONGLONG GetPos() { return m_ullPos; }
 
 	/// <summary>
-	/// ÖÃ×î´óÖµ
+	/// ç½®æœ€å¤§å€¼
 	/// </summary>
-	/// <param name="ullMax">×î´óÖµ</param>
+	/// <param name="ullMax">æœ€å¤§å€¼</param>
 	PNInline void SetMax(ULONGLONG ullMax) { m_ullMax = ullMax; }
 
 	/// <summary>
-	/// È¡×î´óÖµ
+	/// å–æœ€å¤§å€¼
 	/// </summary>
-	/// <returns>·µ»Ø×î´óÖµ</returns>
+	/// <returns>è¿”å›æœ€å¤§å€¼</returns>
 	PNInline ULONGLONG GetMax() { return m_ullMax; }
 
 	/// <summary>
-	/// ÆôÓÃÁÙÊ±½ø¶È
+	/// å¯ç”¨ä¸´æ—¶è¿›åº¦
 	/// </summary>
-	/// <param name="b">ÊÇ·ñÆôÓÃ</param>
+	/// <param name="b">æ˜¯å¦å¯ç”¨</param>
 	PNInline void EnableTempPosMark(BOOL b) { m_bShowTempMark = b; }
 
 	/// <summary>
-	/// ÖÃÁÙÊ±½ø¶ÈÎ»ÖÃ
+	/// ç½®ä¸´æ—¶è¿›åº¦ä½ç½®
 	/// </summary>
-	/// <param name="ullPos">Î»ÖÃ</param>
+	/// <param name="ullPos">ä½ç½®</param>
 	PNInline void SetTempPosMark(ULONGLONG ullPos) { m_ullTempPos = ullPos; }
 
 	/// <summary>
-	/// ÃüÖĞ²âÊÔ
+	/// å‘½ä¸­æµ‹è¯•
 	/// </summary>
-	/// <param name="pt">Ïà¶Ô±³¾°µÄ×ø±ê</param>
-	/// <param name="pullPos">·µ»Ø½ø¶ÈÌõÎ»ÖÃ</param>
-	/// <returns>²âÊÔ³É¹¦·µ»Ø·ÇÁã£¬·ñÔò·µ»ØÁã</returns>
+	/// <param name="pt">ç›¸å¯¹èƒŒæ™¯çš„åæ ‡</param>
+	/// <param name="pullPos">è¿”å›è¿›åº¦æ¡ä½ç½®</param>
+	/// <returns>æµ‹è¯•æˆåŠŸè¿”å›éé›¶ï¼Œå¦åˆ™è¿”å›é›¶</returns>
 	int HitTest(POINT pt, ULONGLONG* pullPos);
 };
-// ¹¤¾ßÌõ°´Å¥×´Ì¬
+// å·¥å…·æ¡æŒ‰é’®çŠ¶æ€
 enum UITOOLBARBTNSTATE
 {
 	TBBS_NORMAL = 0x00000000,
 	TBBS_CHECK = 0x00000001
 };
-// ¹¤¾ßÌõ°´Å¥Ë÷Òı
+// å·¥å…·æ¡æŒ‰é’®ç´¢å¼•
 enum UITOOLBARBTNINDEX
 {
 	TBBI_INVALID = -1,
@@ -696,32 +696,32 @@ enum UITOOLBARBTNINDEX
 
 #define BUFSIZE_TOOLBATTIME			48
 #define BUFSIZE_TOOLBATTIMEMAXCH	47
-// ¹¤¾ßÌõ
+// å·¥å…·æ¡
 class CUIToolBar :public CUIElem
 {
 private:
-	BOOL m_bLBtnDown = FALSE;	// ×ó¼üÊÇ·ñ°´ÏÂ
-	BOOL m_bInToolBar = FALSE;	// ¹â±êÊÇ·ñÔÚ¹¤¾ßÌõÄÚ
+	BOOL m_bLBtnDown = FALSE;	// å·¦é”®æ˜¯å¦æŒ‰ä¸‹
+	BOOL m_bInToolBar = FALSE;	// å…‰æ ‡æ˜¯å¦åœ¨å·¥å…·æ¡å†…
 
-	D2D1_RECT_F m_rcFTimeLabel = {};	// Ê±¼ä±êÇ©¾ØĞÎ
-	RECT m_rcTimeLabel = {};	// Ê±¼ä±êÇ©¾ØĞÎ
-	WCHAR m_szTime[BUFSIZE_TOOLBATTIME] = { L"00:00/00:00" };// Ê±¼ä±êÇ©ÄÚÈİ
-	UINT32 m_cchTime = 0;		// Ê±¼ä±êÇ©ÎÄ±¾³¤¶È
+	D2D1_RECT_F m_rcFTimeLabel = {};	// æ—¶é—´æ ‡ç­¾çŸ©å½¢
+	RECT m_rcTimeLabel = {};	// æ—¶é—´æ ‡ç­¾çŸ©å½¢
+	WCHAR m_szTime[BUFSIZE_TOOLBATTIME] = { L"00:00/00:00" };// æ—¶é—´æ ‡ç­¾å†…å®¹
+	UINT32 m_cchTime = 0;		// æ—¶é—´æ ‡ç­¾æ–‡æœ¬é•¿åº¦
 
-	UITOOLBARBTNINDEX m_idxHot = TBBI_INVALID;// ÈÈµãË÷Òı
-	UITOOLBARBTNINDEX m_idxLastHot = TBBI_INVALID;// ÉÏ´ÎÈÈµãË÷Òı
-	UITOOLBARBTNINDEX m_idxPush = TBBI_INVALID;// °´ÏÂË÷Òı
-	UITOOLBARBTNINDEX m_idxLastHover = TBBI_INVALID;// ÉÏ´ÎĞüÍ£Ë÷Òı
+	UITOOLBARBTNINDEX m_idxHot = TBBI_INVALID;// çƒ­ç‚¹ç´¢å¼•
+	UITOOLBARBTNINDEX m_idxLastHot = TBBI_INVALID;// ä¸Šæ¬¡çƒ­ç‚¹ç´¢å¼•
+	UITOOLBARBTNINDEX m_idxPush = TBBI_INVALID;// æŒ‰ä¸‹ç´¢å¼•
+	UITOOLBARBTNINDEX m_idxLastHover = TBBI_INVALID;// ä¸Šæ¬¡æ‚¬åœç´¢å¼•
 
-	UINT m_uBtnsCheckState = 0;		// °´Å¥¼ì²é×´Ì¬£¬Ê¹ÓÃ 1<<Ë÷Òı ÉèÖÃÎ»±êÖ¾
+	UINT m_uBtnsCheckState = 0;		// æŒ‰é’®æ£€æŸ¥çŠ¶æ€ï¼Œä½¿ç”¨ 1<<ç´¢å¼• è®¾ç½®ä½æ ‡å¿—
 
-	HWND m_hToolTip = NULL;		// ¹¤¾ßÌáÊ¾´°¿Ú¾ä±ú
-	TTTOOLINFOW m_ti = {};		// ¹¤¾ßµ÷ÊÔ½á¹¹
+	HWND m_hToolTip = NULL;		// å·¥å…·æç¤ºçª—å£å¥æŸ„
+	TTTOOLINFOW m_ti = {};		// å·¥å…·è°ƒè¯•ç»“æ„
 
-	ID2D1SolidColorBrush* m_pBrText = NULL;// ÎÄ±¾»­Ë¢
-	ID2D1SolidColorBrush* m_pBrBtnHot = NULL;// ÈÈµã±³¾°»­Ë¢
-	ID2D1SolidColorBrush* m_pBrBtnPushed = NULL;// °´ÏÂ±³¾°»­Ë¢
-	ID2D1SolidColorBrush* m_pBrBtnChecked = NULL;// ¼ì²é±³¾°»­Ë¢
+	ID2D1SolidColorBrush* m_pBrText = NULL;// æ–‡æœ¬ç”»åˆ·
+	ID2D1SolidColorBrush* m_pBrBtnHot = NULL;// çƒ­ç‚¹èƒŒæ™¯ç”»åˆ·
+	ID2D1SolidColorBrush* m_pBrBtnPushed = NULL;// æŒ‰ä¸‹èƒŒæ™¯ç”»åˆ·
+	ID2D1SolidColorBrush* m_pBrBtnChecked = NULL;// æ£€æŸ¥èƒŒæ™¯ç”»åˆ·
 	IDWriteTextFormat* m_pTfTime = NULL;
 public:
 	CUIToolBar();
@@ -734,24 +734,24 @@ public:
 	CUI_DeclRedrawAndPresent;
 
 	/// <summary>
-	/// ÖØ»­Ê±¼ä±êÇ©
+	/// é‡ç”»æ—¶é—´æ ‡ç­¾
 	/// </summary>
 	void RedrawTimeInfo();
 
 	/// <summary>
-	/// ÃüÖĞ²âÊÔ
+	/// å‘½ä¸­æµ‹è¯•
 	/// </summary>
-	/// <param name="pt">²âÊÔµã</param>
-	/// <returns>°´Å¥Ë÷Òı</returns>
+	/// <param name="pt">æµ‹è¯•ç‚¹</param>
+	/// <returns>æŒ‰é’®ç´¢å¼•</returns>
 	UITOOLBARBTNINDEX HitTest(POINT pt);
 
 	/// <summary>
-	/// Ö´ĞĞ°´Å¥¶¯×÷
+	/// æ‰§è¡ŒæŒ‰é’®åŠ¨ä½œ
 	/// </summary>
-	/// <param name="idx">Ë÷Òı</param>
+	/// <param name="idx">ç´¢å¼•</param>
 	void DoCmd(UITOOLBARBTNINDEX idx);
 };
-// ¸èÇúĞÅÏ¢
+// æ­Œæ›²ä¿¡æ¯
 class CUIInfo :public CUIElem
 {
 private:

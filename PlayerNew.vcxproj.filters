@@ -18,21 +18,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="targetver.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Resource.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Entry.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="CWndMain.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="CApp.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\WinEzCtrlKit\eck\CWnd.h">
       <Filter>eck</Filter>
     </ClInclude>
@@ -40,9 +25,6 @@
       <Filter>eck</Filter>
     </ClInclude>
     <ClInclude Include="..\WinEzCtrlKit\eck\DbgHelper.h">
-      <Filter>eck</Filter>
-    </ClInclude>
-    <ClInclude Include="..\WinEzCtrlKit\eck\DesignerDef.h">
       <Filter>eck</Filter>
     </ClInclude>
     <ClInclude Include="..\WinEzCtrlKit\eck\DlgHelper.h">
@@ -84,15 +66,6 @@
     <ClInclude Include="..\WinEzCtrlKit\eck\CButton.h">
       <Filter>eck</Filter>
     </ClInclude>
-    <ClInclude Include="..\WinEzCtrlKit\eck\CChartBar.h">
-      <Filter>eck</Filter>
-    </ClInclude>
-    <ClInclude Include="..\WinEzCtrlKit\eck\CChartLine.h">
-      <Filter>eck</Filter>
-    </ClInclude>
-    <ClInclude Include="..\WinEzCtrlKit\eck\CChartPie.h">
-      <Filter>eck</Filter>
-    </ClInclude>
     <ClInclude Include="..\WinEzCtrlKit\eck\CColorPicker.h">
       <Filter>eck</Filter>
     </ClInclude>
@@ -120,12 +93,6 @@
     <ClInclude Include="..\WinEzCtrlKit\eck\CFileDlg.h">
       <Filter>eck</Filter>
     </ClInclude>
-    <ClInclude Include="..\WinEzCtrlKit\eck\CForm.h">
-      <Filter>eck</Filter>
-    </ClInclude>
-    <ClInclude Include="..\WinEzCtrlKit\eck\CFormTable.h">
-      <Filter>eck</Filter>
-    </ClInclude>
     <ClInclude Include="..\WinEzCtrlKit\eck\CHeader.h">
       <Filter>eck</Filter>
     </ClInclude>
@@ -145,9 +112,6 @@
       <Filter>eck</Filter>
     </ClInclude>
     <ClInclude Include="..\WinEzCtrlKit\eck\CListView.h">
-      <Filter>eck</Filter>
-    </ClInclude>
-    <ClInclude Include="..\WinEzCtrlKit\eck\CLunarCalendar.h">
       <Filter>eck</Filter>
     </ClInclude>
     <ClInclude Include="..\WinEzCtrlKit\eck\CPropertySheet.h">
@@ -189,56 +153,68 @@
     <ClInclude Include="..\WinEzCtrlKit\eck\CUpDown.h">
       <Filter>eck</Filter>
     </ClInclude>
-    <ClInclude Include="CSimpleList.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\WinEzCtrlKit\eck\CScrollView.h">
       <Filter>eck</Filter>
-    </ClInclude>
-    <ClInclude Include="CWndBK.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="CBass.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Utils.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="CWndList.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="CPlayList.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="CPlayListFile.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="COptionsMgr.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="CPlayer.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="CDlgListFile.h">
-      <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\WinEzCtrlKit\eck\CDialog.h">
       <Filter>eck</Filter>
     </ClInclude>
+    <ClInclude Include="Src\bass.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\bass_fx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\bassmidi.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\CApp.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\CBass.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\CDlgListFile.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\COptionsMgr.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\CPlayer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\CPlayList.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\CPlayListFile.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\CSimpleList.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\CWndBK.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\CWndList.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\CWndMain.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\Entry.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\resource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\targetver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\Utils.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Entry.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="CWndMain.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="CApp.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\WinEzCtrlKit\eck\DesignerDef.cpp">
-      <Filter>eck</Filter>
-    </ClCompile>
     <ClCompile Include="..\WinEzCtrlKit\eck\DlgHelper.cpp">
       <Filter>eck</Filter>
     </ClCompile>
@@ -260,9 +236,6 @@
     <ClCompile Include="..\WinEzCtrlKit\eck\CButton.cpp">
       <Filter>eck</Filter>
     </ClCompile>
-    <ClCompile Include="..\WinEzCtrlKit\eck\CChartPie.cpp">
-      <Filter>eck</Filter>
-    </ClCompile>
     <ClCompile Include="..\WinEzCtrlKit\eck\CColorPicker.cpp">
       <Filter>eck</Filter>
     </ClCompile>
@@ -281,9 +254,6 @@
     <ClCompile Include="..\WinEzCtrlKit\eck\CFile.cpp">
       <Filter>eck</Filter>
     </ClCompile>
-    <ClCompile Include="..\WinEzCtrlKit\eck\CForm.cpp">
-      <Filter>eck</Filter>
-    </ClCompile>
     <ClCompile Include="..\WinEzCtrlKit\eck\CLabel.cpp">
       <Filter>eck</Filter>
     </ClCompile>
@@ -291,9 +261,6 @@
       <Filter>eck</Filter>
     </ClCompile>
     <ClCompile Include="..\WinEzCtrlKit\eck\CListBoxExt.cpp">
-      <Filter>eck</Filter>
-    </ClCompile>
-    <ClCompile Include="..\WinEzCtrlKit\eck\CLunarCalendar.cpp">
       <Filter>eck</Filter>
     </ClCompile>
     <ClCompile Include="..\WinEzCtrlKit\eck\CRefBin.cpp">
@@ -311,45 +278,54 @@
     <ClCompile Include="..\WinEzCtrlKit\eck\CWnd.cpp">
       <Filter>eck</Filter>
     </ClCompile>
-    <ClCompile Include="CSimpleList.cpp">
+    <ClCompile Include="Src\CApp.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="CWndBK.cpp">
+    <ClCompile Include="Src\CBass.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="CBass.cpp">
+    <ClCompile Include="Src\CDlgListFile.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Utils.cpp">
+    <ClCompile Include="Src\COptionsMgr.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="CWndList.cpp">
+    <ClCompile Include="Src\CPlayer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="CPlayList.cpp">
+    <ClCompile Include="Src\CPlayList.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="CPlayListFile.cpp">
+    <ClCompile Include="Src\CPlayListFile.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="COptionsMgr.cpp">
+    <ClCompile Include="Src\CSimpleList.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="CPlayer.cpp">
+    <ClCompile Include="Src\CUILrc.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="CUILrc.cpp">
+    <ClCompile Include="Src\CWndBK.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="CDlgListFile.cpp">
+    <ClCompile Include="Src\CWndList.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\CWndMain.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Entry.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Utils.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\WinEzCtrlKit\eck\CDialog.cpp">
-      <Filter>源文件</Filter>
+      <Filter>eck</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="Win32Template.rc">
+    <ResourceCompile Include="Src\Win32Template.rc">
       <Filter>资源文件</Filter>
     </ResourceCompile>
   </ItemGroup>

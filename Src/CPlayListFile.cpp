@@ -1,4 +1,4 @@
-#include "CPlayListFile.h"
+﻿#include "CPlayListFile.h"
 
 BOOL CPlayListFileReader::Open(PCWSTR pszFile)
 {
@@ -77,7 +77,6 @@ void CPlayListFileReader::For(FItemProcessor fnProcessor)
 		{
 			r.SkipPointer(pItem);
 			Item1.bIgnore = eck::IsBitSet(pItem->uFlags, QKLIF_IGNORED);
-			Item1.bDelayPlaying = FALSE;
 
 			pszName = (PCWSTR)r.m_pMem;
 			Item1.cchName = (int)wcslen(pszName);
@@ -201,12 +200,12 @@ void CPlayListFileWriter::PushBack(const LISTFILEITEM_1& Item, PCWSTR pszName, P
 {
 	++m_Header.cItems;
 	m_File << Item;
-	m_File.Write(pszName, eck::Cch2Cb(Item.cchName));
-	m_File.Write(pszFile, eck::Cch2Cb(Item.cchFile));
+	m_File.Write(pszName, (DWORD)eck::Cch2Cb(Item.cchName));
+	m_File.Write(pszFile, (DWORD)eck::Cch2Cb(Item.cchFile));
 	if (Item.cchTime)
-		m_File.Write(pszTime, eck::Cch2Cb(Item.cchTime));
+		m_File.Write(pszTime, (DWORD)eck::Cch2Cb(Item.cchTime));
 	else
-		m_File.Write(L"\0", eck::Cch2Cb(0));
+		m_File.Write(L"\0", (DWORD)eck::Cch2Cb(0));
 }
 
 void CPlayListFileWriter::BeginBookMark()
@@ -219,7 +218,7 @@ void CPlayListFileWriter::PushBackBookmark(const BOOKMARKITEM& Item, PCWSTR pszN
 {
 	++m_BmHeader.cBookmarks;
 	m_File << Item;
-	m_File.Write(pszName, eck::Cch2Cb(Item.cchName));
+	m_File.Write(pszName, (DWORD)eck::Cch2Cb(Item.cchName));
 }
 
 BOOL CPlayListFileWriter::End()

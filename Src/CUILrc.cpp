@@ -1,4 +1,4 @@
-#include "CWndBK.h"
+ï»¿#include "CWndBK.h"
 constexpr static D2D_COLOR_F c_D2DClrCyanDeeper{ 0.f,0.3764f,0.7529f,1.f };
 
 CUILrc::CUILrc()
@@ -27,7 +27,7 @@ BOOL CUILrc::InitElem()
     auto& Font = COptionsMgr::GetInst().LrcFont;
     App->m_pDwFactory->CreateTextFormat(Font.rsFontName.Data(), NULL,
         (DWRITE_FONT_WEIGHT)Font.iWeight, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-        Font.iFontSize, L"zh-cn", &m_pTextFormat);
+        Font.fFontSize, L"zh-cn", &m_pTextFormat);
     return TRUE;
 }
 
@@ -39,14 +39,14 @@ void CUILrc::Redraw()
     //PCWSTR pszText = NULL;
     //if (!g_hStream)
     //{
-    //    pszText = L"Çç¿ÕµÄÒôÀÖ²¥·ÅÆ÷ - VC++/Win32";
+    //    pszText = L"æ™´ç©ºçš„éŸ³ä¹æ’­æ”¾å™¨ - VC++/Win32";
     //    g_iLrcState = LRCSTATE_STOP;
     //    g_iCurrLrcIndex = -2;
     //    //m_IsDraw[2] = FALSE;
     //}
     //else if (!g_Lrc->iCount)
     //{
-    //    pszText = L"ÎÞ¸è´Ê";
+    //    pszText = L"æ— æ­Œè¯";
     //    g_iLrcState = LRCSTATE_NOLRC;
     //    g_iCurrLrcIndex = -2;
     //    //m_IsDraw[2] = FALSE;
@@ -74,7 +74,7 @@ void CUILrc::Redraw()
     ////    m_idxCurr = m_iLrcSBPos;
     ////if (m_iLrcFixedIndex != -1)
     ////    m_idxCurr = m_iLrcFixedIndex;
-    ////// Ë÷Òý²éÕÒÍê±Ï
+    ////// ç´¢å¼•æŸ¥æ‰¾å®Œæ¯•
     //if (m_idxCurr != m_idxLastHighlight)
     //{
     //    m_idxLastHighlight = m_idxCurr;
@@ -280,15 +280,15 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
     //     //	}
     //     //	UINT uFlags = (i == -1) ? MF_GRAYED : 0;
     //     //	HMENU hMenu = CreatePopupMenu();
-    //     //	AppendMenuW(hMenu, uFlags, IDMI_LS_PLAY, L"´Ó´Ë´¦²¥·Å");
-    //     //	AppendMenuW(hMenu, uFlags, IDMI_LS_COPY, L"¸´ÖÆ¸è´Ê");
+    //     //	AppendMenuW(hMenu, uFlags, IDMI_LS_PLAY, L"ä»Žæ­¤å¤„æ’­æ”¾");
+    //     //	AppendMenuW(hMenu, uFlags, IDMI_LS_COPY, L"å¤åˆ¶æ­Œè¯");
     //     //	ClientToScreen(hWnd, &pt);
     //     //	m_iLrcFixedIndex = m_iLrcCenter;
     //     //	int iRet = TrackPopupMenu(hMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hWnd, NULL);
     //     //	DestroyMenu(hMenu);
     //     //	switch (iRet)
     //     //	{
-    //     //	case IDMI_LS_PLAY:// ´Ó´Ë´¦²¥·Å
+    //     //	case IDMI_LS_PLAY:// ä»Žæ­¤å¤„æ’­æ”¾
     //     //	{
     //     //		BASS_ChannelSetPosition(
     //     //			g_hStream,
@@ -299,7 +299,7 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
     //     //		);
     //     //	}
     //     //	break;
-    //     //	case IDMI_LS_COPY:// ¸´ÖÆ¸è´Ê
+    //     //	case IDMI_LS_COPY:// å¤åˆ¶æ­Œè¯
     //     //	{
     //     //		if (OpenClipboard(hWnd))
     //     //		{
@@ -339,10 +339,10 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
     //     POINT pt = GET_PT_LPARAM(lParam);
     //     if (PtInRect(&m_rcSB, pt))
     //     {
-    //         if (PtInRect(&m_rcThumb, pt))// ÃüÖÐ»¬¿é
+    //         if (PtInRect(&m_rcThumb, pt))// å‘½ä¸­æ»‘å—
     //         {
     //             m_bSBLBtnDown = TRUE;
-    //             m_iSBCursorOffset = pt.y - m_rcThumb.top;// ¼ÆËã¹â±êÆ«ÒÆ
+    //             m_iSBCursorOffset = pt.y - m_rcThumb.top;// è®¡ç®—å…‰æ ‡åç§»
     //             SetCapture(hWnd);
     //         }
     //     }
@@ -360,7 +360,7 @@ void CUILrc::OnTimer(UINT uTimerID)
     //case IDT_PGS:
     //{
     //    BOOL bSwitchLrc = FALSE;
-    //    if (m_idxCurr != g_iCurrLrcIndex)// ½ø¶ÈÒÑ¸üÐÂ
+    //    if (m_idxCurr != g_iCurrLrcIndex)// è¿›åº¦å·²æ›´æ–°
     //    {
     //        m_idxLastHighlight = m_idxCurr;
     //        m_idxCurr = g_iCurrLrcIndex;
@@ -401,7 +401,7 @@ void CUILrc::OnTimer(UINT uTimerID)
     //    }
     //    LRCDATA* p = (LRCDATA*)QKAGet(g_Lrc, m_idxCurr);
     //    float fLastTime = g_fTime - p->fTime;
-    //    static int iLastx1 = 0, iLastx2 = 0;// ÉÏ´Î×ó±ß£¬Èç¹û¸úÉÏ´ÎÒ»Ñù¾Í²»ÒªÔÙ»­ÁË
+    //    static int iLastx1 = 0, iLastx2 = 0;// ä¸Šæ¬¡å·¦è¾¹ï¼Œå¦‚æžœè·Ÿä¸Šæ¬¡ä¸€æ ·å°±ä¸è¦å†ç”»äº†
     //    int ii;
     //    BOOL bRedraw = FALSE;
     //    if (!m_bVAnOngoing)
@@ -558,11 +558,11 @@ void CUILrc::InitVAnimation()
     //int iHeight = p1->cyTotal,
     //    iHeight2 = p2->cyTotal;
 
-    //int iTop = m_rc.top + (m_cy - iHeight2) / 2;// ÉÏÒ»¾ä¶¥±ß
+    //int iTop = m_rc.top + (m_cy - iHeight2) / 2;// ä¸Šä¸€å¥é¡¶è¾¹
     //m_LrcVScrollInfo.fDelay = 0.1f;
     //m_LrcVScrollInfo.fTime = g_fTime;
     //float ff;
-    //if (m_idxCurr > m_idxLastHighlight)// ÏÂÒ»¾äÔÚÉÏÒ»¾äµÄÏÂ·½
+    //if (m_idxCurr > m_idxLastHighlight)// ä¸‹ä¸€å¥åœ¨ä¸Šä¸€å¥çš„ä¸‹æ–¹
     //{
     //    m_LrcVScrollInfo.bDirection = TRUE;
     //    //m_LrcVScrollInfo.iDestTop = m_rc.top + m_cyHalf - iHeight / 2;
@@ -574,7 +574,7 @@ void CUILrc::InitVAnimation()
     //    if (m_LrcVScrollInfo.fDelay > ff)
     //        m_LrcVScrollInfo.fDelay = ff / 2;
     //}
-    //else// ÏÂÒ»¾äÔÚÉÏÒ»¾äµÄÉÏ·½
+    //else// ä¸‹ä¸€å¥åœ¨ä¸Šä¸€å¥çš„ä¸Šæ–¹
     //{
     //    m_LrcVScrollInfo.bDirection = FALSE;
     //    m_LrcVScrollInfo.iDestTop = m_rc.top + m_cyHalf - iHeight / 2;
@@ -632,18 +632,18 @@ void CUILrc::DrawAllLrc_Top()
 void CUILrc::DrawAllLrc_Center()
 {
     //auto pDC = m_pBK->m_pDC;
-    //pDC->DrawBitmap(m_pBK->m_pBmpBKStatic, &m_rcF, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &m_rcF);// Ë¢±³¾°
+    //pDC->DrawBitmap(m_pBK->m_pBmpBKStatic, &m_rcF, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &m_rcF);// åˆ·èƒŒæ™¯
     //pDC->PushAxisAlignedClip(&m_rcF, D2D1_ANTIALIAS_MODE_ALIASED);
 
     //m_ullLastDrawingTime = GetTickCount64();
     //float cy = RedrawItem(m_idxCenter, m_yCenterItem, TRUE, FALSE, FALSE);
 
-    //// ³õÊ¼»¯³ÉÉÏÃæÒ»ÏîµÄµ×±ß
+    //// åˆå§‹åŒ–æˆä¸Šé¢ä¸€é¡¹çš„åº•è¾¹
     //float fBottom = m_yCenterItem - (float)GS.iSCLrcLineGap;
-    //// ³õÊ¼»¯³ÉÏÂÃæÒ»ÏîµÄ¶¥±ß
+    //// åˆå§‹åŒ–æˆä¸‹é¢ä¸€é¡¹çš„é¡¶è¾¹
     //float fTop = m_yCenterItem + ((float)GS.iSCLrcLineGap + cy);
     //int i = m_idxCenter;
-    //////////////////////////////////////////////////ÏòÉÏ»­
+    //////////////////////////////////////////////////å‘ä¸Šç”»
     //while (fBottom > m_rcF.top)
     //{
     //    if (i - 1 < 0)
@@ -653,7 +653,7 @@ void CUILrc::DrawAllLrc_Center()
     //    fBottom -= (GS.iSCLrcLineGap + cy);
     //}
     //i = m_idxCenter;
-    //////////////////////////////////////////////////ÏòÏÂ»­
+    //////////////////////////////////////////////////å‘ä¸‹ç”»
     //while (fTop < m_rcF.bottom)
     //{
     //    if (i + 1 >= g_Lrc->iCount)
@@ -697,7 +697,7 @@ float CUILrc::RedrawItem(int iIndex, float y, BOOL bTop, BOOL bClearBK, BOOL bIm
 
     //LRCDATA* p = (LRCDATA*)QKAGet(g_Lrc, iIndex);
     ////if (!p->cchTotal)
-    ////    p = &GS.DTLrcSpaceLine;// ÎÞ¸è´Ê£¬ÄÚÈÝ×ªÏòµ½¿ÕÐÐÌæ´ú
+    ////    p = &GS.DTLrcSpaceLine;// æ— æ­Œè¯ï¼Œå†…å®¹è½¬å‘åˆ°ç©ºè¡Œæ›¿ä»£
 
     //IDWriteTextLayout* pDWTextLayout1;
     //IDWriteTextLayout* pDWTextLayout2;
@@ -724,10 +724,10 @@ float CUILrc::RedrawItem(int iIndex, float y, BOOL bTop, BOOL bClearBK, BOOL bIm
 
     //DWRITE_TEXT_METRICS Metrics1, Metrics2;
 
-    //if (GS.bForceTwoLines)// ÊÇ·ñ½ûÖ¹»»ÐÐ
+    //if (GS.bForceTwoLines)// æ˜¯å¦ç¦æ­¢æ¢è¡Œ
     //{
-    //    m_pTextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);// ½ûÖ¹×Ô¶¯»»ÐÐ
-    //    if (!p->pszLrc2)// Ö»ÓÐÒ»ÐÐ
+    //    m_pTextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);// ç¦æ­¢è‡ªåŠ¨æ¢è¡Œ
+    //    if (!p->pszLrc2)// åªæœ‰ä¸€è¡Œ
     //    {
     //        m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
 
@@ -751,7 +751,7 @@ float CUILrc::RedrawItem(int iIndex, float y, BOOL bTop, BOOL bClearBK, BOOL bIm
     //                KillTimer(g_hMainWnd, IDT_ANIMATION);
     //                if (cx1 > m_cxLrc)
     //                {
-    //                    m_LrcHScrollInfo.cx1 = cx1;// ³¬³¤ÁË£¬ÐèÒªºóÐø¹ö¶¯
+    //                    m_LrcHScrollInfo.cx1 = cx1;// è¶…é•¿äº†ï¼Œéœ€è¦åŽç»­æ»šåŠ¨
     //                    m_LrcHScrollInfo.fNoScrollingTime1 = m_cxLrc * p->fDelay / m_LrcHScrollInfo.cx1 / 2;
     //                    SetTimer(g_hMainWnd, IDT_ANIMATION, TIMERELAPSE_ANIMATION, NULL);
     //                }
@@ -761,7 +761,7 @@ float CUILrc::RedrawItem(int iIndex, float y, BOOL bTop, BOOL bClearBK, BOOL bIm
     //                    m_LrcHScrollInfo.x1 = m_LrcHScrollInfo.x2 = 0;
     //                }
     //            }
-    //            else// ºáÏò¹ö¶¯¾Í„e²â¸ßÁË
+    //            else// æ¨ªå‘æ»šåŠ¨å°±åˆ¥æµ‹é«˜äº†
     //            {
     //                cx1 = (int)m_LrcHScrollInfo.Metrics1.width;
     //                cy1 = (int)m_LrcHScrollInfo.Metrics1.height;
@@ -805,7 +805,7 @@ float CUILrc::RedrawItem(int iIndex, float y, BOOL bTop, BOOL bClearBK, BOOL bIm
     //            if (D2DRcF2.bottom > m_rc.bottom)
     //                D2DRcF2.bottom = m_rcF.bottom;
     //            pDC->PushAxisAlignedClip(&D2DRcF2, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
-    //            pDC->DrawBitmap(m_pBK->m_pBmpBKStatic, &D2DRcF1, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &D2DRcF1);// »­±³¾°
+    //            pDC->DrawBitmap(m_pBK->m_pBmpBKStatic, &D2DRcF1, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &D2DRcF1);// ç”»èƒŒæ™¯
     //        }
 
     //        if (bCurr)
@@ -816,7 +816,7 @@ float CUILrc::RedrawItem(int iIndex, float y, BOOL bTop, BOOL bClearBK, BOOL bIm
     //        pDC->DrawTextW(p->pszLrc, p->cchLrc, m_pTextFormat, &D2DRcF1, pD2DBrush);
 
     //    }
-    //    else// ÓÐÁ½ÐÐ
+    //    else// æœ‰ä¸¤è¡Œ
     //    {
     //        m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
 
@@ -824,8 +824,8 @@ float CUILrc::RedrawItem(int iIndex, float y, BOOL bTop, BOOL bClearBK, BOOL bIm
     //        {
     //            if (iIndex != m_LrcHScrollInfo.iIndex)
     //            {
-    //                g_pDWFactory->CreateTextLayout(p->pszLrc, p->cchLrc, m_pTextFormat, m_cxLrcF, m_cyLrcF, &pDWTextLayout1);// ´´½¨ÎÄ±¾²¼¾Ö
-    //                g_pDWFactory->CreateTextLayout(p->pszLrc2, p->cchLrc2, m_pTextFormat, m_cxLrcF, m_cyLrcF, &pDWTextLayout2);// ´´½¨ÎÄ±¾²¼¾Ö
+    //                g_pDWFactory->CreateTextLayout(p->pszLrc, p->cchLrc, m_pTextFormat, m_cxLrcF, m_cyLrcF, &pDWTextLayout1);// åˆ›å»ºæ–‡æœ¬å¸ƒå±€
+    //                g_pDWFactory->CreateTextLayout(p->pszLrc2, p->cchLrc2, m_pTextFormat, m_cxLrcF, m_cyLrcF, &pDWTextLayout2);// åˆ›å»ºæ–‡æœ¬å¸ƒå±€
     //                pDWTextLayout1->GetMetrics(&m_LrcHScrollInfo.Metrics1);
     //                pDWTextLayout2->GetMetrics(&m_LrcHScrollInfo.Metrics2);
     //                pDWTextLayout1->Release();
@@ -845,7 +845,7 @@ float CUILrc::RedrawItem(int iIndex, float y, BOOL bTop, BOOL bClearBK, BOOL bIm
     //                KillTimer(g_hMainWnd, IDT_ANIMATION);
     //                if (cx1 > m_cxLrc)
     //                {
-    //                    m_LrcHScrollInfo.cx1 = cx1;// ³¬³¤ÁË£¬ÐèÒªºóÐø¹ö¶¯
+    //                    m_LrcHScrollInfo.cx1 = cx1;// è¶…é•¿äº†ï¼Œéœ€è¦åŽç»­æ»šåŠ¨
     //                    m_LrcHScrollInfo.fNoScrollingTime1 = m_cxLrc * p->fDelay / m_LrcHScrollInfo.cx1 / 2;
     //                    SetTimer(g_hMainWnd, IDT_ANIMATION, TIMERELAPSE_ANIMATION, NULL);
     //                }
@@ -857,7 +857,7 @@ float CUILrc::RedrawItem(int iIndex, float y, BOOL bTop, BOOL bClearBK, BOOL bIm
 
     //                if (cx2 > m_cxLrc)
     //                {
-    //                    m_LrcHScrollInfo.cx2 = cx2;// ³¬³¤ÁË£¬ÐèÒªºóÐø¹ö¶¯
+    //                    m_LrcHScrollInfo.cx2 = cx2;// è¶…é•¿äº†ï¼Œéœ€è¦åŽç»­æ»šåŠ¨
     //                    m_LrcHScrollInfo.fNoScrollingTime2 = m_cxLrc * p->fDelay / m_LrcHScrollInfo.cx2 / 2;
     //                    SetTimer(g_hMainWnd, IDT_ANIMATION, TIMERELAPSE_ANIMATION, NULL);
     //                }
@@ -867,7 +867,7 @@ float CUILrc::RedrawItem(int iIndex, float y, BOOL bTop, BOOL bClearBK, BOOL bIm
     //                    m_LrcHScrollInfo.x2 = 0;
     //                }
     //            }
-    //            else// ºáÏò¹ö¶¯¾Í„e²â¸ßÁË
+    //            else// æ¨ªå‘æ»šåŠ¨å°±åˆ¥æµ‹é«˜äº†
     //            {
     //                cx1 = (int)m_LrcHScrollInfo.Metrics1.width;
     //                cx2 = (int)m_LrcHScrollInfo.Metrics2.width;
@@ -877,8 +877,8 @@ float CUILrc::RedrawItem(int iIndex, float y, BOOL bTop, BOOL bClearBK, BOOL bIm
     //        }
     //        else
     //        {
-    //            g_pDWFactory->CreateTextLayout(p->pszLrc, p->cchLrc, m_pTextFormat, m_cxLrcF, m_cyLrcF, &pDWTextLayout1);// ´´½¨ÎÄ±¾²¼¾Ö
-    //            g_pDWFactory->CreateTextLayout(p->pszLrc2, p->cchLrc2, m_pTextFormat, m_cxLrcF, m_cyLrcF, &pDWTextLayout2);// ´´½¨ÎÄ±¾²¼¾Ö
+    //            g_pDWFactory->CreateTextLayout(p->pszLrc, p->cchLrc, m_pTextFormat, m_cxLrcF, m_cyLrcF, &pDWTextLayout1);// åˆ›å»ºæ–‡æœ¬å¸ƒå±€
+    //            g_pDWFactory->CreateTextLayout(p->pszLrc2, p->cchLrc2, m_pTextFormat, m_cxLrcF, m_cyLrcF, &pDWTextLayout2);// åˆ›å»ºæ–‡æœ¬å¸ƒå±€
     //            pDWTextLayout1->GetMetrics(&Metrics1);
     //            pDWTextLayout2->GetMetrics(&Metrics2);
     //            pDWTextLayout1->Release();
@@ -995,7 +995,7 @@ float CUILrc::RedrawItem(int iIndex, float y, BOOL bTop, BOOL bClearBK, BOOL bIm
     //else
     //{
     //    m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-    //    m_pTextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);// ×Ô¶¯»»ÐÐ
+    //    m_pTextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);// è‡ªåŠ¨æ¢è¡Œ
     //    //uStrLen1 = lstrlenW(p->pszLrc);
     //    g_pDWFactory->CreateTextLayout(p->pszLrc, p->cchTotal, m_pTextFormat, m_cxLrcF, m_cyLrcF, &pDWTextLayout1);
     //    pDWTextLayout1->GetMetrics(&Metrics1);
@@ -1053,7 +1053,7 @@ float CUILrc::RedrawItem(int iIndex, float y, BOOL bTop, BOOL bClearBK, BOOL bIm
     //    m_pBK->m_pSwapChain->Present1(0, 0, &pp);
     //}
 
-    //p->iDrawID = m_iDrawingID;// ÒÑ¾­»æÖÆ±ê¼Ç
+    //p->iDrawID = m_iDrawingID;// å·²ç»ç»˜åˆ¶æ ‡è®°
     //p->ullLastDrawingTime = m_ullLastDrawingTime;
     //return p->cy;
 return 0;
@@ -1066,7 +1066,7 @@ int CUILrc::HitTest(POINT pt)
 
     //LRCDATA* p = (LRCDATA*)QKAGet(g_Lrc, m_idxCenter);
     //int i = m_idxCenter;
-    //if (pt.y >= p->rcItem.top)// ÂäÔÚÏÂ°ë²¿·Ö£¨°üÀ¨ÖÐ¼äÒ»Ïî£©
+    //if (pt.y >= p->rcItem.top)// è½åœ¨ä¸‹åŠéƒ¨åˆ†ï¼ˆåŒ…æ‹¬ä¸­é—´ä¸€é¡¹ï¼‰
     //{
     //    while (p->iDrawID == m_iDrawingID)
     //    {
@@ -1078,9 +1078,9 @@ int CUILrc::HitTest(POINT pt)
     //        p = (LRCDATA*)QKAGet(g_Lrc, i);
     //    }
     //}
-    //else// ÂäÔÚÉÏ°ë²¿·Ö
+    //else// è½åœ¨ä¸ŠåŠéƒ¨åˆ†
     //{
-    //    --i;// ÖÐ¼äÒ»Ïî¾Í²»ÅÐ¶ÏÁË£¬Ìø¹ý
+    //    --i;// ä¸­é—´ä¸€é¡¹å°±ä¸åˆ¤æ–­äº†ï¼Œè·³è¿‡
     //    if (i < 0)
     //        return -1;
     //    p = (LRCDATA*)QKAGet(g_Lrc, i);

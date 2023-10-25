@@ -1,20 +1,20 @@
-#pragma once
+﻿#pragma once
 #include "CApp.h"
 
 struct FONTOPTIONS
 {
 	eck::CRefStrW rsFontName;
 	int iWeight;
-	int iFontSize;
+	float fFontSize;
 };
 
 enum class RepeatMode
 {
 	AllLoop,
+	All,
 	Radom,
-	Single,
 	SingleLoop,
-	All
+	Single,
 };
 
 class COptionsMgr

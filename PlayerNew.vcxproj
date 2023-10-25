@@ -88,9 +88,10 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions);NOMINMAX</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -101,7 +102,8 @@
       <AdditionalManifestFiles>..\WinEzCtrlKit\eck\Others\DpiAwarePreMonV2.manifest</AdditionalManifestFiles>
     </Manifest>
     <PreBuildEvent>
-      <Command>Before-Build-Process-Prog.exe</Command>
+      <Command>$(SolutionDir)\Tools\Before-Build-Process-Prog.exe</Command>
+      <Message>维护编译次数和编译时间</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -112,9 +114,10 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions);NOMINMAX</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -127,7 +130,8 @@
       <AdditionalManifestFiles>..\WinEzCtrlKit\eck\Others\DpiAwarePreMonV2.manifest</AdditionalManifestFiles>
     </Manifest>
     <PreBuildEvent>
-      <Command>Before-Build-Process-Prog.exe</Command>
+      <Command>$(SolutionDir)\Tools\Before-Build-Process-Prog.exe</Command>
+      <Message>维护编译次数和编译时间</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -136,9 +140,10 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions);NOMINMAX</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -149,7 +154,8 @@
       <AdditionalManifestFiles>..\WinEzCtrlKit\eck\Others\DpiAwarePreMonV2.manifest</AdditionalManifestFiles>
     </Manifest>
     <PreBuildEvent>
-      <Command>Before-Build-Process-Prog.exe</Command>
+      <Command>$(SolutionDir)\Tools\Before-Build-Process-Prog.exe</Command>
+      <Message>维护编译次数和编译时间</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -160,9 +166,10 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions);NOMINMAX</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -175,7 +182,8 @@
       <AdditionalManifestFiles>..\WinEzCtrlKit\eck\Others\DpiAwarePreMonV2.manifest</AdditionalManifestFiles>
     </Manifest>
     <PreBuildEvent>
-      <Command>Before-Build-Process-Prog.exe</Command>
+      <Command>$(SolutionDir)\Tools\Before-Build-Process-Prog.exe</Command>
+      <Message>维护编译次数和编译时间</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -183,9 +191,6 @@
     <ClInclude Include="..\WinEzCtrlKit\eck\CArray.h" />
     <ClInclude Include="..\WinEzCtrlKit\eck\CBk.h" />
     <ClInclude Include="..\WinEzCtrlKit\eck\CButton.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CChartBar.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CChartLine.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CChartPie.h" />
     <ClInclude Include="..\WinEzCtrlKit\eck\CColorPicker.h" />
     <ClInclude Include="..\WinEzCtrlKit\eck\CComboBox.h" />
     <ClInclude Include="..\WinEzCtrlKit\eck\CComboBoxEx.h" />
@@ -196,8 +201,6 @@
     <ClInclude Include="..\WinEzCtrlKit\eck\CEditExt.h" />
     <ClInclude Include="..\WinEzCtrlKit\eck\CFile.h" />
     <ClInclude Include="..\WinEzCtrlKit\eck\CFileDlg.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CForm.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CFormTable.h" />
     <ClInclude Include="..\WinEzCtrlKit\eck\CHeader.h" />
     <ClInclude Include="..\WinEzCtrlKit\eck\CHotKey.h" />
     <ClInclude Include="..\WinEzCtrlKit\eck\CIniFile.h" />
@@ -205,7 +208,6 @@
     <ClInclude Include="..\WinEzCtrlKit\eck\CListBox.h" />
     <ClInclude Include="..\WinEzCtrlKit\eck\CListBoxExt.h" />
     <ClInclude Include="..\WinEzCtrlKit\eck\CListView.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CLunarCalendar.h" />
     <ClInclude Include="..\WinEzCtrlKit\eck\CPropertySheet.h" />
     <ClInclude Include="..\WinEzCtrlKit\eck\CRefBin.h" />
     <ClInclude Include="..\WinEzCtrlKit\eck\CRefStr.h" />
@@ -223,7 +225,6 @@
     <ClInclude Include="..\WinEzCtrlKit\eck\CWnd.h" />
     <ClInclude Include="..\WinEzCtrlKit\eck\CWndSizer.h" />
     <ClInclude Include="..\WinEzCtrlKit\eck\DbgHelper.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\DesignerDef.h" />
     <ClInclude Include="..\WinEzCtrlKit\eck\DlgHelper.h" />
     <ClInclude Include="..\WinEzCtrlKit\eck\ECK.h" />
     <ClInclude Include="..\WinEzCtrlKit\eck\Env.h" />
@@ -233,26 +234,28 @@
     <ClInclude Include="..\WinEzCtrlKit\eck\ResStruct.h" />
     <ClInclude Include="..\WinEzCtrlKit\eck\Utility.h" />
     <ClInclude Include="..\WinEzCtrlKit\eck\WndHelper.h" />
-    <ClInclude Include="CApp.h" />
-    <ClInclude Include="CBass.h" />
-    <ClInclude Include="CDlgListFile.h" />
-    <ClInclude Include="COptionsMgr.h" />
-    <ClInclude Include="CPlayer.h" />
-    <ClInclude Include="CWndBK.h" />
-    <ClInclude Include="CPlayList.h" />
-    <ClInclude Include="CPlayListFile.h" />
-    <ClInclude Include="CSimpleList.h" />
-    <ClInclude Include="CWndList.h" />
-    <ClInclude Include="CWndMain.h" />
-    <ClInclude Include="Resource.h" />
-    <ClInclude Include="targetver.h" />
-    <ClInclude Include="Entry.h" />
-    <ClInclude Include="Utils.h" />
+    <ClInclude Include="Src\bass.h" />
+    <ClInclude Include="Src\bassmidi.h" />
+    <ClInclude Include="Src\bass_fx.h" />
+    <ClInclude Include="Src\CApp.h" />
+    <ClInclude Include="Src\CBass.h" />
+    <ClInclude Include="Src\CDlgListFile.h" />
+    <ClInclude Include="Src\COptionsMgr.h" />
+    <ClInclude Include="Src\CPlayer.h" />
+    <ClInclude Include="Src\CPlayList.h" />
+    <ClInclude Include="Src\CPlayListFile.h" />
+    <ClInclude Include="Src\CSimpleList.h" />
+    <ClInclude Include="Src\CWndBK.h" />
+    <ClInclude Include="Src\CWndList.h" />
+    <ClInclude Include="Src\CWndMain.h" />
+    <ClInclude Include="Src\Entry.h" />
+    <ClInclude Include="Src\resource.h" />
+    <ClInclude Include="Src\targetver.h" />
+    <ClInclude Include="Src\Utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\WinEzCtrlKit\eck\CBk.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\CButton.cpp" />
-    <ClCompile Include="..\WinEzCtrlKit\eck\CChartPie.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\CColorPicker.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\CCommDlg.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\CDialog.cpp" />
@@ -260,39 +263,36 @@
     <ClCompile Include="..\WinEzCtrlKit\eck\CEdit.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\CEditExt.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\CFile.cpp" />
-    <ClCompile Include="..\WinEzCtrlKit\eck\CForm.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\CLabel.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\CListBox.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\CListBoxExt.cpp" />
-    <ClCompile Include="..\WinEzCtrlKit\eck\CLunarCalendar.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\CRefBin.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\CRefStr.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\CTabHeader.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\CTaskGroupList.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\CWnd.cpp" />
-    <ClCompile Include="..\WinEzCtrlKit\eck\DesignerDef.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\DlgHelper.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\ECK.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\ImageHelper.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\Utility.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\WndHelper.cpp" />
-    <ClCompile Include="CApp.cpp" />
-    <ClCompile Include="CBass.cpp" />
-    <ClCompile Include="CDlgListFile.cpp" />
-    <ClCompile Include="COptionsMgr.cpp" />
-    <ClCompile Include="CPlayer.cpp" />
-    <ClCompile Include="CUILrc.cpp" />
-    <ClCompile Include="CWndBK.cpp" />
-    <ClCompile Include="CPlayList.cpp" />
-    <ClCompile Include="CPlayListFile.cpp" />
-    <ClCompile Include="CSimpleList.cpp" />
-    <ClCompile Include="CWndList.cpp" />
-    <ClCompile Include="CWndMain.cpp" />
-    <ClCompile Include="Entry.cpp" />
-    <ClCompile Include="Utils.cpp" />
+    <ClCompile Include="Src\CApp.cpp" />
+    <ClCompile Include="Src\CBass.cpp" />
+    <ClCompile Include="Src\CDlgListFile.cpp" />
+    <ClCompile Include="Src\COptionsMgr.cpp" />
+    <ClCompile Include="Src\CPlayer.cpp" />
+    <ClCompile Include="Src\CPlayList.cpp" />
+    <ClCompile Include="Src\CPlayListFile.cpp" />
+    <ClCompile Include="Src\CSimpleList.cpp" />
+    <ClCompile Include="Src\CUILrc.cpp" />
+    <ClCompile Include="Src\CWndBK.cpp" />
+    <ClCompile Include="Src\CWndList.cpp" />
+    <ClCompile Include="Src\CWndMain.cpp" />
+    <ClCompile Include="Src\Entry.cpp" />
+    <ClCompile Include="Src\Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="Win32Template.rc" />
+    <ResourceCompile Include="Src\Win32Template.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

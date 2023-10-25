@@ -3,9 +3,7 @@
 // 供 Win32Template.rc 使用
 //
 #define IDD_ABOUT                       101
-#define IDD_LISTFILE                    129
 #define IDC_LIST1                       1002
-#define IDC_LV_LISTFILE                 1002
 
 // Next default values for new objects
 // 
