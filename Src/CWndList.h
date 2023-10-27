@@ -21,6 +21,7 @@ private:
 	eck::CPushButton m_BTSearch{};
 	eck::CToolBar m_TBManage{};
 	eck::CListView m_LVList{};
+	eck::CListView m_LVSearch{};
 
 	HFONT m_hFont = NULL;
 	HFONT m_hFontListName = NULL;
@@ -31,21 +32,15 @@ private:
 
 	int m_iDpi = USER_DEFAULT_SCREEN_DPI;
 
-
 	HTHEME m_hThemeLV = NULL;
+	HBRUSH m_hbrLaterPlaying = NULL;
+	HBRUSH m_hbrGray = NULL;
+	HBRUSH m_hbrCurrPlaying = NULL;
+
+	eck::CRefStrW m_rsCurrKeyword{};
+
 	CWndMain& m_WndMain;
 
-	enum
-	{
-		TBBTI_LOCATE = 0,
-		TBBTI_ADD,
-		TBBTI_LOADLIST,
-		TBBTI_SAVELIST,
-		TBBTI_EMPTY,
-		TBBTI_MANAGE,
-
-		TBBTCOUNT
-	};
 
 	enum// 控件ID
 	{
@@ -53,6 +48,7 @@ private:
 		IDC_ED_SEARCH,
 		IDC_BT_SEARCH,
 		IDC_LV_LIST,
+		IDC_LV_SEARCHING,
 		IDC_TB_MANAGE
 	};
 	enum// 工具条按钮ID
@@ -63,6 +59,8 @@ private:
 		TBCID_SAVELIST,
 		TBCID_EMPTY,
 		TBCID_MANAGE,
+
+		TBBTCOUNT = 6
 	};
 	enum// 菜单ID
 	{
@@ -75,7 +73,7 @@ private:
 		IDMI_OPEN_IN_EXPLORER,
 		IDMI_RENAME,
 		IDMI_INFO,
-		IDMI_BOOKMARK,
+		IDMI_ADDBOOKMARK,
 		IDMI_NEXTBOOKMARK,
 		IDMI_PREVBOOKMARK,
 		IDMI_IGNORE,
@@ -109,6 +107,9 @@ private:
 
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+	static LRESULT CALLBACK SubclassProc_LVMsgForward(HWND hWnd, UINT uMsg, WPARAM wParam,
+		LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
+
 	PNInline void UpdateDpiInit(int iDpi)
 	{
 		m_iDpi = iDpi;
@@ -139,15 +140,19 @@ private:
 
 	void OnCmdManage();
 
-	void OnLVNDbLClick(NMITEMACTIVATE* pnmia);
+	void OnListLVNDbLClick(NMITEMACTIVATE* pnmia);
 
-	LRESULT OnLVNCustomDraw(NMLVCUSTOMDRAW* pnmlvcd);
+	LRESULT OnListLVNCustomDraw(NMLVCUSTOMDRAW* pnmlvcd);
 
-	BOOL OnLVNRClick(NMITEMACTIVATE* pnmia);
+	BOOL OnListLVNRClick(NMITEMACTIVATE* pnmia);
 
 	void OnMenuOpenInExplorer();
 
-	void OnEDNChanged();
+	void OnMenuDelFromList();
+
+	LRESULT OnSearchLVNCustomDraw(NMLVCUSTOMDRAW* pnmlvcd);
+
+	void OnENChange();
 public:
 	CWndList(CWndMain& Main) :m_WndMain(Main) {}
 

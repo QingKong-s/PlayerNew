@@ -69,7 +69,7 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	m_Sl.SetItemHeight(40);
 	m_Sl.SetDispInfoProc([this](SLGETDISPINFO* p)
 		{
-			p->pItemInfo->pszText= m_vStr[p->pItemInfo->idxItem];
+			p->pItemInfo->pszText= m_vStr[p->pItemInfo->idxItem].Data();
 			p->pItemInfo->cchText = m_vStr[p->pItemInfo->idxItem].Size();
 			return 0;
 		});

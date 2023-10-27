@@ -61,7 +61,8 @@ void CDlgListFile::OnInitDialog(HWND hWnd)
 {
 	UpdateDpiInit(eck::GetDpi(hWnd));
 	m_hFont = eck::EzFont(L"微软雅黑", 9, 400, FALSE, FALSE, FALSE, m_hWnd);
-	m_EDFile.Create(NULL, WS_TABSTOP | WS_GROUP | WS_CHILD | WS_VISIBLE | (m_pParam->uType == Type::Load ? ES_READONLY : 0), 0,
+	m_EDFile.Create(NULL, WS_TABSTOP | WS_GROUP | WS_CHILD | WS_VISIBLE |
+		ES_AUTOHSCROLL | (m_pParam->uType == Type::Load ? ES_READONLY : 0), 0,
 		m_Ds.iMargin, m_Ds.iMargin, 0, 0, hWnd, IDC_ED_FILE);
 	m_EDFile.SetFrameType(1);
 	m_EDFile.SetClr(2, GetSysColor(COLOR_WINDOW));
@@ -76,7 +77,7 @@ void CDlgListFile::OnInitDialog(HWND hWnd)
 	m_LVFile.InsertColumn(L"文件名", 0, m_Ds.cxColumn1);
 	m_LVFile.InsertColumn(L"修改时间", 1, m_Ds.cxColumn2);
 
-	const auto& vPath = COptionsMgr::GetInst().vListPath;
+	auto& vPath = COptionsMgr::GetInst().vListPath;
 
 	LVGROUP lvg;
 	lvg.cbSize = sizeof(LVGROUP);
@@ -213,7 +214,7 @@ void CDlgListFile::OnLVNItemChanged(NMLISTVIEW* pnmlv)
 	int cchPath = (int)wcslen(szPath);
 	*(szPath + cchPath) = L'\\';
 	++cchPath;
-	cchPath+= m_LVFile.GetItemText(pnmlv->iItem, 0, szPath + cchPath , MAX_PATH - cchPath );
+	cchPath += m_LVFile.GetItemText(pnmlv->iItem, 0, szPath + cchPath, MAX_PATH - cchPath);
 
 	wcscpy_s(szPath + cchPath, MAX_PATH - cchPath, L".PNList");
 
@@ -236,7 +237,7 @@ void CDlgListFile::UpdateDpi(int iDpi)
 	eck::SetFontForWndAndCtrl(m_hWnd, m_hFont);
 	DeleteObject(hOldFont);
 
-	eck::LVSetItemHeight(m_LVFile, m_Ds.cyLVItem);
+	eck::LVSetItemHeight(m_LVFile.GetHWND(), m_Ds.cyLVItem);
 	HDWP hDwp = BeginDeferWindowPos(4);
 	hDwp = DeferWindowPos(hDwp, m_EDFile.GetHWND(), NULL,
 		m_Ds.iMargin,
@@ -278,7 +279,7 @@ INT_PTR CDlgListFile::DlgBox(HWND hParent, void* pData)
 
 	m_hWnd = CreateWindowExW(0, eck::WCN_DLG, c_szTile[(UINT)m_pParam->uType], WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 		rc.left + (rc.right - rc.left - cx) / 2, rc.top + (rc.bottom - rc.top - cy) / 2, cx, cy,
-		hParent, NULL, eck::g_hInstance, pData);
+		hOwner, NULL, eck::g_hInstance, pData);
 	eck::SetWindowProc(m_hWnd, WndProc);
 	SendMsg(WM_INITDIALOG, 0, (LPARAM)this);
 
@@ -296,8 +297,8 @@ INT_PTR CDlgListFile::DlgBox(HWND hParent, void* pData)
 		EnableWindow(hOwner, TRUE);
 	if (hParent)
 		SetActiveWindow(hParent);
-	Destroy();
 	PostModal();
+	Destroy();
 
 	return m_bRet && m_pParam->rsRetFile.Size();
 }

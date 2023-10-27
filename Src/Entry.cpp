@@ -47,8 +47,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	if(Test())
 		return 0;
 #endif // _DEBUG
-	const DWORD dwStyle = WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX | WS_VISIBLE | WS_OVERLAPPEDWINDOW;
-	const DWORD dwExStyle = 0u;
+	constexpr DWORD dwStyle = WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX | WS_VISIBLE | WS_OVERLAPPEDWINDOW;
+	constexpr DWORD dwExStyle = 0u;
 
 	const int iDpi = GetDpiForSystem();
 	RECT rc{ 0,0,1000 * iDpi / 96,640 * iDpi / 96 };

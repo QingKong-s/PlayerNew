@@ -22,9 +22,9 @@ class COptionsMgr
 public:
 	FONTOPTIONS LrcFont{};
 
-	RepeatMode iRepeatMode;
+	RepeatMode iRepeatMode{};
 
-	Utils::LrcEncoding iLrcFileEncoding;
+	Utils::LrcEncoding iLrcFileEncoding{};
 
 	std::vector<eck::CRefStrW> vListPath{};
 

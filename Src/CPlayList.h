@@ -28,6 +28,7 @@ struct BOOKMAEKLISTUNIT
 constexpr inline int SF_IDXPART = 17;
 enum SortFlags :UINT
 {
+	PNSF_NONE = 0,
 	// 低16位
 	PNSF_NAME = 1,
 	PNSF_TIME = 2,
@@ -49,6 +50,15 @@ private:
 	std::unordered_map<int, BOOKMAEKLISTUNIT> m_hmBookmark;
 
 	BOOL m_bSort = FALSE;
+	struct
+	{
+		SortFlags uCurrSortFlags = PNSF_NONE;
+		int idxBegin = -1;
+		int idxEnd = -1;
+	}
+	m_SortParam{};
+
+
 
 	static PNInline size_t Sf2FnIdx(SortFlags u)
 	{
@@ -99,9 +109,9 @@ public:
 		return (int)m_hmBookmark.size();
 	}
 
-	PNInline const auto& GetList() const { return m_vList; }
+	PNInline auto& GetList() { return m_vList; }
 
-	PNInline const auto& GetBookmark() const { return m_hmBookmark; }
+	PNInline auto& GetBookmark() { return m_hmBookmark; }
 
 	PNInline BOOL IsSorting() { return m_bSort; }
 };

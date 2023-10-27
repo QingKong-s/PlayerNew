@@ -1,9 +1,8 @@
-#pragma once
+﻿#pragma once
 #include "CApp.h"
 #include "COptionsMgr.h"
 
 #include "eck\CDialog.h"
-#include "eck\CLabel.h"
 #include "eck\CEditExt.h"
 #include "eck\CListView.h"
 #include "eck\CButton.h"
