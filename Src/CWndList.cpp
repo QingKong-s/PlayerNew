@@ -1,6 +1,7 @@
 ﻿#include "CWndMain.h"
 #include "CDlgListFile.h"
 #include "CDlgBookmark.h"
+#include "CDlgNewBookmark.h"
 #include "DragDrop.h"
 
 constexpr static PCWSTR c_szDefListName = L"当前无播放列表";
@@ -772,6 +773,7 @@ BOOL CWndList::OnListLVNRClick(NMITEMACTIVATE* pnmia)
 	const int iRet = TrackPopupMenu(m_hMenuLV, TPM_NONOTIFY | TPM_RETURNCMD | TPM_VERNEGANIMATION | TPM_RIGHTBUTTON,
 		pt.x, pt.y, 0, m_hWnd, NULL);
 	auto& Player = App->GetPlayer();
+	auto& List = Player.GetList();
 	switch (iRet)
 	{
 	case IDMI_PLAY:
@@ -789,6 +791,46 @@ BOOL CWndList::OnListLVNRClick(NMITEMACTIVATE* pnmia)
 		break;
 	case IDMI_DELETE_FROM_LIST:
 		OnMenuDelFromList();
+		break;
+	case IDMI_DELETE_FROM_DISK:
+#pragma message("TODO：删除文件")
+		break;
+	case IDMI_IGNORE:
+		EckBoolNot(List.At(idx).bIgnore);
+		m_LVList.RedrawItem(idx);
+		break;
+	case IDMI_RENAME:
+#pragma message("TODO：重命名")
+		break;
+	case IDMI_DETAIL:
+#pragma message("TODO：详细信息")
+		break;
+	case IDMI_PREVBOOKMARK:
+	{
+		for (int i = idx; i >= 0; --i)
+		{
+			if (List.At(i).bBookmark)
+			{
+				EnsureVisibleBookmark(i);
+				break;
+			}
+		}
+	}
+	break;
+	case IDMI_NEXTBOOKMARK:
+	{
+		for (int i = idx; i < m_LVList.GetItemCount(); ++i)
+		{
+			if (List.At(i).bBookmark)
+			{
+				EnsureVisibleBookmark(i);
+				break;
+			}
+		}
+	}
+	break;
+	case IDMI_ADDBOOKMARK:
+		OnMenuAddDelBookmark(idx);
 		break;
 	}
 	return FALSE;
@@ -908,6 +950,30 @@ void CWndList::OnMenuDelFromList()
 	{
 		Player.Search(m_rsCurrKeyword.Data());
 		m_LVSearch.SetItemCount(Player.GetSearchingResultCount());
+	}
+}
+
+void CWndList::OnMenuAddDelBookmark(int idx)
+{
+	auto& List = App->GetPlayer().GetList();
+	auto& Item = List.At(idx);
+	if (Item.bBookmark)
+	{
+		if (Utils::MsgBox(L"确定要删除书签吗？", NULL, L"询问", 2, (HICON)TD_INFORMATION_ICON, m_hWnd) == Utils::MBBID_1)
+		{
+			List.DeleteBookmark(List.AbsIndex(idx));
+			m_LVList.RedrawItem(idx);
+		}
+	}
+	else
+	{
+		CDlgNewBookmark Dlg{};
+		CDlgNewBookmark::PARAM Param{};
+		if (Dlg.DlgBox(m_hWnd, &Param))
+		{
+			List.InsertBookmark(List.AbsIndex(idx), Param.rsName.Data(), Param.rsName.Size(), Param.cr);
+			m_LVList.RedrawItem(idx);
+		}
 	}
 }
 
@@ -1118,6 +1184,7 @@ BOOL CWndList::OnSearchLVNRClick(NMITEMACTIVATE* pnmia)
 	NMITEMACTIVATE nmia{};
 	nmia.iItem = Player.AtSearchingIndex(pnmia->iItem);
 	OnListLVNRClick(&nmia);
+	m_LVSearch.RedrawItem(pnmia->iItem);
 	return FALSE;
 }
 
@@ -1158,6 +1225,11 @@ void CWndList::OnENChange()
 			Player.CancelSearch();
 		}
 	}
+}
+
+void CWndList::EnsureVisibleBookmark(int idx)
+{
+	m_LVList.EnsureVisible(idx);
 }
 
 ATOM CWndList::RegisterWndClass()

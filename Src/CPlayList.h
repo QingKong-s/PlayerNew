@@ -47,7 +47,7 @@ public:
 	using TSortProc = std::function<bool(int idx1, int idx2)>;
 private:
 	std::vector<PLAYLISTUNIT> m_vList;
-	std::unordered_map<int, BOOKMAEKLISTUNIT> m_hmBookmark;
+	std::unordered_map<int, BOOKMAEKLISTUNIT> m_hmBookmark;// 实际索引->书签项目
 
 	BOOL m_bSort = FALSE;
 	struct
@@ -89,6 +89,14 @@ public:
 	PNInline PLAYLISTUNIT& AtAbs(int idx)
 	{
 		return m_vList.at(idx);
+	}
+
+	PNInline int AbsIndex(int idx)
+	{
+		if (m_bSort)
+			return At(idx).idxSortMapping;
+		else
+			return idx;
 	}
 
 	PNInline BOOKMAEKLISTUNIT& AtBookmark(int idx)

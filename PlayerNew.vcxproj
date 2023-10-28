@@ -241,6 +241,7 @@
     <ClInclude Include="Src\CBass.h" />
     <ClInclude Include="Src\CDlgBookmark.h" />
     <ClInclude Include="Src\CDlgListFile.h" />
+    <ClInclude Include="Src\CDlgNewBookmark.h" />
     <ClInclude Include="Src\COptionsMgr.h" />
     <ClInclude Include="Src\CPlayer.h" />
     <ClInclude Include="Src\CPlayList.h" />
@@ -282,6 +283,7 @@
     <ClCompile Include="Src\CBass.cpp" />
     <ClCompile Include="Src\CDlgBookmark.cpp" />
     <ClCompile Include="Src\CDlgListFile.cpp" />
+    <ClCompile Include="Src\CDlgNewBookmark.cpp" />
     <ClCompile Include="Src\COptionsMgr.cpp" />
     <ClCompile Include="Src\CPlayer.cpp" />
     <ClCompile Include="Src\CPlayList.cpp" />

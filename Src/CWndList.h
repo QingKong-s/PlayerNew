@@ -167,6 +167,8 @@ private:
 
 	void OnMenuDelFromList();
 
+	void OnMenuAddDelBookmark(int idx);
+
 	void OnListLVNBeginDrag(NMLISTVIEW* pnmlv);
 
 	LRESULT OnSearchLVNCustomDraw(NMLVCUSTOMDRAW* pnmlvcd);
@@ -187,4 +189,6 @@ public:
 		int x, int y, int cx, int cy, HWND hParent, int nID, PCVOID pData = NULL) override;
 
 	void PlayListItem(int idx);
+
+	void EnsureVisibleBookmark(int idx);
 };
