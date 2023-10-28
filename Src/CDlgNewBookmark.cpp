@@ -67,13 +67,13 @@ void CDlgNewBookmark::UpdateDpi(int iDpi)
 
 LRESULT CDlgNewBookmark::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	auto p = (CDlgNewBookmark*)GetWindowLongPtrW(hWnd, 0);
+	auto p = (CDlgNewBookmark*)GetWindowLongPtrW(hWnd, eck::CDialog::OcbPtr1);
 	switch (uMsg)
 	{
 	case WM_INITDIALOG:
 	{
 		p = (CDlgNewBookmark*)lParam;
-		SetWindowLongPtrW(hWnd, 0, (LONG_PTR)p);
+		SetWindowLongPtrW(hWnd, eck::CDialog::OcbPtr1, (LONG_PTR)p);
 		p->OnInitDialog(hWnd);
 	}
 	return FALSE;
@@ -93,10 +93,10 @@ LRESULT CDlgNewBookmark::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		if (lParam && HIWORD(wParam) == BN_CLICKED)
 			switch (LOWORD(wParam))
 			{
-			case IDC_BT_OK:
+			case IDOK:
 				p->OnCmdOk();
 				return 0;
-			case IDC_BT_CANCEL:
+			case IDCANCEL:
 				p->OnCmdCancel();
 				return 0;
 			}
@@ -104,7 +104,7 @@ LRESULT CDlgNewBookmark::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	break;
 	}
 
-	return DefWindowProcW(hWnd, uMsg, wParam, lParam);
+	return DefDlgProcW(hWnd, uMsg, wParam, lParam);
 }
 
 void CDlgNewBookmark::OnInitDialog(HWND hWnd)
@@ -118,16 +118,17 @@ void CDlgNewBookmark::OnInitDialog(HWND hWnd)
 	const int yLine2 = m_Ds.iMargin + m_Ds.iGap + m_Ds.cyComm;
 	const int yBT = yLine2 + m_Ds.iGap * 2 + m_Ds.cyComm;
 	m_LAName.Create(L"名称：", WS_VISIBLE, 0, m_Ds.iMargin, m_Ds.iMargin, m_Ds.cxLabel, m_Ds.cyComm, hWnd, IDC_LA_TIP1);
-	m_EDName.Create(L"新书签", WS_VISIBLE, WS_EX_CLIENTEDGE, xInput, m_Ds.iMargin, m_Ds.cxInput, m_Ds.cyComm, hWnd, IDC_ED_NAME);
+	m_EDName.Create(L"新书签", WS_GROUP | WS_TABSTOP | WS_VISIBLE, WS_EX_CLIENTEDGE, xInput, m_Ds.iMargin, m_Ds.cxInput, m_Ds.cyComm, hWnd, IDC_ED_NAME);
 
 	m_LAColor.Create(L"颜色：", WS_VISIBLE, 0, m_Ds.iMargin, yLine2, m_Ds.cxLabel, m_Ds.cyComm, hWnd, IDC_LA_TIP2);
-	m_CLPColor.Create(L"新书签", WS_VISIBLE, 0, xInput, yLine2, m_Ds.cxInput, m_Ds.cyComm, hWnd, IDC_CLP_CLR);
+	m_CLPColor.Create(L"新书签", WS_TABSTOP | WS_VISIBLE, 0, xInput, yLine2, m_Ds.cxInput, m_Ds.cyComm, hWnd, IDC_CLP_CLR);
 	m_CLPColor.SetItemHeight(m_Ds.cyComm);
 
 	const int xBTCancel = rc.right - m_Ds.iMargin - m_Ds.cxBT;
-	m_BTCancel.Create(L"取消", WS_VISIBLE, 0, xBTCancel, yBT, m_Ds.cxBT, m_Ds.cyComm, hWnd, IDC_BT_CANCEL);
-	m_BTOk.Create(L"确定", WS_VISIBLE | BS_DEFPUSHBUTTON, 0, 
-		xBTCancel - m_Ds.iGap - m_Ds.cxBT, yBT, m_Ds.cxBT, m_Ds.cyComm, hWnd, IDC_BT_OK);
+	m_BTOk.Create(L"确定", WS_GROUP | WS_TABSTOP | WS_VISIBLE | BS_DEFPUSHBUTTON, 0,
+		xBTCancel - m_Ds.iGap - m_Ds.cxBT, yBT, m_Ds.cxBT, m_Ds.cyComm, hWnd, IDOK);
+	m_BTCancel.Create(L"取消", WS_TABSTOP | WS_VISIBLE, 0, xBTCancel, yBT, m_Ds.cxBT, m_Ds.cyComm, hWnd, IDCANCEL);
+
 	eck::SetFontForWndAndCtrl(hWnd, m_hFont);
 }
 

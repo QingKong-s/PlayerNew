@@ -2,7 +2,7 @@
 
 LRESULT CALLBACK CDlgListFile::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	auto p = (CDlgListFile*)GetWindowLongPtrW(hWnd, 0);
+	auto p = (CDlgListFile*)GetWindowLongPtrW(hWnd, eck::CDialog::OcbPtr1);
 	switch (uMsg)
 	{
 	case WM_NOTIFY:
@@ -23,14 +23,10 @@ LRESULT CALLBACK CDlgListFile::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	case WM_INITDIALOG:
 	{
 		p = (CDlgListFile*)lParam;
-		SetWindowLongPtrW(hWnd, 0, (LONG_PTR)p);
+		SetWindowLongPtrW(hWnd, eck::CDialog::OcbPtr1, (LONG_PTR)p);
 		p->OnInitDialog(hWnd);
 	}
 	return FALSE;
-
-	case WM_CLOSE:
-		PostQuitMessage(0);
-		return 0;
 
 	case WM_DESTROY:
 		return HANDLE_WM_DESTROY(hWnd, wParam, lParam, p->OnDestroy);
@@ -43,10 +39,10 @@ LRESULT CALLBACK CDlgListFile::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 		if (lParam && HIWORD(wParam) == BN_CLICKED)
 			switch (LOWORD(wParam))
 			{
-			case IDC_BT_OK:
+			case IDOK:
 				p->OnCmdOk();
 				return 0;
-			case IDC_BT_CANCEL:
+			case IDCANCEL:
 				p->OnCmdCancel();
 				return 0;
 			}
@@ -54,7 +50,7 @@ LRESULT CALLBACK CDlgListFile::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	break;
 	}
 
-	return DefWindowProcW(hWnd, uMsg, wParam, lParam);
+	return DefDlgProcW(hWnd, uMsg, wParam, lParam);
 }
 
 void CDlgListFile::OnInitDialog(HWND hWnd)
@@ -128,9 +124,9 @@ void CDlgListFile::OnInitDialog(HWND hWnd)
 	m_LVFile.Show(SW_SHOWNOACTIVATE);
 
 	m_BTOk.Create(L"确定", WS_TABSTOP | WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 0,
-		0, 0, m_Ds.cxBtn, m_Ds.cyBtn, hWnd, IDC_BT_OK);
+		0, 0, m_Ds.cxBtn, m_Ds.cyBtn, hWnd, IDOK);
 	m_BTCancel.Create(L"取消", WS_TABSTOP | WS_CHILD | WS_VISIBLE, 0,
-		0, 0, m_Ds.cxBtn, m_Ds.cyBtn, hWnd, IDC_BT_CANCEL);
+		0, 0, m_Ds.cxBtn, m_Ds.cyBtn, hWnd, IDCANCEL);
 	eck::SetFontForWndAndCtrl(hWnd, m_hFont);
 
 	RECT rc;
@@ -180,8 +176,13 @@ void CDlgListFile::OnDpiChanged(HWND hWnd, int xDpi, int yDpi, RECT* pRect)
 
 void CDlgListFile::OnCmdOk()
 {
-	m_bRet = TRUE;
 	m_pParam->rsRetFile = m_EDFile.GetText();
+	if (!m_pParam->rsRetFile.Size())
+	{
+		Utils::MsgBox(L"未选定的文件", NULL, L"错误", 1, (HICON)TD_ERROR_ICON, m_hWnd);
+		return;
+	}
+	m_bRet = TRUE;
 	PostQuitMessage(0);
 }
 

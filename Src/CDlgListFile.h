@@ -39,8 +39,6 @@ private:
 		IDC_LA_TIP = 101,
 		IDC_ED_FILE,
 		IDC_LV_FILE,
-		IDC_BT_OK,
-		IDC_BT_CANCEL
 	};
 
 	int m_iDpi = USER_DEFAULT_SCREEN_DPI;

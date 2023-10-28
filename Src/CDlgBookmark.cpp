@@ -67,7 +67,7 @@ LRESULT CDlgBookmark::SubclassProc_ED(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 
 LRESULT CDlgBookmark::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	auto p = (CDlgBookmark*)GetWindowLongPtrW(hWnd, 0);
+	auto p = (CDlgBookmark*)GetWindowLongPtrW(hWnd, eck::CDialog::OcbPtr1);
 	switch (uMsg)
 	{
 	case WM_NOTIFY:
@@ -86,7 +86,7 @@ LRESULT CDlgBookmark::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 	case WM_SIZE:
 		return HANDLE_WM_SIZE(hWnd, wParam, lParam, p->OnSize);
 	case WM_COMMAND:
-		if ((HWND)lParam == p->m_TBOp.GetHWND() || HIWORD(wParam) == BN_CLICKED)
+		if ((HWND)lParam == p->m_TBOp.GetHWND() && HIWORD(wParam) == BN_CLICKED)
 			switch (LOWORD(wParam))
 			{
 			case TBCID_DELETE:
@@ -96,10 +96,12 @@ LRESULT CDlgBookmark::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 				p->OnCmdJump();
 				return 0;
 			}
+		else if (HIWORD(wParam) == BN_CLICKED && LOWORD(wParam) == IDCANCEL)
+			PostQuitMessage(0);
 		break;
 	case WM_INITDIALOG:
 		p = (CDlgBookmark*)lParam;
-		SetWindowLongPtrW(hWnd, 0, (LONG_PTR)p);
+		SetWindowLongPtrW(hWnd, eck::CDialog::OcbPtr1, (LONG_PTR)p);
 		p->OnInitDialog(hWnd);
 		break;
 	case WM_TIMER:
@@ -114,7 +116,7 @@ LRESULT CDlgBookmark::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 		PostQuitMessage(0);
 		return 0;
 	}
-	return DefWindowProcW(hWnd, uMsg, wParam, lParam);
+	return DefDlgProcW(hWnd, uMsg, wParam, lParam);
 }
 
 void CDlgBookmark::OnInitDialog(HWND hWnd)

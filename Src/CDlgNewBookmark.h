@@ -29,8 +29,6 @@ private:
 		IDC_LA_TIP2,
 		IDC_ED_NAME,
 		IDC_CLP_CLR,
-		IDC_BT_OK,
-		IDC_BT_CANCEL
 	};
 
 	PARAM* m_pParam = NULL;
