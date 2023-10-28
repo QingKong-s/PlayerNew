@@ -1,9 +1,48 @@
 ﻿#include "CWndMain.h"
 #include "CDlgListFile.h"
 #include "CDlgBookmark.h"
+#include "DragDrop.h"
 
-constexpr PCWSTR c_szDefListName = L"当前无播放列表";
-constexpr static UINT_PTR c_uScidLV = 20231026'01;
+constexpr static PCWSTR c_szDefListName = L"当前无播放列表";
+constexpr static UINT_PTR c_uScidLVList = 20231026'01;
+constexpr static UINT_PTR c_uScidLVSearch = 20231028'01;
+
+class CDropSourceList :public CDropSource
+{
+public:
+	// IUnknown
+	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void** ppvObject)
+	{
+		const static QITAB qit[]
+		{
+			QITABENT(CDropSourceList, IDropSource),
+			{}
+		};
+
+		return QISearch(this, qit, iid, ppvObject);
+	}
+	// IDropSource
+	HRESULT STDMETHODCALLTYPE QueryContinueDrag(BOOL fEscapePressed, DWORD grfKeyState)
+	{
+		if (fEscapePressed)
+			return DRAGDROP_S_CANCEL;
+		if (!eck::IsBitSet(grfKeyState, MK_LBUTTON))
+			return DRAGDROP_S_DROP;
+		return S_OK;
+	}
+
+	HRESULT STDMETHODCALLTYPE GiveFeedback(DWORD dwEffect)
+	{
+		if (dwEffect == DROPEFFECT_NONE)
+		{
+			SetCursor(LoadCursorW(NULL, IDC_NO));
+			return S_OK;
+		}
+		
+		return DRAGDROP_S_USEDEFAULTCURSORS;
+	}
+};
+
 
 LRESULT CWndList::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -22,12 +61,23 @@ LRESULT CWndList::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				return 0;
 			case NM_RCLICK:
 				return p->OnListLVNRClick((NMITEMACTIVATE*)lParam);
+			case LVN_BEGINDRAG:
+				p->OnListLVNBeginDrag((NMLISTVIEW*)lParam);
+				return 0;
 			}
 		else if (((NMHDR*)lParam)->hwndFrom == p->m_LVSearch.GetHWND())
 			switch (((NMHDR*)lParam)->code)
 			{
 			case NM_CUSTOMDRAW:
 				return p->OnSearchLVNCustomDraw((NMLVCUSTOMDRAW*)lParam);
+			case NM_DBLCLK:
+				p->OnSearchLVNDbLClick((NMITEMACTIVATE*)lParam);
+				return 0;
+			case NM_RCLICK:
+				return p->OnSearchLVNRClick((NMITEMACTIVATE*)lParam);
+			case LVN_BEGINDRAG:
+				p->OnSearchLVNBeginDrag((NMLISTVIEW*)lParam);
+				return 0;
 			}
 	}
 	break;
@@ -109,8 +159,9 @@ LRESULT CWndList::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 }
 
-LRESULT CWndList::SubclassProc_LVMsgForward(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+LRESULT CWndList::SubclassProc_LVList(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
+	auto p = (CWndList*)dwRefData;
 	switch (uMsg)
 	{
 	case LVM_DELETECOLUMN:
@@ -125,14 +176,48 @@ LRESULT CWndList::SubclassProc_LVMsgForward(HWND hWnd, UINT uMsg, WPARAM wParam,
 	case LVM_SETTEXTBKCOLOR:
 	case LVM_SETTEXTCOLOR:
 	case LVM_SETVIEW:
-		SendMessageW(((CWndList*)dwRefData)->m_LVSearch.GetHWND(), uMsg, wParam, lParam);
+		SendMessageW(p->m_LVSearch.GetHWND(), uMsg, wParam, lParam);
 		break;
 	case LVM_SETIMAGELIST:
 	{
 		HIMAGELIST hIml = ImageList_Duplicate((HIMAGELIST)lParam);
-		SendMessageW(((CWndList*)dwRefData)->m_LVSearch.GetHWND(), uMsg, wParam, (LPARAM)hIml);
+		SendMessageW(p->m_LVSearch.GetHWND(), uMsg, wParam, (LPARAM)hIml);
 	}
 	break;
+	case WM_KEYDOWN:
+		if (wParam == VK_RETURN)// 按回车键播放曲目
+		{
+			const int idx = p->m_LVList.GetCurrSel();
+			if (idx < 0)
+				break;
+			p->PlayListItem(idx);
+		}
+		else if (wParam == 0x41)// A键按下
+			if (GetKeyState(VK_CONTROL) & 0x80000000)// Ctrl + A 全选
+				p->m_LVList.SetItemState(-1, LVIS_SELECTED, LVIS_SELECTED);
+		break;
+	}
+
+	return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+}
+
+LRESULT CWndList::SubclassProc_LVSearch(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+{
+	auto p = (CWndList*)dwRefData;
+	switch (uMsg)
+	{
+	case WM_KEYDOWN:
+		if (wParam == VK_RETURN)// 按回车键播放曲目
+		{
+			const int idx = p->m_LVSearch.GetCurrSel();
+			if (idx < 0)
+				break;
+			p->PlayListItem(App->GetPlayer().AtSearchingIndex(idx));
+		}
+		else if (wParam == 0x41)// A键按下
+			if (GetKeyState(VK_CONTROL) & 0x80000000)// Ctrl + A 全选
+				p->m_LVSearch.SetItemState(-1, LVIS_SELECTED, LVIS_SELECTED);
+		break;
 	}
 
 	return DefSubclassProc(hWnd, uMsg, wParam, lParam);
@@ -255,14 +340,15 @@ BOOL CWndList::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 
 	constexpr DWORD dwLVStyle = LVS_REPORT | LVS_SHOWSELALWAYS | LVS_OWNERDATA;
 	m_LVSearch.Create(NULL, dwLVStyle, 0, 0, 0, 0, 0, hWnd, IDC_LV_LIST);
+	SetWindowSubclass(m_LVSearch.GetHWND(), SubclassProc_LVSearch, c_uScidLVSearch, (DWORD_PTR)this);
 	m_LVSearch.SetExplorerTheme();
 
 	m_LVList.Create(NULL, WS_VISIBLE | dwLVStyle, 0, 0, 0, 0, 0, hWnd, IDC_LV_LIST);
-	SetWindowSubclass(m_LVList.GetHWND(), SubclassProc_LVMsgForward, c_uScidLV, (DWORD_PTR)this);
+	SetWindowSubclass(m_LVList.GetHWND(), SubclassProc_LVList, c_uScidLVList, (DWORD_PTR)this);
 	constexpr DWORD dwLVExStyle = LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER;
 	m_LVList.SetLVExtendStyle(dwLVExStyle);
-	m_LVList.InsertColumn(L"名称", 0, 300);
-	m_LVList.InsertColumn(L"时长", 1, 100, LVCFMT_CENTER);
+	m_LVList.InsertColumn(L"名称", 0, m_Ds.cxColumn1);
+	m_LVList.InsertColumn(L"时长", 1, m_Ds.cxColumn2, LVCFMT_CENTER);
 	m_LVList.SetExplorerTheme();
 	m_hThemeLV = OpenThemeData(m_LVList.GetHWND(), L"ListView");
 
@@ -322,6 +408,9 @@ void CWndList::OnDestroy(HWND hWnd)
 	DestroyMenu(m_hMenuManage);
 	DeleteObject(m_hFont);
 	DeleteObject(m_hFontListName);
+	DeleteObject(m_hbrCurrPlaying);
+	DeleteObject(m_hbrGray);
+	DeleteObject(m_hbrLaterPlaying);
 }
 
 void CWndList::OnCmdLocate()
@@ -686,7 +775,7 @@ BOOL CWndList::OnListLVNRClick(NMITEMACTIVATE* pnmia)
 	switch (iRet)
 	{
 	case IDMI_PLAY:
-		Player.Play(idx);
+		PlayListItem(idx);
 		break;
 	case IDMI_PLAYLATER:
 		if (Player.GetLaterPlaying() == idx)
@@ -815,6 +904,113 @@ void CWndList::OnMenuDelFromList()
 		}
 	Player.EndSortProtect(bSort);
 	m_LVList.SetItemCount(Player.GetList().GetCount());
+	if (Player.IsSearching())
+	{
+		Player.Search(m_rsCurrKeyword.Data());
+		m_LVSearch.SetItemCount(Player.GetSearchingResultCount());
+	}
+}
+
+void CWndList::OnListLVNBeginDrag(NMLISTVIEW* pnmlv)
+{
+	if (pnmlv->iItem < 0)
+		return;
+
+	std::vector<int> vIdx{};
+	auto& List = App->GetPlayer().GetList();
+	const int cItems = m_LVList.GetItemCount();
+
+	int cchTotal = 0;
+	EckCounter(cItems, i)
+	{
+		if (m_LVList.GetItemState(i, LVIS_SELECTED) == LVIS_SELECTED)
+		{
+			vIdx.emplace_back(i);
+			cchTotal += (List.At(i).rsFile.Size() + 1);
+		}
+	}
+#pragma region 制HDROP
+	SIZE_T cbBuf = sizeof(DROPFILES) + eck::Cch2Cb(cchTotal);
+	HGLOBAL hGlobal = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, cbBuf);
+	if (!hGlobal)
+	{
+		EckDbgBreak();
+		return;
+	}
+	void* p = GlobalLock(hGlobal);
+	if (!p)
+	{
+		GlobalFree(hGlobal);
+		EckDbgBreak();
+		return;
+	}
+
+	DROPFILES df
+	{
+		sizeof(DROPFILES),
+		{},
+		TRUE,
+		TRUE
+	};
+
+	eck::CMemWriter w(p, cbBuf);
+	w << df;
+	for (auto x : vIdx)
+		w << List.At(x).rsFile;
+	w << L'\0';
+
+	GlobalUnlock(hGlobal);
+	// 制格式描述
+	FORMATETC fe =
+	{
+		CF_HDROP,
+		NULL,
+		DVASPECT_CONTENT,
+		-1,
+		TYMED_HGLOBAL
+	};
+	// 制存储介质
+	STGMEDIUM sm;
+	sm.tymed = TYMED_HGLOBAL;
+	sm.hGlobal = hGlobal;
+	sm.pUnkForRelease = NULL;
+
+	auto pDataObject = new CDataObject;
+	pDataObject->SetData(&fe, &sm, FALSE);
+#pragma endregion
+#pragma region 制自定义拖放信息
+	LISTDRAGPARAMHEADER Header{ LDPH_VER_1,GetCurrentProcessId(),(int)vIdx.size() };
+	cbBuf = sizeof(LISTDRAGPARAMHEADER) + vIdx.size() * sizeof(int);
+	hGlobal = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, cbBuf);
+	if (!hGlobal)
+	{
+		pDataObject->Release();
+		EckDbgBreak();
+		return;
+	}
+	p = GlobalLock(hGlobal);
+	if (!p)
+	{
+		GlobalFree(hGlobal);
+		pDataObject->Release();
+		EckDbgBreak();
+		return;
+	}
+	eck::CMemWriter w2(p, cbBuf);
+	w2 << Header << vIdx;
+	GlobalUnlock(hGlobal);
+	fe.cfFormat = App->GetListDragClipFormat();
+	sm.hGlobal = hGlobal;
+
+	pDataObject->SetData(&fe, &sm, FALSE);
+#pragma endregion
+	auto pDropSource = new CDropSourceList;
+
+	DWORD dwEffect;
+	HRESULT hr = DoDragDrop(pDataObject, pDropSource, DROPEFFECT_COPY, &dwEffect);
+
+	pDropSource->Release();
+	pDataObject->Release();
 }
 
 LRESULT CWndList::OnSearchLVNCustomDraw(NMLVCUSTOMDRAW* pnmlvcd)
@@ -826,16 +1022,17 @@ LRESULT CWndList::OnSearchLVNCustomDraw(NMLVCUSTOMDRAW* pnmlvcd)
 	case CDDS_ITEMPREPAINT:
 	{
 		const HDC hDC = pnmlvcd->nmcd.hdc;
-		auto& Item = App->GetPlayer().AtSearching((int)pnmlvcd->nmcd.dwItemSpec);
 		const int idx = (int)pnmlvcd->nmcd.dwItemSpec;
+		const int idxReal = App->GetPlayer().AtSearchingIndex(idx);
+		auto& Item = App->GetPlayer().AtSearching(idx);
 
-		if (idx == App->GetPlayer().GetCurrFile())// 标记现行播放项
+		if (idxReal == App->GetPlayer().GetCurrFile())// 标记现行播放项
 			FillRect(hDC, &pnmlvcd->nmcd.rc, m_hbrCurrPlaying);
 		else if (idx % 2)// 交替行色
 			FillRect(hDC, &pnmlvcd->nmcd.rc, m_hbrGray);
 
 		int iState;
-		if (m_LVList.GetItemState(idx, LVIS_SELECTED) == LVIS_SELECTED)// 选中
+		if (m_LVSearch.GetItemState(idx, LVIS_SELECTED) == LVIS_SELECTED)// 选中
 		{
 			if (pnmlvcd->nmcd.uItemState & CDIS_HOT)
 				iState = LISS_HOTSELECTED;
@@ -864,7 +1061,7 @@ LRESULT CWndList::OnSearchLVNCustomDraw(NMLVCUSTOMDRAW* pnmlvcd)
 		rc.right = pnmlvcd->nmcd.rc.right;
 		DrawTextW(hDC, Item.rsTime.Data(), Item.rsTime.Size(), &rc, DT_SINGLELINE | DT_VCENTER | DT_CENTER | DT_END_ELLIPSIS);
 
-		if (idx == App->GetPlayer().GetLaterPlaying())// 稍后播放
+		if (idxReal == App->GetPlayer().GetLaterPlaying())// 稍后播放
 			FrameRect(hDC, &pnmlvcd->nmcd.rc, m_hbrLaterPlaying);
 
 		int pos = 0;
@@ -900,6 +1097,42 @@ LRESULT CWndList::OnSearchLVNCustomDraw(NMLVCUSTOMDRAW* pnmlvcd)
 	return CDRF_SKIPDEFAULT;
 	}
 	return CDRF_SKIPDEFAULT;
+}
+
+void CWndList::OnSearchLVNDbLClick(NMITEMACTIVATE* pnmia)
+{
+	if (pnmia->iItem < 0)
+		return;
+	PlayListItem(App->GetPlayer().AtSearchingIndex(pnmia->iItem));
+}
+
+BOOL CWndList::OnSearchLVNRClick(NMITEMACTIVATE* pnmia)
+{
+	auto& Player = App->GetPlayer();
+	m_LVList.SetItemState(-1, 0, LVIS_SELECTED);
+	EckCounter(m_LVSearch.GetItemCount(), i)
+	{
+		if (m_LVSearch.GetItemState(i, LVIS_SELECTED) == LVIS_SELECTED)
+			m_LVList.SetItemState(Player.AtSearchingIndex(i), LVIS_SELECTED, LVIS_SELECTED);
+	}
+	NMITEMACTIVATE nmia{};
+	nmia.iItem = Player.AtSearchingIndex(pnmia->iItem);
+	OnListLVNRClick(&nmia);
+	return FALSE;
+}
+
+void CWndList::OnSearchLVNBeginDrag(NMLISTVIEW* pnmlv)
+{
+	auto& Player = App->GetPlayer();
+	m_LVList.SetItemState(-1, 0, LVIS_SELECTED);
+	EckCounter(m_LVSearch.GetItemCount(), i)
+	{
+		if (m_LVSearch.GetItemState(i, LVIS_SELECTED) == LVIS_SELECTED)
+			m_LVList.SetItemState(Player.AtSearchingIndex(i), LVIS_SELECTED, LVIS_SELECTED);
+	}
+	NMLISTVIEW nmlv{};
+	nmlv.iItem = Player.AtSearchingIndex(pnmlv->iItem);
+	OnListLVNBeginDrag(&nmlv);
 }
 
 void CWndList::OnENChange()
@@ -954,12 +1187,28 @@ void CWndList::PlayListItem(int idx)
 	int idxOld = Player.GetCurrFile();
 	auto uRet = Player.Play(idx);
 	if (idxOld >= 0)
-		m_LVList.RedrawItems(idxOld, idxOld);
+	{
+		m_LVList.RedrawItem(idxOld);
+		if (Player.IsSearching())
+		{
+			const auto& vResult = Player.GetSearchingResult();
+			auto it = std::find(std::execution::par_unseq, vResult.begin(), vResult.end(), idxOld);
+			if (it != vResult.end())
+				m_LVSearch.RedrawItem((int)std::distance(vResult.begin(), it));
+		}
+	}
 	int iBassErr = BASS_OK;
 	auto pszErrMsg = CPlayer::GetErrMsgToShow(uRet, &iBassErr);
 	if (!pszErrMsg)
 	{
-		m_LVList.RedrawItems(idx, idx);
+		m_LVList.RedrawItem(idx);
+		if (Player.IsSearching())
+		{
+			const auto& vResult = Player.GetSearchingResult();
+			auto it = std::find(std::execution::par_unseq, vResult.begin(), vResult.end(), idx);
+			if (it != vResult.end())
+				m_LVSearch.RedrawItem((int)std::distance(vResult.begin(), it));
+		}
 		m_WndMain.SetText(Player.GetList().At(idx).rsName.Data());
 	}
 	else

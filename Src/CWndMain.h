@@ -13,9 +13,16 @@
 #include "CSimpleList.h"
 
 
+struct DRAGDROPINFO
+{
+	BOOL bValid;
+};
+
+class CDropTargetList;
 
 class CWndMain : public eck::CWnd
 {
+	friend class CDropTargetList;
 private:
 	IDXGISwapChain1* m_pSwapChain = NULL;
 	ID2D1DeviceContext* m_pDC = NULL;
@@ -26,6 +33,9 @@ private:
 	CWndList m_List{ *this };
 
 	int m_xSeparateBar = 0;
+
+	CDropTargetList* m_pDropTarget = NULL;
+	DRAGDROPINFO m_DragDropInfo{};
 
 	enum
 	{

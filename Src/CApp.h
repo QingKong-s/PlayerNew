@@ -52,6 +52,8 @@ private:
 
 	CPlayer m_Player{};
 
+	CLIPFORMAT m_cfListDrag = 0;
+
 	static HRESULT WICCreateBitmap(IWICBitmapDecoder* pDecoder, IWICBitmap** ppBitmap);
 public:
 	~CApp();
@@ -61,6 +63,8 @@ public:
 	PNInline HINSTANCE GetHInstance() const { return m_hInstance; }
 
 	PNInline CPlayer& GetPlayer() { return m_Player; }
+
+	PNInline CLIPFORMAT GetListDragClipFormat() const { return m_cfListDrag; }
 
 	static HRESULT WICCreateBitmap(PWSTR pszFile, IWICBitmap** ppWICBitmap);
 

@@ -1,6 +1,6 @@
 ﻿#include "CDlgBookmark.h"
 
-constexpr static UINT_PTR c_uScidLV = 20231027'01;
+constexpr static UINT_PTR c_uScidLVList = 20231027'01;
 
 void CDlgBookmark::UpdateDpiInit(int iDpi)
 {
@@ -160,7 +160,7 @@ void CDlgBookmark::OnInitDialog(HWND hWnd)
 		lvi.pszText = (PWSTR)x.second.rsName.Data();
 		m_LVBookmark.SetItemText(lvi.iItem, &lvi);
 	}
-	SetWindowSubclass(m_LVBookmark.GetHWND(), SubclassProc_LV, c_uScidLV, (DWORD_PTR)this);
+	SetWindowSubclass(m_LVBookmark.GetHWND(), SubclassProc_LV, c_uScidLVList, (DWORD_PTR)this);
 	m_LVBookmark.Show(SW_SHOWNOACTIVATE);
 
 	m_EDName.Create(NULL, ES_AUTOHSCROLL, WS_EX_CLIENTEDGE, 0, 0, 0, 0, m_LVBookmark.GetHWND(), IDC_ED_NAME);

@@ -12,9 +12,21 @@
 
 constexpr inline auto WCN_LIST = L"PlayerNew.WndClass.List";
 
+#pragma pack(push, 4)
+constexpr inline int LDPH_VER_1 = 0;
+struct LISTDRAGPARAMHEADER
+{
+	int iVer;
+	DWORD dwPID;
+	int cItems;
+	// int idxLV[];
+};
+#pragma pack(pop)
+
 class CWndMain;
 class CWndList : public eck::CWnd
 {
+	friend class CDropTargetList;
 private:
 	eck::CLabel m_LAListName{};
 	eck::CEditExt m_EDSearch{};
@@ -102,12 +114,17 @@ private:
 		ECK_DS_ENTRY(iGap, 4)
 		ECK_DS_ENTRY(cxLVTextSpace, 4)
 		ECK_DS_ENTRY(cyLVItem, c_cyLVItem)
+		ECK_DS_ENTRY(cxColumn1, 240)
+		ECK_DS_ENTRY(cxColumn2, 60)
 		;
 	ECK_DS_END_VAR(m_Ds);
 
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-	static LRESULT CALLBACK SubclassProc_LVMsgForward(HWND hWnd, UINT uMsg, WPARAM wParam,
+	static LRESULT CALLBACK SubclassProc_LVList(HWND hWnd, UINT uMsg, WPARAM wParam,
+		LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
+
+	static LRESULT CALLBACK SubclassProc_LVSearch(HWND hWnd, UINT uMsg, WPARAM wParam,
 		LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 
 	PNInline void UpdateDpiInit(int iDpi)
@@ -150,7 +167,15 @@ private:
 
 	void OnMenuDelFromList();
 
+	void OnListLVNBeginDrag(NMLISTVIEW* pnmlv);
+
 	LRESULT OnSearchLVNCustomDraw(NMLVCUSTOMDRAW* pnmlvcd);
+
+	void OnSearchLVNDbLClick(NMITEMACTIVATE* pnmia);
+
+	BOOL OnSearchLVNRClick(NMITEMACTIVATE* pnmia);
+
+	void OnSearchLVNBeginDrag(NMLISTVIEW* pnmlv);
 
 	void OnENChange();
 public:

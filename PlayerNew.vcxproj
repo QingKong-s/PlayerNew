@@ -249,6 +249,7 @@
     <ClInclude Include="Src\CWndBK.h" />
     <ClInclude Include="Src\CWndList.h" />
     <ClInclude Include="Src\CWndMain.h" />
+    <ClInclude Include="Src\DragDrop.h" />
     <ClInclude Include="Src\Entry.h" />
     <ClInclude Include="Src\resource.h" />
     <ClInclude Include="Src\targetver.h" />
@@ -290,6 +291,7 @@
     <ClCompile Include="Src\CWndBK.cpp" />
     <ClCompile Include="Src\CWndList.cpp" />
     <ClCompile Include="Src\CWndMain.cpp" />
+    <ClCompile Include="Src\DragDrop.cpp" />
     <ClCompile Include="Src\Entry.cpp" />
     <ClCompile Include="Src\Utils.cpp" />
   </ItemGroup>

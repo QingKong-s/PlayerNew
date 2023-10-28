@@ -1,6 +1,288 @@
 ﻿#include <format>
 
 #include "CWndMain.h"
+#include "DragDrop.h"
+
+
+
+class CDropTargetList :public CDropTarget
+{
+private:
+	CWndMain& m_WndMain;
+public:
+	CDropTargetList(CWndMain& x) :m_WndMain{ x }
+	{}
+	// IUnknown
+	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppvObject)
+	{
+		const static QITAB qit[]
+		{
+			QITABENT(CDropTargetList, IDropTarget),
+			{}
+		};
+
+		return QISearch(this, qit, riid, ppvObject);
+	}
+	// IDropTarget
+	HRESULT STDMETHODCALLTYPE DragEnter(IDataObject* pDataObj, DWORD grfKeyState, POINTL pt, DWORD* pdwEffect)
+	{
+		if (!pdwEffect)
+			return E_INVALIDARG;
+		*pdwEffect = DROPEFFECT_NONE;
+		m_WndMain.m_DragDropInfo.bValid = FALSE;
+		FORMATETC fe
+		{
+			App->GetListDragClipFormat(),
+			NULL,
+			DVASPECT_CONTENT,
+			-1,
+			TYMED_HGLOBAL
+		};
+
+		if (SUCCEEDED(pDataObj->QueryGetData(&fe)))
+		{
+			if (eck::IsBitSet(grfKeyState, MK_CONTROL))
+			{
+				m_WndMain.m_DragDropInfo.bValid = TRUE;
+				*pdwEffect = DROPEFFECT_COPY;
+			}
+			else if (!App->GetPlayer().GetList().IsSorting())
+			{
+				m_WndMain.m_DragDropInfo.bValid = TRUE;
+				*pdwEffect = DROPEFFECT_MOVE;
+			}
+		}
+		else
+		{
+			fe.cfFormat = CF_HDROP;
+			if (SUCCEEDED(pDataObj->QueryGetData(&fe)))
+			{
+				m_WndMain.m_DragDropInfo.bValid = TRUE;
+				*pdwEffect = DROPEFFECT_COPY;
+			}
+		}
+		return S_OK;
+	}
+
+	HRESULT STDMETHODCALLTYPE DragOver(DWORD grfKeyState, POINTL pt, DWORD* pdwEffect)
+	{
+		if (!pdwEffect)
+			return E_INVALIDARG;
+		if (!m_WndMain.m_DragDropInfo.bValid ||
+			App->GetPlayer().IsSearching() ||
+			App->GetPlayer().GetList().IsSorting())
+		{
+			*pdwEffect = DROPEFFECT_NONE;
+			return S_OK;
+		}
+		*pdwEffect = DROPEFFECT_COPY;
+		POINT pt0{ pt.x,pt.y };
+		const auto& LV = m_WndMain.m_List.m_LVList;
+		const BOOL bOnLV = (WindowFromPoint(pt0) == LV.GetHWND());// 光标是否在列表视图上
+		const int cItems = LV.GetItemCount();
+
+		LVINSERTMARK lim;
+		lim.cbSize = sizeof(LVINSERTMARK);
+		lim.dwReserved = 0;
+
+		if (bOnLV)
+		{
+			ScreenToClient(LV.GetHWND(), &pt0);
+			LVHITTESTINFO lvhti;
+			lvhti.pt = { 0,pt0.y };// x设为0执行命中测试
+			LV.HitTest(&lvhti);
+
+			if (lvhti.iItem != -1)
+			{
+				lim.iItem = lvhti.iItem;
+				RECT rcItem;
+				LV.GetItemRect(lvhti.iItem, &rcItem);
+				if (pt0.y > rcItem.top + (rcItem.bottom - rcItem.top) / 2)// 是否落在表项的下半部分
+					lim.dwFlags = LVIM_AFTER;
+				else
+					lim.dwFlags = 0;
+			}
+			else if (eck::IsBitSet(lvhti.flags, LVHT_NOWHERE))// 落在空白处，在最后插入
+			{
+				lim.iItem = cItems - 1;
+				lim.dwFlags = LVIM_AFTER;
+			}
+			LV.SetInsertMark(&lim);
+		}
+		else
+		{
+			lim.iItem = cItems - 1;
+			lim.dwFlags = LVIM_AFTER;
+			LV.SetInsertMark(&lim);
+		}
+		return S_OK;
+	}
+
+	HRESULT STDMETHODCALLTYPE DragLeave(void)
+	{
+		m_WndMain.m_List.m_LVList.SetInsertMark(-1);
+		return S_OK;
+	}
+
+	HRESULT STDMETHODCALLTYPE Drop(IDataObject* pDataObj, DWORD grfKeyState, POINTL pt, DWORD* pdwEffect)
+	{
+		if (!pdwEffect)
+			return E_INVALIDARG;
+		*pdwEffect = DROPEFFECT_NONE;
+		if (!m_WndMain.m_DragDropInfo.bValid ||
+			App->GetPlayer().IsSearching())
+			return S_OK;
+
+		POINT pt0{ pt.x,pt.y };
+		const auto& LV = m_WndMain.m_List.m_LVList;
+		const BOOL bOnLV = (WindowFromPoint(pt0) == LV.GetHWND());// 光标是否在列表视图上
+		
+		LVHITTESTINFO lvhti;
+		if (bOnLV)
+		{
+			ScreenToClient(LV.GetHWND(), &pt0);
+			lvhti.pt = { 0,pt0.y };
+			LV.HitTest(&lvhti);
+		}
+		else
+			lvhti.iItem = -1;
+
+		LV.SetInsertMark(-1);
+
+		PCVOID pData;
+
+		const LISTDRAGPARAMHEADER* pHeader;
+
+		const DROPFILES* pdf;
+		LISTFILEITEM_1 Info{};
+		PCWSTR pszTemp;
+		PCSTR pszTempA;
+		eck::CRefStrW rsTemp{};
+
+		FORMATETC fe
+		{
+			App->GetListDragClipFormat(),
+			NULL,
+			DVASPECT_CONTENT,
+			-1,
+			TYMED_HGLOBAL
+		};
+
+		STGMEDIUM sm{};
+		sm.tymed = TYMED_HGLOBAL;
+
+		auto& Player = App->GetPlayer();
+		if (Player.IsSearching())
+			return E_UNEXPECTED;
+		else if (SUCCEEDED(pDataObj->GetData(&fe, &sm)))// 取自定义拖放信息
+		{
+			if (eck::IsBitSet(grfKeyState, MK_CONTROL))// 复制项目而不是移动
+			{
+				ReleaseStgMedium(&sm);
+				goto TryHDrop;
+			}
+
+			pData = GlobalLock(sm.hGlobal);
+			if (!pData)
+			{
+				ReleaseStgMedium(&sm);
+				return E_UNEXPECTED;
+			}
+
+			eck::CMemReader r(pData, GlobalSize(sm.hGlobal));
+			r.SkipPointer(pHeader);
+			if (pHeader->iVer != LDPH_VER_1 || pHeader->cItems <= 0)// 验证合法性
+			{
+				GlobalUnlock(sm.hGlobal);
+				ReleaseStgMedium(&sm);
+				return E_UNEXPECTED;
+			}
+			if (pHeader->dwPID != GetCurrentProcessId())// 不是自进程拖放，转向处理HDROP
+			{
+				GlobalUnlock(sm.hGlobal);
+				ReleaseStgMedium(&sm);
+				goto TryHDrop;
+			}
+			
+			if (Player.GetList().IsSorting())// 如果是自进程拖放，但当前处在排序状态且Ctrl键未按下，则拒绝拖放
+			{
+				*pdwEffect = DROPEFFECT_NONE;
+				GlobalUnlock(sm.hGlobal);
+				ReleaseStgMedium(&sm);
+				return E_UNEXPECTED;
+			}
+
+			if (lvhti.iItem >= 0)// 修正索引
+			{
+				RECT rcItem;
+				LV.GetItemRect(lvhti.iItem, &rcItem);
+				if (pt0.y > rcItem.top + (rcItem.bottom - rcItem.top) / 2)
+					++lvhti.iItem;
+			}
+
+			const int idxFirst = Player.MoveItems(lvhti.iItem, (const int*)r.m_pMem, pHeader->cItems);// 移动项目
+			LV.SetItemState(-1, 0, LVIS_SELECTED);
+			EckCounter(pHeader->cItems, i)
+				LV.SetItemState(idxFirst + i, LVIS_SELECTED, LVIS_SELECTED);// 选中移动的项目
+			LV.Redraw();
+			GlobalUnlock(sm.hGlobal);
+			ReleaseStgMedium(&sm);
+			*pdwEffect = DROPEFFECT_MOVE;
+			return S_OK;
+		}
+		else
+		{
+		TryHDrop:
+			fe.cfFormat = CF_HDROP;
+			if (SUCCEEDED(pDataObj->GetData(&fe, &sm)))// 取HDROP
+			{
+				pData = GlobalLock(sm.hGlobal);
+				if (!pData)
+				{
+					ReleaseStgMedium(&sm);
+					return E_UNEXPECTED;
+				}
+
+				eck::CMemReader r(pData, GlobalSize(sm.hGlobal));
+				r.SkipPointer(pdf);
+
+				const BOOL bSort = Player.BeginSortProtect();
+				if (pdf->fWide)
+				{
+					pszTemp = (PCWSTR)r.m_pMem;
+					while (*pszTemp != L'\0')
+					{
+						Info.cchFile = (int)wcslen(pszTemp);
+						Player.Insert(lvhti.iItem, Info, NULL, NULL, pszTemp);
+						r += eck::Cch2Cb(Info.cchFile);
+						pszTemp = (PCWSTR)r.m_pMem;
+					}
+				}
+				else
+				{
+					pszTempA = (PCSTR)r.m_pMem;
+					while (*pszTempA != '\0')
+					{
+						const int cchA = (int)strlen(pszTempA);
+						rsTemp = eck::StrX2WRs(pszTempA, cchA);
+						Info.cchFile = rsTemp.Size();
+						Player.Insert(lvhti.iItem, Info, NULL, NULL, rsTemp.Data());
+						r += (cchA + 1);
+						pszTempA = (PCSTR)r.m_pMem;
+					}
+				}
+				Player.EndSortProtect(bSort);
+				LV.SetItemCount(Player.GetList().GetCount());
+
+				GlobalUnlock(sm.hGlobal);
+				ReleaseStgMedium(&sm);
+				*pdwEffect = DROPEFFECT_COPY;
+				return S_OK;
+			}
+		}
+		return E_UNEXPECTED;
+	}
+};
 
 
 constexpr PCWSTR c_pszWndClassMain = L"PlayerNew.WndClass.Main";
@@ -60,7 +342,16 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 
 	ShowWindow(m_Bk.GetHWND(), SW_SHOWNOACTIVATE);
 	ShowWindow(m_List.GetHWND(), SW_SHOWNOACTIVATE);
+
+	m_pDropTarget = new CDropTargetList(*this);
+	HRESULT hr = RegisterDragDrop(hWnd, m_pDropTarget);
+	if (FAILED(hr))
+		CApp::ShowError(hWnd, hr, CApp::ErrSrc::HResult, L"注册拖放目标失败");
+	
 	return TRUE;
+
+
+
 	m_vStr.resize(100000);
 	EckCounter(m_vStr.size(), i)
 	{
@@ -76,6 +367,12 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	m_Sl.Create(NULL, WS_CHILD | WS_VISIBLE | WS_BORDER, 0, 100, 100, 500, 700, hWnd, 0);
 	m_Sl.SetItemCount((int)m_vStr.size());
 	return TRUE;
+}
+
+void CWndMain::OnDestroy()
+{
+	RevokeDragDrop(m_hWnd);
+	m_pDropTarget->Release();
 }
 
 void CWndMain::OnDpiChanged(HWND hWnd, int xDpi, int yDpi, RECT* pRect)

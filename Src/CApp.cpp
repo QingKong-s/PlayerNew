@@ -1,4 +1,4 @@
-#include "CApp.h"
+ï»¿#include "CApp.h"
 CApp* App;
 
 HRESULT CApp::WICCreateBitmap(IWICBitmapDecoder* pDecoder, IWICBitmap** ppBitmap)
@@ -57,6 +57,9 @@ void CApp::Init(HINSTANCE hInstance)
 	eck::Init(hInstance);
 	CBass::Init();
 
+	m_cfListDrag = (CLIPFORMAT)RegisterClipboardFormatW(L"PlayerNew.CBFmt.ListDrag");
+	EckAssert(m_cfListDrag);
+
 	HRESULT hr;
 #ifndef NDEBUG
 	D2D1_FACTORY_OPTIONS D2DFactoryOptions;
@@ -68,12 +71,12 @@ void CApp::Init(HINSTANCE hInstance)
 	if (FAILED(hr))
 	{
 	}
-	//////////////´´½¨DWrite¹¤³§
+	//////////////åˆ›å»ºDWriteå·¥å‚
 	hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown**)&m_pDwFactory);
 	if (FAILED(hr))
 	{
 	}
-	//////////////´´½¨DXGI¹¤³§
+	//////////////åˆ›å»ºDXGIå·¥å‚
 	ID3D11Device* pD3DDevice;
 	hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_BGRA_SUPPORT
 #ifndef NDEBUG
@@ -91,12 +94,12 @@ void CApp::Init(HINSTANCE hInstance)
 
 	pDXGIAdapter->GetParent(IID_PPV_ARGS(&m_pDxgiFactory));
 	pDXGIAdapter->Release();
-	//////////////´´½¨DXGIÉè±¸
+	//////////////åˆ›å»ºDXGIè®¾å¤‡
 	hr = m_pD2dFactory->CreateDevice(m_pDxgiDevice, &m_pD2dDevice);
 	if (FAILED(hr))
 	{
 	}
-	//////////////´´½¨WIC¹¤³§
+	//////////////åˆ›å»ºWICå·¥å‚
 	hr = CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&m_pWicFactory));
 	if (FAILED(hr))
 	{
@@ -138,12 +141,12 @@ void CApp::ShowError(HWND hWnd, EckOpt(DWORD, dwErrCode), ErrSrc uSrc, PCWSTR ps
 	tdc.dwCommonButtons = TDCBF_OK_BUTTON;
 	tdc.pszMainIcon = TD_ERROR_ICON;
 
-	tdc.pszWindowTitle = pszTitle ? pszTitle : L"´íÎó";
+	tdc.pszWindowTitle = pszTitle ? pszTitle : L"é”™è¯¯";
 
-	tdc.pszMainInstruction = pszInfo ? pszInfo : L"·¢Éú´íÎó";
+	tdc.pszMainInstruction = pszInfo ? pszInfo : L"å‘ç”Ÿé”™è¯¯";
 
 	std::wstring sContent;
-	constexpr PCWSTR c_pszErrInfoFmt = L"´íÎó´úÂë£º0x{:08X}\n\n´íÎóĞÅÏ¢£º\n{}";
+	constexpr PCWSTR c_pszErrInfoFmt = L"é”™è¯¯ä»£ç ï¼š0x{:08X}\n\né”™è¯¯ä¿¡æ¯ï¼š\n{}";
 	switch (uSrc)
 	{
 	case CApp::ErrSrc::Win32:

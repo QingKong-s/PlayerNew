@@ -213,3 +213,78 @@ void CPlayer::Search(PCWSTR pszKeyWord)
 			m_vSearchingResult.emplace_back(i);
 	}
 }
+
+int CPlayer::MoveItems(int idxDst, const int* pidx, int cItems)
+{
+	auto& vItems = m_List.GetList();
+	vItems.reserve(vItems.size() + cItems);
+
+	int m = 0, n = 0;
+	BOOL b[2]{};
+	if (idxDst < 0 || idxDst >= (int)vItems.size())
+	{
+		idxDst = (int)vItems.size();
+		EckCounter(cItems, i)
+		{
+			int idx = pidx[i];
+			if (b[0])
+				--m_idxCurrFile;
+			else if (idx == m_idxCurrFile)
+			{
+				m_idxCurrFile = idxDst - 1;
+				b[0] = TRUE;
+			}
+			if (b[1])
+				--m_idxLaterPlay;
+			else if (idx == m_idxLaterPlay)
+			{
+				m_idxLaterPlay = idxDst - 1;
+				b[1] = TRUE;
+			}
+			idx -= n;
+			vItems.emplace_back(std::move(vItems[idx]));
+			vItems.erase(vItems.begin() + idx);
+			++n;
+		}
+	}
+	else
+	{
+		EckCounter(cItems, i)
+		{
+			int idx = pidx[i];
+			if (idx >= idxDst)
+			{
+				if (idx == m_idxCurrFile)
+					m_idxCurrFile = idxDst + m;
+				if (idx == m_idxLaterPlay)
+					m_idxLaterPlay = idxDst + m;
+
+				vItems.insert(vItems.begin() + idxDst + m, std::move(vItems[idx]));
+				vItems.erase(vItems.begin() + idx + 1);
+				++m;
+			}
+			else
+			{
+				if (b[0])
+					--m_idxCurrFile;
+				else if (idx == m_idxCurrFile)
+				{
+					m_idxCurrFile = idxDst - 1;
+					b[0] = TRUE;
+				}
+				if (b[1])
+					--m_idxLaterPlay;
+				else if (idx == m_idxLaterPlay)
+				{
+					m_idxLaterPlay = idxDst - 1;
+					b[1] = TRUE;
+				}
+				idx -= n;
+				vItems.insert(vItems.begin() + idxDst, std::move(vItems[idx]));
+				vItems.erase(vItems.begin() + idx);
+				++n;
+			}
+		}
+	}
+	return idxDst - n;
+}

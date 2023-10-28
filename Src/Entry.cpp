@@ -27,10 +27,10 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PWSTR pszCmdLine, _In_ int nCmdShow)
 {
-	HRESULT hr = CoInitialize(NULL);
+	HRESULT hr = OleInitialize(NULL);
 	if (FAILED(hr))
 	{
-		CApp::ShowError(NULL, hr, CApp::ErrSrc::HResult, L"CoInitialize调用失败");
+		CApp::ShowError(NULL, hr, CApp::ErrSrc::HResult, L"OleInitialize调用失败");
 		return 0;
 	}
 
@@ -63,7 +63,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	}
 
 	delete App;
-	CoUninitialize();
+	OleUninitialize();
 	return (int)msg.wParam;
 }
 

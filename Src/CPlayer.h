@@ -205,7 +205,24 @@ public:
 		return m_List.At(m_vSearchingResult[idx]);
 	}
 
+	PNInline int AtSearchingIndex(int idx)
+	{
+		return m_vSearchingResult[idx];
+	}
+
 	PNInline BOOL IsSearching() { return m_bSearching; }
+
+	PNInline const auto& GetSearchingResult() { return m_vSearchingResult; }
+
+	/// <summary>
+	/// 移动项目。
+	/// 搜索或排序时不应交换项目，因此本函数使用LV索引
+	/// </summary>
+	/// <param name="idxDst">移动到的位置，将在此位置之前插入，-1表示插入到末尾</param>
+	/// <param name="pidx">要移动的项目，按从小到大排列</param>
+	/// <param name="cItems">要移动的项目数</param>
+	/// <returns>第一个新项的索引</returns>
+	int MoveItems(int idxDst, const int* pidx, int cItems);
 
 	PNInline CBass& GetBass() { return m_Bass; }
 
