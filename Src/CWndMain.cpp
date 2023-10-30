@@ -293,6 +293,93 @@ void CWndMain::UpdateDpi(int iDpi)
 	eck::UpdateDpiSize(m_Ds, iDpi);
 }
 
+void CWndMain::InitBK()
+{
+	RECT rc;
+	auto p1 = new CUIAlbum;
+	m_BK.AddElem(p1);
+	rc = { 30,150,800,700 };
+	p1->SetElemRect(&rc);
+
+	auto p = new CUIInfo;
+	m_BK.AddElem(p);
+	p->InitElem();
+	rc = { 50,10,800,300 };
+	p->SetElemRect(&rc);
+
+	//auto pbtn = new CUIButton;
+	//m_BK.AddElem(pbtn);
+	//pbtn->InitElem();
+	//rc = { 10,220,100,400 };
+	//pbtn->SetElemRect(&rc);
+	//pbtn->SetImg(m_BK.m_pBmpIcon[CWndBK::ICIDX_Play]);
+	//pbtn->SetImgSize(m_BK.m_Ds.cxIcon, m_BK.m_Ds.cyIcon);
+
+	//auto prb = new CUIRoundButton;
+	//m_BK.AddElem(prb);
+	//prb->InitElem();
+	//rc = { 140,410,300,580 };
+	//prb->SetElemRect(&rc);
+	//prb->SetImg(m_BK.m_pBmpIcon[CWndBK::ICIDX_Options]);
+	//prb->SetImgSize(m_BK.m_Ds.cxIcon, m_BK.m_Ds.cyIcon);
+
+	auto ppc = new CUIPlayingCtrl;
+	m_BK.AddElem(ppc);
+	ppc->InitElem();
+	rc = { 70,760,800,900 };
+	ppc->SetElemRect(&rc);
+
+	//auto pw = new CUIWaves;
+	//m_BK.AddElem(pw);
+	//pw->InitElem();
+	//pw->SetElemRect({ 80,50,500,200 });
+	//pw->SetLineWidth((int)(2.f * 1.5f));
+
+	//auto pspe = new CUISpe;
+	//m_BK.AddElem(pspe);
+	//pspe->InitElem();
+	//rc = { 400,120,900,600 };
+	//pspe->SetElemRect(&rc);
+	//pspe->SetGapWidth(1.5f);
+	//pspe->SetCount(40);
+
+	//auto pspe2 = new CUISpe2;
+	//m_BK.AddElem(pspe2);
+	//pspe2->InitElem();
+	//rc = { 100,120,800,600 };
+	//pspe2->SetElemRect(&rc);
+	//pspe2->SetSampleCount(60);
+
+	//auto pra = new CUIAlbumRotating;
+	//m_BK.AddElem(pra);
+	//pra->InitElem();
+	//rc = { 100,120,600,800 };
+	//pra->SetElemRect(&rc);
+
+	auto p2 = new CUIProgBar;
+	m_BK.AddElem(p2);
+	p2->InitElem();
+	rc = { 90,710,800,750 };
+	p2->SetElemRect(&rc);
+	p2->SetMax(10000ull);
+
+	//auto p3 = new CUIToolBar;
+	//m_BK.AddElem(p3);
+	//p3->InitElem();
+	//p3->SetElemRect({ 70,650,800,700 });
+
+
+	//eck::CRTCreateThread([](void* pParam)->UINT
+	//	{
+	//		while (TRUE)
+	//		{
+	//			PostMessageW((HWND)pParam, 114514, 101, 0);
+	//			Sleep(20);
+	//		}
+	//		return 0;
+	//	}, m_BK);
+}
+
 LRESULT CWndMain::WndProc_Main(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	auto p = (CWndMain*)GetWindowLongPtrW(hWnd, 0);
@@ -315,7 +402,7 @@ LRESULT CWndMain::WndProc_Main(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 void CWndMain::OnSize(HWND hWnd, UINT uState, int cx, int cy)
 {
 	HDWP hDwp = BeginDeferWindowPos(3);
-	hDwp = DeferWindowPos(hDwp, m_Bk.GetHWND(), NULL,
+	hDwp = DeferWindowPos(hDwp, m_BK.GetHWND(), NULL,
 		0,
 		0,
 		m_xSeparateBar,
@@ -331,7 +418,8 @@ void CWndMain::OnSize(HWND hWnd, UINT uState, int cx, int cy)
 BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 {
 	UpdateDpi(eck::GetDpi(hWnd));
-	m_Bk.Create(NULL, WS_CHILD, 0, 0, 0, 0, 0, hWnd, IDC_BK);
+	m_BK.Create(NULL, WS_CHILD, 0, 0, 0, 0, 0, hWnd, IDC_BK);
+	App->GetPlayer().SetWndBK(&m_BK);
 	m_List.Create(L"列表", WS_CHILD | WS_CLIPCHILDREN, 0, 0, 0, 0, 0, hWnd, IDC_LIST);
 
 	RECT rc;
@@ -340,7 +428,7 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	m_xSeparateBar = rc.right * 2 / 3;
 	OnSize(hWnd, 0, rc.right, rc.bottom);
 
-	ShowWindow(m_Bk.GetHWND(), SW_SHOWNOACTIVATE);
+	ShowWindow(m_BK.GetHWND(), SW_SHOWNOACTIVATE);
 	ShowWindow(m_List.GetHWND(), SW_SHOWNOACTIVATE);
 
 	m_pDropTarget = new CDropTargetList(*this);
@@ -348,6 +436,7 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	if (FAILED(hr))
 		CApp::ShowError(hWnd, hr, CApp::ErrSrc::HResult, L"注册拖放目标失败");
 	
+	InitBK();
 	return TRUE;
 
 

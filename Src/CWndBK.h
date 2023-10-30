@@ -8,8 +8,6 @@
 
 constexpr inline auto WCN_MAINBK = L"PlayerNew.WndClass.MainBK";
 
-constexpr inline auto c_szWaveEventName = L"PlayerNew.Event.WaveEvent";
-
 // UI元素类型
 enum UIELEMTYPE
 {
@@ -23,24 +21,33 @@ enum UIELEMTYPE
 	UIET_LRC,
 	UIET_PROGBAR,
 	UIET_TOOLBAR,
-	UIET_INFO
+	UIET_INFO,
+	UIET_BUTTON,
+	UIET_ROUNDBUTTON,
 };
 
 // UI元素标志
 enum UIELEMFLAGS
 {
-	UIEF_NONE = 0x00000000,// 无
-	UIEF_STATIC = 0x00000001,// 静态元素
-	UIEF_NOEVENT = 0x00000002,// 无需转发事件
-	UIEF_WANTTIMEREVENT = 0x00000004 // 需要定时器周期事件
+	UIEF_NONE = 0,						// 无
+	UIEF_STATIC = (1u << 0),			// 静态元素
+	UIEF_NOEVENT = (1u << 1),			// 无需转发事件
+	UIEF_WANTTIMEREVENT = (1u << 2),	// 需要定时器周期事件
+	UIEF_ONLYPAINTONTIMER = (1u << 3),	// 定时器触发时仅重画
+};
+
+enum UIELEMSTYLE
+{
+	UIES_NOERASEBK = (1u << 0),			// 不使用静态图擦除背景
 };
 
 // UI元素事件
 enum UIELEMEVENT
 {
-	UIEE_SETRECT = 1,	// (&rc,0)		矩形将被更改
-	UIEE_ONPLAYINGCTRL = 2,	// (type,0)		播放控制操作已发生
-	UIEE_ONSETTINGSCHANGE = 3,	// (0,0)		设置已被更改
+	UIEE_SETRECT = 1,			// (&rc, 0)		矩形将被更改
+	UIEE_ONPLAYINGCTRL = 2,		// (type, 0)	播放控制操作已发生
+	UIEE_ONSETTINGSCHANGE = 3,	// (0, 0)		设置已被更改
+	UIEE_CHILDREDRAW = 4,		// (pElem, 0)	子元素请求重画，只会在有UIES_NOERASEBK样式的子元素执行即时重画时发送
 };
 
 // 播放控制类型
@@ -58,25 +65,33 @@ enum class ThreadState
 	Error
 };
 
+#define CUI_FRIEND_ALL_ELEM \
+	friend class CUIElem; \
+	friend class CUIAlbum; \
+	friend class CUIAlbumRotating; \
+	friend class CUIWaves; \
+	friend class CUISpe; \
+	friend class CUISpe2; \
+	friend class CUILrc; \
+	friend class CUIProgBar; \
+	friend class CUIToolBar; \
+	friend class CUIInfo; \
+	friend class CUIButton; \
+	friend class CUIRoundButton; \
+	friend class CUIPlayingCtrl;
+
 class CUIElem;
 class CWndBK :public eck::CWnd
 {
-	friend class CUIElem;
-	friend class CUIAlbum;
-	friend class CUIAlbumRotating;
-	friend class CUIWaves;
-	friend class CUISpe;
-	friend class CUISpe2;
-	friend class CUILrc;
-	friend class CUIProgBar;
-	friend class CUIToolBar;
-	friend class CUIInfo;
+	friend class CWndMain;
+
+	CUI_FRIEND_ALL_ELEM
 private:
 	IDXGISwapChain1* m_pSwapChain = NULL;
 	ID2D1DeviceContext* m_pDC = NULL;
 	ID2D1Bitmap1* m_pBmpBK = NULL;
-	ID2D1Bitmap1* m_pBmpBKStatic = NULL;// 静态背景，清除区域用
-	ID2D1Bitmap1* m_pBmpAlbum = NULL;// 封面原始位图
+	ID2D1Bitmap1* m_pBmpBKStatic = NULL;		// 静态背景，清除区域用
+	ID2D1Bitmap1* m_pBmpAlbum = NULL;			// 封面原始位图
 	ID2D1SolidColorBrush* m_pBrWhite = NULL;
 	ID2D1SolidColorBrush* m_pBrWhite2 = NULL;
 
@@ -90,30 +105,72 @@ private:
 
 	std::vector<CUIElem*> m_vElems{};
 	std::vector<CUIElem*> m_vElemsWantTimer{};
+	std::vector<CUIElem*> m_vAllElems{};
 
 	std::vector<RECT> m_vDirtyRect{};
-
-	ULONGLONG m_ullMusicPos = 0ull;
-	ULONGLONG m_ullMusicLength = 0ull;
 
 	enum
 	{
 		IDT_PGS = 101,
 	};
 
+	enum
+	{
+		ICIDX_Prev,
+		ICIDX_Play,
+		ICIDX_Stop,
+		ICIDX_Next,
+		ICIDX_Lrc,
+		ICIDX_RMAllLoop,
+		ICIDX_RMAll,
+		ICIDX_RMRadom,
+		ICIDX_RMSingleLoop,
+		ICIDX_RMSingle,
+		ICIDX_PlayOpt,
+		ICIDX_PlayList,
+		ICIDX_Options,
+		ICIDX_About,
+		ICIDX_Pause,
+
+		ICIDX__MAX
+	};
+
+	ID2D1Bitmap1* m_pBmpIcon[ICIDX__MAX]{};
+
+	int m_iDpi = USER_DEFAULT_SCREEN_DPI;
 	ECK_DS_BEGIN(DPIS)
 		ECK_DS_ENTRY(sizeAlbumLevel, 15)
 		ECK_DS_ENTRY(cxWaveLine, 2)
-		ECK_DS_ENTRY(cxSepLine, 1)
+		ECK_DS_ENTRY(cxSepLine, 2)
 		ECK_DS_ENTRY(cyProgBarTrack, 6)
 		ECK_DS_ENTRY(cxTime, 100)
 		ECK_DS_ENTRY(cxTopTip, 50)
 		ECK_DS_ENTRY(cyTopTip, 18)
 		ECK_DS_ENTRY(cyTopTitle, 30)
 		ECK_DS_ENTRY(sizeTopTipGap, 6)
+		ECK_DS_ENTRY(cxIcon, 25)
+		ECK_DS_ENTRY(cyIcon, 25)
+		ECK_DS_ENTRY(cxPCBT, 40)
+		ECK_DS_ENTRY(cyPCBT, 40)
+		ECK_DS_ENTRY(cxPCBTBig, 54)
+		ECK_DS_ENTRY(cyPCBTBig, 54)
+		ECK_DS_ENTRY(iPCBTGap, 5)
 		;
 	ECK_DS_END_VAR(m_Ds);
 
+	ECK_DS_BEGIN(DPIS_F)
+		ECK_DS_ENTRY_F(cxWaveLine, 2.f)
+		ECK_DS_ENTRY_F(cxSepLine, 2.f)
+		ECK_DS_ENTRY_F(cyProgBarTrack, 6.f)
+		ECK_DS_ENTRY_F(cxTime, 100.f)
+		ECK_DS_ENTRY_F(cxTopTip, 50.f)
+		ECK_DS_ENTRY_F(cyTopTip, 18.f)
+		ECK_DS_ENTRY_F(cyTopTitle, 30.f)
+		ECK_DS_ENTRY_F(sizeTopTipGap, 6.f)
+		ECK_DS_ENTRY_F(cxIcon, 25.f)
+		ECK_DS_ENTRY_F(cyIcon, 25.f)
+		;
+	ECK_DS_END_VAR(m_DsF);
 
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
@@ -152,7 +209,7 @@ public:
 	/// <summary>
 	/// 设置被改变
 	/// </summary>
-	void OnSettingsChanged() { GenElemEvent(UIEE_ONSETTINGSCHANGE, 0, 0); }
+	PNInline void OnSettingsChanged() { GenElemEvent(UIEE_ONSETTINGSCHANGE, 0, 0); }
 
 	/// <summary>
 	/// 重画
@@ -164,9 +221,12 @@ public:
 	/// </summary>
 	void UpdateStaticBmp();
 
+	template<class T>
+	PNInline T Dpi(T Size) const
+	{
+		return Size * (T)m_iDpi / (T)96;
+	}
 };
-
-
 
 #ifndef NDEBUG
 #if 1
@@ -195,9 +255,15 @@ public:
 	PNInline void Redraw(BOOL bImmdShow) override \
 	{ \
 		auto pDC = m_pBK->m_pDC; \
+		if (m_pParent) \
+		{ \
+			m_pParent->OnElemEvent(UIEE_CHILDREDRAW, (WPARAM)this, 0); \
+			goto CUIRedrawImmdShow; \
+		} \
 		pDC->BeginDraw(); \
 		Redraw(); \
 		pDC->EndDraw(); \
+	CUIRedrawImmdShow: \
 		if (bImmdShow) \
 		{ \
 			DXGI_PRESENT_PARAMETERS pp; \
@@ -209,44 +275,47 @@ public:
 		} \
 	}
 
-#define BUFSIZE_UIDIRTYRCGROW	10
-
-
-
 // UI元素类
 class CUIElem
 {
+	friend class CWndBK;
+	friend class CUIBK;
+	CUI_FRIEND_ALL_ELEM
 protected:
 	UINT m_uType = UIET_INVALID;
 	UINT m_uFlags = UIEF_NONE;
 
-	D2D1_RECT_F		m_rcF = {};		// 元素矩形
-	RECT			m_rc = {};		// 元素矩形
-	RECT			m_rcInWnd = {};		// 元素矩形与窗口矩形的交集
-	int				m_cxHalf = 0,		// 元素宽度的一半
+	D2D1_RECT_F m_rcF{};	// 元素矩形
+	RECT m_rc{};			// 元素矩形
+	RECT m_rcInWnd{};		// 元素矩形与窗口矩形的交集
+	RECT m_rcRelative{};	// 相对父元素的位置
+	int m_cxHalf = 0,		// 元素宽度的一半
 		m_cyHalf = 0;		// 元素高度的一半
-	int				m_cx = 0,		// 元素宽度
-		m_cy = 0;		// 元素高度
+	int m_cx = 0,			// 元素宽度
+		m_cy = 0;			// 元素高度
 
+	BOOL m_bShow = TRUE;
+	CWndBK* m_pBK = NULL;
 
-	BOOL			m_bShow = TRUE;
-	BOOL			m_bRedraw = TRUE;
-	CWndBK*			m_pBK = NULL;
-	int				m_iZOrder = -1;		// 从0开始的Z序
-
-	int				m_idxDirtyRect = -1;
-	BOOL			m_bHasFoucs = FALSE;
+	CUIElem* m_pParent = NULL;			// 父元素
+	std::vector<CUIElem*> m_vChildren{};// 子元素
 
 	/// <summary>
 	/// 默认属性更改处理过程
 	/// </summary>
-	/// <param name="uEvent"></param>
-	/// <param name="wParam"></param>
-	/// <param name="lParam"></param>
-	/// <returns></returns>
 	LRESULT DefElemEventProc(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam);
+
+	PNInline void DispatchEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
+	{
+		for (auto pElem : m_vChildren)
+		{
+			if (!eck::IsBitSet(pElem->m_uFlags, UIEF_NOEVENT))
+				if (pElem->OnEvent(uMsg, wParam, lParam))
+					break;
+		}
+	}
 public:
-	friend class CUIBK;
+	UINT m_uStyle = 0u;
 
 	virtual ~CUIElem();
 
@@ -269,7 +338,7 @@ public:
 	/// <param name="wParam"></param>
 	/// <param name="lParam"></param>
 	/// <returns></returns>
-	virtual LRESULT OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) { return 0; }
+	virtual BOOL OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) { return 0; }
 
 	/// <summary>
 	/// 通用方法：定时器周期事件
@@ -299,20 +368,20 @@ public:
 	/// 置元素矩形
 	/// </summary>
 	/// <param name="rc">矩形</param>
-	PNInline void SetElemRect(RECT rc) { OnElemEvent(UIEE_SETRECT, (WPARAM)&rc, 0); }
+	PNInline void SetElemRect(RECT* prc) { OnElemEvent(UIEE_SETRECT, (WPARAM)prc, 0); }
 
 	/// <summary>
 	/// 取元素矩形
 	/// </summary>
 	/// <param name="prc">RECT指针</param>
 	/// <returns></returns>
-	PNInline void GetElemRect(RECT* prc) { *prc = m_rc; }
+	PNInline void GetElemRect(RECT* prc) const { *prc = m_rc; }
 
 	/// <summary>
 	/// 元素是否可见
 	/// </summary>
 	/// <returns>可见性</returns>
-	PNInline BOOL IsElemVisible() { return m_bShow; }
+	PNInline BOOL IsElemVisible() const { return m_bShow; }
 
 	/// <summary>
 	/// 置元素可见性
@@ -320,18 +389,7 @@ public:
 	/// <param name="bShow">是否可见</param>
 	PNInline void ShowElem(BOOL bShow) { m_bShow = bShow; }
 
-	PNInline void SetZOrder(int iZOrder) { m_iZOrder = iZOrder; }
-
-	PNInline int GetZOrder() { return  m_iZOrder; }
-
-	PNInline void SetRedraw(BOOL b) { m_bRedraw = b; }
-
-	/// <summary>
-	/// 添加影子元素。
-	/// 此元素的显示内容将被投影到影子元素
-	/// </summary>
-	/// <param name="pElem">元素</param>
-	void AddShadow(CUIElem* pElem);
+	void SetParent(CUIElem* pParent);
 };
 
 // 封面
@@ -378,6 +436,7 @@ private:
 
 	ThreadState m_ThreadState = ThreadState::Stopped;// 线程状态
 	HANDLE m_hThread = NULL;
+	HANDLE m_hEvent = NULL;
 	std::vector<DWORD> m_vWavesData{};
 
 	void GetWavesData();
@@ -386,7 +445,7 @@ public:
 	~CUIWaves();
 	void Redraw() override;
 	BOOL InitElem() override;
-	void OnTimer(UINT uTimerID) override;
+	LRESULT OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam) override;
 
 	/// <summary>
 	/// 置绘制线宽
@@ -405,18 +464,17 @@ public:
 class CUISpe final :public CUIElem
 {
 private:
-	int m_iCount = 0;		// 频谱条数量
+	int m_iCount = 0;			// 频谱条数量
 	float m_cxBar = 0.f;		// 频谱条宽度
 	float m_cxGap = 0.f;		// 间隔宽度
 
-
-	int* m_piOldHeight = NULL;		// 旧高度信息
+	int* m_piOldHeight = NULL;	// 旧高度信息
 	int* m_piHeight = NULL;		// 高度
-	int* m_piOldMaxPos = NULL;		// 旧峰值
+	int* m_piOldMaxPos = NULL;	// 旧峰值
 	int* m_piTime = NULL;		// 计时
 
-	int* m_pBaseData = NULL;		// 缓冲区基指针
-	SIZE_T m_cbDataUnit = 0;		// 缓冲区总大小
+	std::vector<int> m_vBuf{};	// 缓冲区
+	SIZE_T m_cbPerUnit = 0u;	// 每单元字节数
 
 	ID2D1SolidColorBrush* m_pBrBar = NULL;// 频谱条画刷
 public:
@@ -425,7 +483,6 @@ public:
 	LRESULT OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam) override;
 	void Redraw() override;
 	BOOL InitElem() override;
-	void OnTimer(UINT uTimerID) override;
 
 	/// <summary>
 	/// 置频谱条数量
@@ -456,14 +513,15 @@ public:
 	/// <returns>返回间隔宽度</returns>
 	PNInline float GetGapWidth() { return m_cxGap; }
 };
+
 // 频谱2
-class CUISpe2 :public CUIElem
+class CUISpe2 final :public CUIElem
 {
 private:
 	int m_cSample = 0;		// 样本数
-	float* m_pfBuf = NULL;		// 样本缓冲区
+	float* m_pfBuf = NULL;	// 样本缓冲区
 	SIZE_T m_cbBuf = 0;		// 缓冲区大小
-	float m_cxStep = 0.f;		// 样本显示间隔
+	float m_cxStep = 0.f;	// 样本显示间隔
 
 	ID2D1SolidColorBrush* m_pBrLine = NULL;
 public:
@@ -492,7 +550,7 @@ struct LRCITEMHEIGHTDATA
 	float cy;
 };
 // 滚动歌词
-class CUILrc :public CUIElem
+class CUILrc final :public CUIElem
 {
 private:
 	ID2D1SolidColorBrush* m_pBrTextNormal = NULL;
@@ -547,7 +605,7 @@ private:
 public:
 	CUILrc();
 	~CUILrc();
-	LRESULT OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
+	BOOL OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 	void Redraw() override;
 	CUI_DeclRedrawAndPresent;
 	void OnTimer(UINT uTimerID) override;
@@ -595,25 +653,26 @@ public:
 
 	void InitAnimation(int idxPrevCenter, int idxNewCenter);
 };
+
 // 进度条
-class CUIProgBar :public CUIElem
+class CUIProgBar final :public CUIElem
 {
 private:
 	ULONGLONG m_ullPos = 0ull;		// 位置
 	ULONGLONG m_ullMax = 0ull;		// 最大位置
 
-	ULONGLONG m_ullTempPos = 0ull;		// 临时位置
+	ULONGLONG m_ullTempPos = 0ull;	// 临时位置
 	BOOL m_bShowTempMark = FALSE;	// 是否启用临时位置
 
-	BOOL m_bLBtnDown = FALSE;	// 左键是否按下
+	BOOL m_bLBtnDown = FALSE;		// 左键是否按下
 
-	ID2D1SolidColorBrush* m_pBrNormal = NULL;// 进度画刷
-	ID2D1SolidColorBrush* m_pBrBK = NULL;// 背景画刷
-	ID2D1SolidColorBrush* m_pBrTempMark = NULL;// 临时进度画刷
+	ID2D1SolidColorBrush* m_pBrNormal = NULL;	// 进度画刷
+	ID2D1SolidColorBrush* m_pBrBK = NULL;		// 背景画刷
+	ID2D1SolidColorBrush* m_pBrTempMark = NULL;	// 临时进度画刷
 public:
 	CUIProgBar();
 	~CUIProgBar();
-	LRESULT OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
+	BOOL OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 	void Redraw() override;
 	BOOL InitElem() override;
 	void OnTimer(UINT uTimerID) override;
@@ -669,6 +728,139 @@ public:
 	/// <returns>测试成功返回非零，否则返回零</returns>
 	int HitTest(POINT pt, ULONGLONG* pullPos);
 };
+
+// 歌曲信息
+class CUIInfo final :public CUIElem
+{
+private:
+	ID2D1SolidColorBrush* m_pBrBigTip = NULL;
+	ID2D1SolidColorBrush* m_pBrSmallTip = NULL;
+	IDWriteTextFormat* m_pTfTitle = NULL;
+	IDWriteTextFormat* m_pTfTip = NULL;
+
+	void UpdateTextFormat();
+public:
+	CUIInfo();
+	~CUIInfo();
+	void Redraw() override;
+	BOOL InitElem() override;
+};
+
+class CUIButton :public CUIElem
+{
+protected:
+	ID2D1SolidColorBrush* m_pBrHot = NULL;
+	ID2D1SolidColorBrush* m_pBrPressed = NULL;
+	ID2D1Bitmap1* m_pBmp = NULL;
+
+	BOOL m_bHot = FALSE;
+	BOOL m_bLBtnDown = FALSE;
+
+	D2D1_RECT_F m_rcfImg{};
+public:
+	CUIButton();
+
+	~CUIButton();
+
+	void Redraw() override;
+
+	CUI_DeclRedrawAndPresent;
+
+	BOOL InitElem() override;
+
+	BOOL OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
+
+	LRESULT OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam) override;
+
+	PNInline void SetImg(ID2D1Bitmap1* pBmp)
+	{
+		m_pBmp = pBmp;
+	}
+
+	PNInline void SetImgSize(int cx, int cy)
+	{
+		m_rcfImg.left = m_rcF.left + (float)((m_cx - cx) / 2);
+		m_rcfImg.top = m_rcF.top + (float)((m_cy - cy) / 2);
+		m_rcfImg.right = m_rcfImg.left + cx;
+		m_rcfImg.bottom = m_rcfImg.top + cy;
+	}
+
+	/// <summary>
+	/// 置颜色
+	/// </summary>
+	/// <param name="i">0 - 热点   1 - 按下</param>
+	/// <param name="cr">颜色</param>
+	PNInline void SetColor(int i, const D2D1_COLOR_F& cr)
+	{
+		if (i == 0)
+			m_pBrHot->SetColor(cr);
+		else if (i == 1)
+			m_pBrPressed->SetColor(cr);
+#ifdef _DEBUG
+		else
+			EckDbgBreak();
+#endif
+	}
+};
+
+class CUIRoundButton final :public CUIButton
+{
+private:
+	ID2D1SolidColorBrush* m_pBrNormal = NULL;
+
+	D2D1_ELLIPSE m_Ellipse{};
+public:
+	CUIRoundButton();
+
+	~CUIRoundButton();
+
+	void Redraw() override;
+
+	BOOL OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
+
+	LRESULT OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam) override;
+
+	BOOL InitElem() override;
+
+	/// <summary>
+	/// 置颜色
+	/// </summary>
+	/// <param name="i">0 - 热点   1 - 按下   2 - 正常</param>
+	/// <param name="cr">颜色</param>
+	PNInline void SetColor(int i, const D2D1_COLOR_F& cr)
+	{
+		if (i == 2)
+			m_pBrNormal->SetColor(cr);
+		else
+			CUIButton::SetColor(i, cr);
+	}
+};
+
+class CUIPlayingCtrl final :public CUIElem
+{
+private:
+	CUIButton* m_pBTOptions{};
+	CUIButton* m_pBTPlayOpt{};
+	CUIButton* m_pBTRepeatMode{};
+	CUIButton* m_pBTPrev{};
+	CUIRoundButton* m_pBTPlay{};
+	CUIButton* m_pBTNext{};
+	CUIButton* m_pBTStop{};
+	CUIButton* m_pBTLrc{};
+	CUIButton* m_pBTAbout{};
+public:
+	CUIPlayingCtrl();
+
+	void Redraw() override;
+
+	BOOL InitElem() override;
+
+	LRESULT OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam) override;
+
+	BOOL OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
+};
+
+
 // 工具条按钮状态
 enum UITOOLBARBTNSTATE
 {
@@ -697,36 +889,36 @@ enum UITOOLBARBTNINDEX
 #define BUFSIZE_TOOLBATTIME			48
 #define BUFSIZE_TOOLBATTIMEMAXCH	47
 // 工具条
-class CUIToolBar :public CUIElem
+class CUIToolBar final :public CUIElem
 {
 private:
-	BOOL m_bLBtnDown = FALSE;	// 左键是否按下
-	BOOL m_bInToolBar = FALSE;	// 光标是否在工具条内
+	BOOL m_bLBtnDown = FALSE;		// 左键是否按下
+	BOOL m_bInToolBar = FALSE;		// 光标是否在工具条内
 
-	D2D1_RECT_F m_rcFTimeLabel = {};	// 时间标签矩形
-	RECT m_rcTimeLabel = {};	// 时间标签矩形
+	D2D1_RECT_F m_rcFTimeLabel = {};// 时间标签矩形
+	RECT m_rcTimeLabel = {};		// 时间标签矩形
 	WCHAR m_szTime[BUFSIZE_TOOLBATTIME] = { L"00:00/00:00" };// 时间标签内容
-	UINT32 m_cchTime = 0;		// 时间标签文本长度
+	UINT32 m_cchTime = 0;			// 时间标签文本长度
 
-	UITOOLBARBTNINDEX m_idxHot = TBBI_INVALID;// 热点索引
-	UITOOLBARBTNINDEX m_idxLastHot = TBBI_INVALID;// 上次热点索引
-	UITOOLBARBTNINDEX m_idxPush = TBBI_INVALID;// 按下索引
+	UITOOLBARBTNINDEX m_idxHot = TBBI_INVALID;		// 热点索引
+	UITOOLBARBTNINDEX m_idxLastHot = TBBI_INVALID;	// 上次热点索引
+	UITOOLBARBTNINDEX m_idxPush = TBBI_INVALID;		// 按下索引
 	UITOOLBARBTNINDEX m_idxLastHover = TBBI_INVALID;// 上次悬停索引
 
 	UINT m_uBtnsCheckState = 0;		// 按钮检查状态，使用 1<<索引 设置位标志
 
-	HWND m_hToolTip = NULL;		// 工具提示窗口句柄
-	TTTOOLINFOW m_ti = {};		// 工具调试结构
+	HWND m_hToolTip = NULL;			// 工具提示窗口句柄
+	TTTOOLINFOW m_ti = {};			// 工具调试结构
 
-	ID2D1SolidColorBrush* m_pBrText = NULL;// 文本画刷
-	ID2D1SolidColorBrush* m_pBrBtnHot = NULL;// 热点背景画刷
-	ID2D1SolidColorBrush* m_pBrBtnPushed = NULL;// 按下背景画刷
-	ID2D1SolidColorBrush* m_pBrBtnChecked = NULL;// 检查背景画刷
+	ID2D1SolidColorBrush* m_pBrText = NULL;			// 文本画刷
+	ID2D1SolidColorBrush* m_pBrBtnHot = NULL;		// 热点背景画刷
+	ID2D1SolidColorBrush* m_pBrBtnPushed = NULL;	// 按下背景画刷
+	ID2D1SolidColorBrush* m_pBrBtnChecked = NULL;	// 检查背景画刷
 	IDWriteTextFormat* m_pTfTime = NULL;
 public:
 	CUIToolBar();
 	~CUIToolBar();
-	LRESULT OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
+	BOOL OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 	void Redraw() override;
 	void OnTimer(UINT uTimerID) override;
 	LRESULT OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam) override;
@@ -750,20 +942,4 @@ public:
 	/// </summary>
 	/// <param name="idx">索引</param>
 	void DoCmd(UITOOLBARBTNINDEX idx);
-};
-// 歌曲信息
-class CUIInfo :public CUIElem
-{
-private:
-	ID2D1SolidColorBrush* m_pBrBigTip = NULL;
-	ID2D1SolidColorBrush* m_pBrSmallTip = NULL;
-	IDWriteTextFormat* m_pTfTitle = NULL;
-	IDWriteTextFormat* m_pTfTip = NULL;
-
-	void UpdateTF();
-public:
-	CUIInfo();
-	~CUIInfo();
-	void Redraw() override;
-	BOOL InitElem() override;
 };

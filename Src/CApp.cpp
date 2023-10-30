@@ -41,6 +41,21 @@ HRESULT CApp::WICCreateBitmap(IWICBitmapDecoder* pDecoder, IWICBitmap** ppBitmap
 	return S_OK;
 }
 
+void CApp::LoadRes()
+{
+	HRESULT hr;
+	eck::CRefStrW rs = eck::GetRunningPath();
+	const int cchPath = rs.Size();
+	rs.ReSizeAbs(rs.Size() + MAX_PATH);
+	EckCounter(ARRAYSIZE(c_szResFile), i)
+	{
+		wcscpy(rs.Data() + cchPath, c_szResFile[i]);
+		if (FAILED(hr = WICCreateBitmap(rs.Data(), &m_pWicRes[i])))
+			ShowError(NULL, hr, ErrSrc::HResult, L"加载资源时出错", std::format(LR"("{}"加载失败)", rs.Data()).c_str());
+	}
+	int a = 0;
+}
+
 CApp::~CApp()
 {
 	m_pD2dFactory->Release();
@@ -66,7 +81,7 @@ void CApp::Init(HINSTANCE hInstance)
 	D2DFactoryOptions.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
 	hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory1), &D2DFactoryOptions, (void**)&m_pD2dFactory);
 #else
-	hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, IID_PPV_ARGS(&m_pD2dFactory));
+	hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, IID_PPV_ARGS(&m_pD2dFactory));
 #endif // !NDEBUG
 	if (FAILED(hr))
 	{
@@ -77,21 +92,32 @@ void CApp::Init(HINSTANCE hInstance)
 	{
 	}
 	//////////////创建DXGI工厂
+	constexpr D3D_FEATURE_LEVEL uFeatureLevel[]
+	{
+		D3D_FEATURE_LEVEL_11_1,
+		D3D_FEATURE_LEVEL_11_0,
+		D3D_FEATURE_LEVEL_10_1,
+		D3D_FEATURE_LEVEL_10_0,
+		D3D_FEATURE_LEVEL_9_3,
+		D3D_FEATURE_LEVEL_9_2,
+		D3D_FEATURE_LEVEL_9_1
+	};
 	ID3D11Device* pD3DDevice;
 	hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_BGRA_SUPPORT
 #ifndef NDEBUG
 		| D3D11_CREATE_DEVICE_DEBUG
 #endif // !NDEBUG
-		, NULL, 0, D3D11_SDK_VERSION, &pD3DDevice, NULL, NULL);
+		, uFeatureLevel, ARRAYSIZE(uFeatureLevel), D3D11_SDK_VERSION, & pD3DDevice, NULL, NULL);
 	if (FAILED(hr))
 	{
+		EckDbgBreak();
 	}
 	pD3DDevice->QueryInterface(IID_PPV_ARGS(&m_pDxgiDevice));
 	pD3DDevice->Release();
 
 	IDXGIAdapter* pDXGIAdapter;
 	m_pDxgiDevice->GetAdapter(&pDXGIAdapter);
-
+	m_pDxgiDevice->SetMaximumFrameLatency(1);
 	pDXGIAdapter->GetParent(IID_PPV_ARGS(&m_pDxgiFactory));
 	pDXGIAdapter->Release();
 	//////////////创建DXGI设备
@@ -104,10 +130,11 @@ void CApp::Init(HINSTANCE hInstance)
 	if (FAILED(hr))
 	{
 	}
-	
+
+	LoadRes();
 }
 
-HRESULT CApp::WICCreateBitmap(PWSTR pszFile, IWICBitmap** ppWICBitmap)
+HRESULT CApp::WICCreateBitmap(PCWSTR pszFile, IWICBitmap** ppWICBitmap)
 {
 	*ppWICBitmap = NULL;
 	IWICBitmapDecoder* pDecoder;
@@ -127,13 +154,13 @@ HRESULT CApp::WICCreateBitmap(IStream* pStream, IWICBitmap** ppWICBitmap)
 	HRESULT hr = App->m_pWicFactory->CreateDecoderFromStream(pStream, NULL, WICDecodeMetadataCacheOnDemand, &pDecoder);
 	if (FAILED(hr))
 	{
-		EckDbgBreak();
+		//EckDbgBreak();
 		return hr;
 	}
 	return WICCreateBitmap(pDecoder, ppWICBitmap);
 }
 
-void CApp::ShowError(HWND hWnd, EckOpt(DWORD, dwErrCode), ErrSrc uSrc, PCWSTR pszInfo, PCWSTR pszTitle)
+void CApp::ShowError(HWND hWnd, EckOpt(DWORD, dwErrCode), ErrSrc uSrc, PCWSTR pszInfo, PCWSTR pszDetail, PCWSTR pszTitle)
 {
 	TASKDIALOGCONFIG tdc{ sizeof(TASKDIALOGCONFIG) };
 	tdc.hwndParent = hWnd;
@@ -146,6 +173,8 @@ void CApp::ShowError(HWND hWnd, EckOpt(DWORD, dwErrCode), ErrSrc uSrc, PCWSTR ps
 	tdc.pszMainInstruction = pszInfo ? pszInfo : L"发生错误";
 
 	std::wstring sContent;
+	if (pszDetail)
+		sContent = std::wstring(pszDetail) + L"\n";
 	constexpr PCWSTR c_pszErrInfoFmt = L"错误代码：0x{:08X}\n\n错误信息：\n{}";
 	switch (uSrc)
 	{

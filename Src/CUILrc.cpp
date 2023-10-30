@@ -115,7 +115,7 @@ void CUILrc::Redraw()
     BkDbg_DrawElemFrame();
 }
 
-LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
+BOOL CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     HWND hWnd = m_pBK->m_hWnd;
     // switch (uMsg)

@@ -16,6 +16,19 @@ enum class PlayOpErr
 	BassError,
 };
 
+enum TICKCHANGING
+{
+	TKC_NONE = 0,
+	TKC_LRCPOSUPDATED = (1u << 1),
+};
+
+PNInline TICKCHANGING operator|=(TICKCHANGING& x1, TICKCHANGING x2)
+{
+	return x1 = (TICKCHANGING)(x1 | x2);
+}
+
+
+class CWndBK;
 class CPlayer
 {
 private:
@@ -38,14 +51,22 @@ private:
 	std::vector<Utils::LRCLABEL> m_vLrcLabel{};
 	std::vector<Utils::LRCINFO> m_vLrc{};
 	int m_idxCurrLrc = -1;
+	int m_idxLastLrc = -1;
 
 	Utils::MUSICINFO m_MusicInfo{};
+	IWICBitmap* m_pWicCoverBmp = NULL;
+
+	CWndBK* m_pWndBK = NULL;
 
 	void ApplyPrevEffect()
 	{
 
 	}
+
+	HRESULT CreateWicBmpCover();
 public:
+	~CPlayer();
+
 	static constexpr PNInline PCWSTR GetErrMsg(PlayOpErr uErrCode)
 	{
 		constexpr PCWSTR c_szErr[]
@@ -80,7 +101,7 @@ public:
 
 	PlayOpErr Play(int idx);
 
-	void Stop();
+	void Stop(BOOL bNoGap = FALSE);
 
 	PlayOpErr Next();
 
@@ -251,4 +272,10 @@ public:
 	PNInline CPlayList& GetList() { return m_List; }
 
 	PNInline BOOL IsFileActive() const { return m_bHasActiveFile; }
+
+	PNInline IWICBitmap* GetWicBmpCover() const { return m_pWicCoverBmp; }
+
+	PNInline void SetWndBK(CWndBK* p) { m_pWndBK = p; }
+
+	TICKCHANGING Tick();
 };

@@ -31,6 +31,55 @@ LRESULT CWndBK::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	auto p = (CWndBK*)GetWindowLongPtrW(hWnd, 0);
 	switch (uMsg)
 	{
+	case WM_TIMER:
+	{
+		switch (wParam)
+		{
+		case IDT_PGS:
+		{
+			App->GetPlayer().Tick();
+			p->m_vDirtyRect.clear();
+			p->m_pDC->BeginDraw();
+			for (auto pElem : p->m_vElemsWantTimer)
+			{
+				if (eck::IsBitSet(pElem->m_uFlags, UIEF_ONLYPAINTONTIMER))
+				{
+					pElem->Redraw();
+					p->m_vDirtyRect.emplace_back(pElem->m_rcInWnd);
+				}
+				else
+					pElem->OnTimer(wParam);
+			}
+			p->m_pDC->EndDraw();
+			DXGI_PRESENT_PARAMETERS dpp{};
+			dpp.DirtyRectsCount = (UINT)p->m_vDirtyRect.size();
+			dpp.pDirtyRects = p->m_vDirtyRect.data();
+			p->m_pSwapChain->Present1(1, 0, &dpp);
+		}
+		return 0;
+
+		default:
+		{
+            for (auto pElem : p->m_vElemsWantTimer)
+            {
+                pElem->OnTimer(wParam);
+            }
+        }
+        return 0;
+        }
+    }
+    return 0;
+
+    case WM_NCHITTEST:
+    case WM_SETCURSOR:
+    case WM_NOTIFY:
+    case WM_MOUSEACTIVATE:
+        return DefWindowProcW(hWnd, uMsg, wParam, lParam);
+
+    case WM_LBUTTONDOWN:
+        SetFocus(hWnd);
+        break;
+
 	case WM_SIZE:
 		return HANDLE_WM_SIZE(hWnd, wParam, lParam, p->OnSize);
 	case WM_NCCREATE:
@@ -40,15 +89,40 @@ LRESULT CWndBK::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_CREATE:
 		return HANDLE_WM_CREATE(hWnd, wParam, lParam, p->OnCreate);
 	}
+
+	for (auto pElem : p->m_vElems)
+	{
+        if (!eck::IsBitSet(pElem->m_uFlags, UIEF_NOEVENT))
+            if (pElem->OnEvent(uMsg, wParam, lParam))
+                break;
+	}
+
+	switch (uMsg)
+    {
+    case WM_MOUSEMOVE:
+    {
+        TRACKMOUSEEVENT tme;
+        tme.cbSize = sizeof(tme);
+        tme.hwndTrack = hWnd;
+        tme.dwFlags = TME_LEAVE | TME_HOVER;
+        tme.dwHoverTime = 200;
+        TrackMouseEvent(&tme);
+    }
+    return 0;
+    }
+
 	return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 }
 
 BOOL CWndBK::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 {
+    m_iDpi = eck::GetDpi(hWnd);
+    eck::UpdateDpiSize(m_Ds, m_iDpi);
+    eck::UpdateDpiSizeF(m_DsF, m_iDpi);
 	RECT rc;
 	GetClientRect(hWnd, &rc);
-	rc.right = std::max(rc.right, 8l);
-	rc.bottom = std::max(rc.bottom, 8l);
+	rc.right = std::max(rc.right, 8L);
+	rc.bottom = std::max(rc.bottom, 8L);
 	DXGI_SWAP_CHAIN_DESC1 DxgiSwapChainDesc
 	{
 		(UINT)rc.right,
@@ -58,9 +132,9 @@ BOOL CWndBK::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 		{1, 0},
 		DXGI_USAGE_RENDER_TARGET_OUTPUT,
 		2,
-		DXGI_SCALING_NONE,
+		DXGI_SCALING_STRETCH,
 		DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL,
-		DXGI_ALPHA_MODE_UNSPECIFIED,
+		DXGI_ALPHA_MODE_IGNORE,
 		0
 	};
 
@@ -89,7 +163,7 @@ BOOL CWndBK::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 
 	D2D1_BITMAP_PROPERTIES1 D2dBmpProp
 	{
-		{DXGI_FORMAT_B8G8R8A8_UNORM,D2D1_ALPHA_MODE_PREMULTIPLIED},
+		{DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE},
 		96,
 		96,
 		D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
@@ -103,48 +177,88 @@ BOOL CWndBK::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 
 	pSurface->Release();
 
+    D2D_SIZE_U D2DSizeU = { 8,8 };
+    D2dBmpProp.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE;
+    if (FAILED(hr = m_pDC->CreateBitmap(D2DSizeU, NULL, 0, D2dBmpProp, &m_pBmpBKStatic)))// 创建一幅内存位图
+    {
+		EckDbgPrint(L"ID2D1DeviceContext::CreateBitmap Error");
+    }
+
+    m_pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &m_pBrWhite);
+    m_pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.5f), &m_pBrWhite2);
+
 	m_pDC->SetTarget(m_pBmpBK);
-	return TRUE;
+
+    m_pDC->CreateBitmapFromWicBitmap(App->GetWicRes()[IIDX_Prev], &m_pBmpIcon[ICIDX_Prev]);
+    m_pDC->CreateBitmapFromWicBitmap(App->GetWicRes()[IIDX_Triangle], &m_pBmpIcon[ICIDX_Play]);
+    m_pDC->CreateBitmapFromWicBitmap(App->GetWicRes()[IIDX_Block], &m_pBmpIcon[ICIDX_Stop]);
+    m_pDC->CreateBitmapFromWicBitmap(App->GetWicRes()[IIDX_Next], &m_pBmpIcon[ICIDX_Next]);
+    m_pDC->CreateBitmapFromWicBitmap(App->GetWicRes()[IIDX_Lrc], &m_pBmpIcon[ICIDX_Lrc]);
+    m_pDC->CreateBitmapFromWicBitmap(App->GetWicRes()[IIDX_Circle], &m_pBmpIcon[ICIDX_RMAllLoop]);
+    m_pDC->CreateBitmapFromWicBitmap(App->GetWicRes()[IIDX_ArrowRight3], &m_pBmpIcon[ICIDX_RMAll]);
+    m_pDC->CreateBitmapFromWicBitmap(App->GetWicRes()[IIDX_ArrowCross], &m_pBmpIcon[ICIDX_RMRadom]);
+    m_pDC->CreateBitmapFromWicBitmap(App->GetWicRes()[IIDX_CircleOne], &m_pBmpIcon[ICIDX_RMSingleLoop]);
+    m_pDC->CreateBitmapFromWicBitmap(App->GetWicRes()[IIDX_ArrowRight], &m_pBmpIcon[ICIDX_RMSingle]);
+    m_pDC->CreateBitmapFromWicBitmap(App->GetWicRes()[IIDX_PlayOpt], &m_pBmpIcon[ICIDX_PlayOpt]);
+    m_pDC->CreateBitmapFromWicBitmap(App->GetWicRes()[IIDX_PlayList], &m_pBmpIcon[ICIDX_PlayList]);
+    m_pDC->CreateBitmapFromWicBitmap(App->GetWicRes()[IIDX_Gear], &m_pBmpIcon[ICIDX_Options]);
+    m_pDC->CreateBitmapFromWicBitmap(App->GetWicRes()[IIDX_Info], &m_pBmpIcon[ICIDX_About]);
+    m_pDC->CreateBitmapFromWicBitmap(App->GetWicRes()[IIDX_Pause], &m_pBmpIcon[ICIDX_Pause]);
+    return TRUE;
 }
 
 void CWndBK::OnSize(HWND hWnd, UINT state, int cx, int cy)
 {
-	m_cxClient = cx;
-	m_cyClient = cy;
+    m_cxClient = cx;
+    m_cyClient = cy;
+    m_rcfClient = { 0.f,0.f,(float)cx,(float)cy };
 
-	m_pDC->SetTarget(NULL);// 移除引用
-	m_pBmpBK->Release();
+    m_pDC->SetTarget(NULL);// 移除引用
+    m_pBmpBK->Release();
 
-	HRESULT hr;
-	if (FAILED(hr = m_pSwapChain->ResizeBuffers(0, cx, cy, DXGI_FORMAT_UNKNOWN, 0)))
-	{
-		assert(FALSE);
-	}
+    HRESULT hr;
+    if (FAILED(hr = m_pSwapChain->ResizeBuffers(0, std::max(cx, 8), std::max(cy, 8), DXGI_FORMAT_UNKNOWN, 0)))
+    {
+        assert(FALSE);
+    }
 
-	IDXGISurface1* pSurface;
-	hr = m_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pSurface));
-	if (!pSurface)
-	{
-		assert(FALSE);
-	}
+    IDXGISurface1* pSurface;
+    hr = m_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pSurface));
+    if (!pSurface)
+    {
+        assert(FALSE);
+    }
 
-	D2D1_BITMAP_PROPERTIES1 D2dBmpProp
-	{
-		{DXGI_FORMAT_B8G8R8A8_UNORM,D2D1_ALPHA_MODE_PREMULTIPLIED},
-		96,
-		96,
-		D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
-		NULL
-	};
+    D2D1_BITMAP_PROPERTIES1 D2dBmpProp
+    {
+        {DXGI_FORMAT_B8G8R8A8_UNORM,D2D1_ALPHA_MODE_PREMULTIPLIED},
+        96,
+        96,
+        D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+        NULL
+    };
 
-	if (FAILED(hr = m_pDC->CreateBitmapFromDxgiSurface(pSurface, &D2dBmpProp, &m_pBmpBK)))
-	{
-		assert(FALSE);
-	}
+    if (FAILED(hr = m_pDC->CreateBitmapFromDxgiSurface(pSurface, &D2dBmpProp, &m_pBmpBK)))
+    {
+        assert(FALSE);
+    }
 
 	pSurface->Release();
 
+	m_pBmpBKStatic->Release();
+	D2D_SIZE_U D2DSizeU = { (UINT32)cx, (UINT32)cy };
+	D2dBmpProp.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE;
+	if (FAILED(hr = m_pDC->CreateBitmap(D2DSizeU, NULL, 0, D2dBmpProp, &m_pBmpBKStatic)))
+	{
+		EckDbgPrint(L"ID2D1DeviceContext::CreateBitmap Error");
+	}
 	m_pDC->SetTarget(m_pBmpBK);
+}
+
+void CWndBK::GenElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam)
+{
+    for (auto pElem : m_vElems)
+        pElem->OnElemEvent(uEvent, wParam, lParam);
 }
 
 CWndBK::CWndBK()
@@ -174,46 +288,223 @@ HWND CWndBK::Create(PCWSTR pszText, DWORD dwStyle, DWORD dwExStyle, int x, int y
 	return m_hWnd;
 }
 
+void CWndBK::AddElem(CUIElem* pElem)
+{
+    pElem->m_pBK = this;
+    m_vElems.emplace_back(pElem);
+    m_vAllElems.emplace_back(pElem);
+    m_vDirtyRect.reserve(m_vElems.size());
+    if (eck::IsBitSet(pElem->m_uFlags, UIEF_WANTTIMEREVENT))
+        m_vElemsWantTimer.emplace_back(pElem);
+}
+
+void CWndBK::OnPlayingControl(PLAYINGCTRLTYPE uType)
+{
+    switch (uType)
+    {
+    case PCT_PLAY:
+    {
+        SAFE_RELEASE(m_pBmpAlbum);
+        m_pDC->CreateBitmapFromWicBitmap(App->GetPlayer().GetWicBmpCover(), &m_pBmpAlbum);
+        auto Size = m_pBmpAlbum->GetSize();
+        m_cxAlbum = (int)Size.width;
+        m_cyAlbum = (int)Size.height;
+        UpdateStaticBmp();
+        SetTimer(m_hWnd, IDT_PGS, 40, NULL);
+    }
+    break;
+    case PCT_STOP:
+        KillTimer(m_hWnd, IDT_PGS);
+        break;
+    }
+
+    GenElemEvent(UIEE_ONPLAYINGCTRL, uType, 0);
+    Redraw();
+}
+
+void CWndBK::Redraw()
+{
+    m_pDC->BeginDraw();
+    m_pDC->SetTarget(m_pBmpBK);
+    m_pDC->DrawBitmap(m_pBmpBKStatic);
+	for (auto pElem : m_vElems)
+    {
+		if (!eck::IsBitSet(pElem->m_uFlags, UIEF_STATIC))
+            pElem->Redraw();
+    }
+    m_pDC->EndDraw();
+    m_pSwapChain->Present(0, 0);
+}
+
+void CWndBK::UpdateStaticBmp()
+{
+    if (m_cxClient <= 0 || m_cyClient <= 0)
+        return;
+    IWICBitmap* pWICBitmapOrg = App->GetPlayer().GetWicBmpCover();// 原始WIC位图
+
+    ////////////////////绘制静态位图
+    m_pDC->BeginDraw();
+    m_pDC->SetTarget(m_pBmpBKStatic);
+
+    UINT cx0, cy0;
+    float cxRgn/*截取区域宽*/, cyRgn/*截取区域高*/, cx/*缩放后图片宽*/, cy/*缩放后图片高*/;
+    D2D_RECT_F D2DRectF;
+
+    ID2D1SolidColorBrush* pBrush;
+    if (pWICBitmapOrg)
+    {
+        /*
+        情况一，客户区宽为最大边
+        cxClient   cyClient
+        -------- = --------
+         cxPic      cyRgn
+        情况二，客户区高为最大边
+        cyClient   cxClient
+        -------- = --------
+         cyPic      cxRgn
+        */
+        ////////////////////处理缩放与截取（无论怎么改变窗口大小，用来模糊的封面图都要居中充满整个窗口）
+        D2D_POINT_2F D2DPtF;
+        pWICBitmapOrg->GetSize(&cx0, &cy0);
+        cyRgn = (float)m_cyClient / (float)m_cxClient * (float)cx0;
+        if (cyRgn <= cy0)// 情况一
+        {
+            cx = (float)m_cxClient;
+            cy = cx * cy0 / cx0;
+            D2DPtF = { 0,(float)(m_cyClient - cy) / 2 };
+        }
+        else// 情况二
+        {
+            cy = (float)m_cyClient;
+            cx = cx0 * cy / cy0;
+            D2DPtF = { (float)(m_cxClient - cx) / 2,0 };
+        }
+        ////////////缩放
+        IWICBitmapScaler* pWICBitmapScaler;// WIC位图缩放器
+        App->m_pWicFactory->CreateBitmapScaler(&pWICBitmapScaler);
+        pWICBitmapScaler->Initialize(pWICBitmapOrg, (UINT)cx, (UINT)cy, WICBitmapInterpolationModeCubic);// 缩放
+        IWICBitmap* pWICBmpScaled;// 缩放后的WIC位图
+        App->m_pWicFactory->CreateBitmapFromSource(pWICBitmapScaler, WICBitmapNoCache, &pWICBmpScaled);
+        pWICBitmapScaler->Release();// 释放WIC位图缩放器
+        ID2D1Bitmap1* pD2DBmpScaled;// 缩放后的D2D位图
+        m_pDC->CreateBitmapFromWicBitmap(pWICBmpScaled, &pD2DBmpScaled);// 转换为D2D位图
+        pWICBmpScaled->Release();// 释放缩放后的WIC位图
+
+        ////////////模糊 
+        ID2D1Image* pD2DBmpBlurred = NULL;
+        ID2D1Effect* pD2DEffect;
+        m_pDC->CreateEffect(CLSID_D2D1GaussianBlur, &pD2DEffect);
+        if (pD2DEffect)
+        {
+            pD2DEffect->SetInput(0, pD2DBmpScaled);
+            pD2DEffect->SetValue(D2D1_GAUSSIANBLUR_PROP_STANDARD_DEVIATION, 50.0f);// 标准偏差
+            pD2DEffect->SetValue(D2D1_GAUSSIANBLUR_PROP_BORDER_MODE, D2D1_BORDER_MODE_HARD);// 硬边缘
+            pD2DEffect->GetOutput(&pD2DBmpBlurred);
+            pD2DEffect->Release();
+        }
+        pD2DBmpScaled->Release();
+        ////////////画模糊背景
+        if (pD2DBmpBlurred)
+        {
+            m_pDC->DrawImage(pD2DBmpBlurred, &D2DPtF);
+            pD2DBmpBlurred->Release();
+        }
+        ////////////画半透明遮罩
+        m_pDC->FillRectangle(&m_rcfClient, m_pBrWhite2);
+    }
+    else// 没有图就全刷白吧
+        m_pDC->FillRectangle(&m_rcfClient, m_pBrWhite);
+
+    ////////////////////画静态元素
+	for (auto pElem : m_vElems)
+    {
+        if (pElem->m_uFlags & UIEF_STATIC)
+            pElem->Redraw();
+    }
+
+    m_pDC->EndDraw();
+    m_pDC->SetTarget(m_pBmpBK);
+}
+
 
 
 
 
 LRESULT CUIElem::DefElemEventProc(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam)
 {
-    switch (uEvent)
-    {
-    case UIEE_SETRECT:
-    {
-        auto prc = (RECT*)wParam;
-        m_rc = *prc;
-        m_rcInWnd = m_rc;
-        m_rcF = eck::MakeD2DRcF(m_rc);
-        m_cx = m_rc.right - m_rc.left;
-        m_cy = m_rc.bottom - m_rc.top;
-        m_cxHalf = m_cx / 2;
-        m_cyHalf = m_cy / 2;
+	switch (uEvent)
+	{
+	case UIEE_SETRECT:
+	{
+		auto prc = (RECT*)wParam;
+		//---------相对位置
+		m_rcRelative = *prc;
+		//---------绝对位置
+		m_rc = *prc;
+		if (m_pParent)
+			OffsetRect(&m_rc, m_pParent->m_rc.left, m_pParent->m_rc.top);
+		// 取D2D矩形
+		m_rcF = eck::MakeD2DRcF(m_rc);
+		// 计算尺寸
+		m_cx = m_rc.right - m_rc.left;
+		m_cy = m_rc.bottom - m_rc.top;
+		m_cxHalf = m_cx / 2;
+		m_cyHalf = m_cy / 2;
+		// 计算窗口范围内的矩形
+		m_rcInWnd = m_rc;
+		if (m_rcInWnd.left < 0)
+			m_rcInWnd.left = 0;
+		if (m_rcInWnd.top < 0)
+			m_rcInWnd.top = 0;
+		if (m_rcInWnd.right > m_pBK->m_cxClient)
+			m_rcInWnd.right = m_pBK->m_cxClient;
+		if (m_rcInWnd.bottom > m_pBK->m_cyClient)
+			m_rcInWnd.bottom = m_pBK->m_cyClient;
+		//---------更新子窗口的绝对位置
+		RECT rc;
+		for (auto pElem : m_vChildren)
+		{
+			pElem->GetElemRect(&rc);
+			pElem->SetElemRect(&rc);
+		}
 
-        if (m_rcInWnd.left < 0)
-            m_rcInWnd.left = 0;
-        else if (m_rcInWnd.top < 0)
-            m_rcInWnd.top = 0;
-        else if (m_rcInWnd.right > m_cx)
-            m_rcInWnd.right = m_cx;
-        else if (m_rcInWnd.bottom > m_cy)
-            m_rcInWnd.bottom = m_cy;
-
-        m_pBK->m_vDirtyRect.push_back(m_rc);
-    }
-    return 0;
-
-    }
-    return 0;
+		if (!m_pParent)
+			m_pBK->m_vDirtyRect.emplace_back(m_rcInWnd);
+	}
+	return 0;
+	}
+	return 0;
 }
 
 CUIElem::~CUIElem()
 {
 }
 
+void CUIElem::SetParent(CUIElem* pParent)
+{
+    if (m_pParent == pParent)
+        return;
+    if (m_pParent)
+    {
+        auto it = std::find(m_pParent->m_vChildren.begin(), m_pParent->m_vChildren.end(), this);
+        if (it != m_pParent->m_vChildren.end())
+            m_pParent->m_vChildren.erase(it);
+    }
+    else
+    {
+        auto it = std::find(m_pBK->m_vElems.begin(), m_pBK->m_vElems.end(), this);
+        if (it != m_pBK->m_vElems.end())
+            m_pBK->m_vElems.erase(it);
+    }
+    m_pParent = pParent;
+    if (m_pParent)
+        m_pParent->m_vChildren.emplace_back(this);
+    else
+        m_pBK->m_vElems.emplace_back(this);
+    RECT rc;
+    GetElemRect(&rc);
+    SetElemRect(&rc);
+}
 
 CUIAlbum::CUIAlbum()
 {
@@ -269,6 +560,8 @@ CUIAlbumRotating::CUIAlbumRotating()
 CUIAlbumRotating::~CUIAlbumRotating()
 {
     m_pBrAlbum->Release();
+    m_pBrUV->Release();
+    m_pBrUV2->Release();
 }
 
 void CUIAlbumRotating::UpdateAlbumBrush()
@@ -287,81 +580,74 @@ void CUIAlbumRotating::UpdateAlbumBrush()
         float xStart = m_rcF.left + iAlbumLevel + cx / 2.f - fRadius, yStart = m_rcF.top + iAlbumLevel + cy / 2.f - fRadius;
         float fSize = fRadius * 2;
         float fScaleFactor;
-        D2D1_SIZE_F D2DSize = pBmp->GetSize();
-        if (D2DSize.width > D2DSize.height)// 宽度较大
+        const int cxImg = m_pBK->m_cxAlbum, cyImg = m_pBK->m_cyAlbum;
+        if (cxImg > cyImg)// 宽度较大
         {
-            fScaleFactor = fSize / D2DSize.height;
-            xStart -= ((D2DSize.width - D2DSize.height) / 2.f * fSize / D2DSize.height);
+            fScaleFactor = fSize / cyImg;
+            xStart -= ((cxImg - cyImg) / 2.f * fSize / cyImg);
         }
         else// 高度较大
         {
-            fScaleFactor = fSize / D2DSize.width;
-            yStart -= ((D2DSize.height - D2DSize.width) / 2.f * fSize / D2DSize.width);
+            fScaleFactor = fSize / cxImg;
+            yStart -= ((cyImg - cxImg) / 2.f * fSize / cxImg);
         }
 
-        D2D1_MATRIX_3X2_F Matrix, Matrix2;
-
-        Matrix = D2D1::Matrix3x2F::Translation(xStart, yStart);// 制平移矩阵
-        D2D1::Matrix3x2F* MatrixObj1 = D2D1::Matrix3x2F::ReinterpretBaseType(&Matrix);// 转类
-
-        Matrix2 = D2D1::Matrix3x2F::Scale(fScaleFactor, fScaleFactor, D2D1::Point2F(xStart, yStart));// 制缩放矩阵
-        D2D1::Matrix3x2F* MatrixObj2 = D2D1::Matrix3x2F::ReinterpretBaseType(&Matrix2);// 转类
-
-        Matrix = ((*MatrixObj1) * (*MatrixObj2));// 矩阵相乘
-
-        D2D1_BRUSH_PROPERTIES D2DBrushProp = { 1.f,Matrix };
-        m_pBK->m_pDC->CreateBitmapBrush(pBmp, NULL, &D2DBrushProp, &m_pBrAlbum);
-    }
+		const D2D1_BRUSH_PROPERTIES BrushProp
+		{
+			1.f,
+			D2D1::Matrix3x2F::Translation(xStart, yStart) *
+				D2D1::Matrix3x2F::Scale(fScaleFactor, fScaleFactor, D2D1::Point2F(xStart, yStart))
+		};
+		m_pBK->m_pDC->CreateBitmapBrush(pBmp, NULL, &BrushProp, &m_pBrAlbum);
+	}
 }
 
 void CUIAlbumRotating::Redraw()
 {
     auto pDC = m_pBK->m_pDC;
-    pDC->PushAxisAlignedClip(&m_rcF, D2D1_ANTIALIAS_MODE_ALIASED);// 设个剪辑区，防止边缘残留
+    pDC->PushAxisAlignedClip(&m_rcF, D2D1_ANTIALIAS_MODE_ALIASED);
     pDC->DrawBitmap(m_pBK->m_pBmpBKStatic, &m_rcF, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &m_rcF);// 刷背景
 
     DWORD dwLevel = -1;
-    float cx = m_rcF.right - m_rcF.left, cy = m_rcF.bottom - m_rcF.top;
     const int iAlbumLevel = m_pBK->m_Ds.sizeAlbumLevel;
-    if (App->GetPlayer().GetBass().GetHStream())
+    if (App->GetPlayer().IsFileActive())
     {
         dwLevel = App->GetPlayer().GetBass().GetLevel();
         /////////////////////////////画封面边缘
-        D2D1_ELLIPSE D2DEllipse;
-        D2DEllipse.point = { m_rcF.left + cx / 2.f,m_rcF.top + cy / 2.f };
         float fRadius;
-        fRadius = std::min(cx / 2.f, cy / 2.f);
-        D2DEllipse.radiusX = D2DEllipse.radiusY = fRadius;
+        fRadius = std::min(m_cx / 2.f, m_cy / 2.f);
+        D2D1_ELLIPSE Ellipse
+        {
+            { m_rcF.left + m_cx / 2.f,m_rcF.top + m_cy / 2.f },
+            fRadius,
+            fRadius
+        };
 
-        pDC->FillEllipse(&D2DEllipse, m_pBrUV);// 画外圈
+        pDC->FillEllipse(&Ellipse, m_pBrUV);// 画外圈
         float fOffset = 0.f;
         fRadius -= iAlbumLevel;
-
         if (dwLevel != -1)
         {
             fOffset = ((float)(LOWORD(dwLevel) + HIWORD(dwLevel)) / 2.f) / 32768.f * iAlbumLevel;
             fRadius += fOffset;
-            D2DEllipse.radiusX = D2DEllipse.radiusY = fRadius;
-            pDC->FillEllipse(&D2DEllipse, m_pBrUV2);// 画电平指示
+            Ellipse.radiusX = Ellipse.radiusY = fRadius;
+            pDC->FillEllipse(&Ellipse, m_pBrUV2);// 画电平指示
         }
-
         /////////////////////////////画封面
-        D2D1_MATRIX_3X2_F Matrix = D2D1::Matrix3x2F::Rotation(m_fAngle, D2DEllipse.point);// 制旋转矩阵
-        pDC->SetTransform(Matrix);// 置旋转变换
+        pDC->SetTransform(D2D1::Matrix3x2F::Rotation(m_fAngle, Ellipse.point));// 置旋转变换
 
         fRadius = fRadius - fOffset;
-        D2DEllipse.radiusX = D2DEllipse.radiusY = fRadius;
-        pDC->FillEllipse(&D2DEllipse, m_pBrAlbum);
+        Ellipse.radiusX = Ellipse.radiusY = fRadius;
+        pDC->FillEllipse(&Ellipse, m_pBrAlbum);
 
-        Matrix = D2D1::Matrix3x2F::Identity();
-        pDC->SetTransform(Matrix);// 还原空变换
+        pDC->SetTransform(D2D1::Matrix3x2F::Identity());// 还原空变换
     }
     else
     {
         D2D1_ELLIPSE D2DEllipse;
-        D2DEllipse.point = { m_rcF.left + cx / 2.f,m_rcF.top + cy / 2.f };
+        D2DEllipse.point = { m_rcF.left + m_cx / 2.f,m_rcF.top + m_cy / 2.f };
         float fRadius;
-        fRadius = std::min(cx / 2.f, cy / 2.f);
+        fRadius = std::min(m_cx / 2.f, m_cy / 2.f);
         D2DEllipse.radiusX = D2DEllipse.radiusY = fRadius;
 
         pDC->FillEllipse(&D2DEllipse, m_pBrUV);// 画外圈
@@ -383,6 +669,7 @@ void CUIAlbumRotating::OnTimer(UINT uTimerID)
         if (m_fAngle >= 360.f)
             m_fAngle = 0;
         Redraw();
+        m_pBK->m_vDirtyRect.emplace_back(m_rcInWnd);
     }
 }
 
@@ -410,41 +697,33 @@ BOOL CUIAlbumRotating::InitElem()
     SAFE_RELEASE(m_pBrUV);
     SAFE_RELEASE(m_pBrUV2);
     auto pDC = m_pBK->m_pDC;
-    pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &m_pBrUV);
-    pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.6f), &m_pBrUV2);
+    pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &m_pBrUV2);
+    pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.6f), &m_pBrUV);
     return TRUE;
 }
 
 
 void CUIWaves::GetWavesData()
 {
-	auto p = App;
-    std::thread Thread([this, p]()
+    std::thread Thread([this]()
         {
             CBass Bass;
-            Bass.Open(p->GetPlayer().GetCurrFileName().Data(), BASS_STREAM_DECODE, BASS_MUSIC_DECODE | BASS_MUSIC_PRESCAN);
-            ULONGLONG ullLength = (ULONGLONG)(Bass.GetLength() * 1000.);
-            if (ullLength == 0)
+            Bass.Open(App->GetPlayer().GetCurrFileName().Data(), BASS_STREAM_DECODE, BASS_MUSIC_DECODE | BASS_MUSIC_PRESCAN);
+            if (!Bass.GetHStream())
             {
-                EckDbgPrint(CBass::GetError());
+                EckDbgPrint(CBass::GetErrorMsg(CBass::GetError()));
                 m_ThreadState = ThreadState::Error;
                 return;
             }
+            ULONGLONG ullLength = (ULONGLONG)(Bass.GetLength() * 1000.);
 
             size_t cBars = ullLength / 20ull;
             m_vWavesData.resize(cBars);
 
-            HANDLE hEvent = OpenEventW(EVENT_ALL_ACCESS, FALSE, c_szWaveEventName);
-            if (!hEvent)
-            {
-                EckDbgPrintFormatMessage(GetLastError());
-                m_ThreadState = ThreadState::Error;
-                return;
-            }
             EckCounter(cBars, i)
             {
                 m_vWavesData[i] = Bass.GetLevel();
-                if (WaitForSingleObject(hEvent, 0) == WAIT_OBJECT_0)
+                if (WaitForSingleObject(m_hEvent, 0) == WAIT_OBJECT_0)
                 {
                     m_vWavesData.clear();
                     m_ThreadState = ThreadState::Stopped;
@@ -454,15 +733,15 @@ void CUIWaves::GetWavesData()
 
             m_ThreadState = ThreadState::Stopped;
         });
-
+    DuplicateHandle(GetCurrentProcess(), Thread.native_handle(), GetCurrentProcess(), &m_hThread, GENERIC_ALL, FALSE, 0);
     Thread.detach();
-    m_hThread = Thread.native_handle();
 }
 
 CUIWaves::CUIWaves()
 {
     m_uType = UIET_WAVES;
-    m_uFlags = UIEF_NOEVENT | UIEF_WANTTIMEREVENT;
+    m_uFlags = UIEF_NOEVENT | UIEF_WANTTIMEREVENT | UIEF_ONLYPAINTONTIMER;
+    m_hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
 }
 
 BOOL CUIWaves::InitElem()
@@ -474,16 +753,50 @@ BOOL CUIWaves::InitElem()
     pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Red), &m_pBrCenterMark);
     App->m_pDwFactory->CreateTextFormat(L"微软雅黑", NULL,
         DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-        13, L"zh-cn", &m_pTfTip);
+		m_pBK->Dpi(18.f), L"zh-cn", &m_pTfTip);
     m_pTfTip->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
     m_pTfTip->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);// 水平垂直都居中
     return TRUE;
 }
 
+LRESULT CUIWaves::OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam)
+{
+	auto lResult = DefElemEventProc(uEvent, wParam, lParam);
+	switch (uEvent)
+	{
+	case UIEE_ONPLAYINGCTRL:
+	{
+		switch (wParam)
+		{
+		case PCT_PLAY:
+			m_ThreadState = ThreadState::Running;
+			CloseHandle(m_hThread);
+            ResetEvent(m_hEvent);
+			GetWavesData();
+			break;
+		case PCT_STOP:
+			if (m_hThread)
+			{
+				SetEvent(m_hEvent);
+				WaitForSingleObject(m_hThread, INFINITE);
+				CloseHandle(m_hThread);
+				m_hThread = NULL;
+			}
+			break;
+		}
+	}
+	break;
+	}
+	return lResult;
+}
+
 CUIWaves::~CUIWaves()
 {
-    SAFE_RELEASE(m_pBrLine);
-    SAFE_RELEASE(m_pBrCenterMark);
+    m_pBrLine->Release();
+    m_pBrCenterMark->Release();
+    m_pTfTip->Release();
+    CloseHandle(m_hThread);
+    CloseHandle(m_hEvent);
 }
 
 void CUIWaves::Redraw()
@@ -492,6 +805,7 @@ void CUIWaves::Redraw()
     pDC->DrawBitmap(m_pBK->m_pBmpBKStatic, &m_rcF, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &m_rcF);// 刷背景
 
     PCWSTR pszText = NULL;
+
 	if (m_hThread && WaitForSingleObject(m_hThread, 0) != WAIT_OBJECT_0)// 正在加载
         pszText = L"正在加载...";
     else if (!App->GetPlayer().GetBass().GetHStream())// 已停止
@@ -501,13 +815,12 @@ void CUIWaves::Redraw()
 
     if (pszText)// 应当显示提示
     {
-        SetRedraw(FALSE);
-        pDC->DrawTextW(pszText, lstrlenW(pszText), m_pTfTip, &m_rcF, m_pBrLine);
+        pDC->DrawTextW(pszText, (int)wcslen(pszText), m_pTfTip, &m_rcF, m_pBrLine);
 		BkDbg_DrawElemFrame();
 		return;
 	}
 
-    const int idxCurr = (int)(m_pBK->m_ullMusicPos / 20ull);// 算数组索引    20ms一单位
+    const int idxCurr = (int)(App->GetPlayer().GetPos() / 20ull);// 算数组索引    20ms一单位
     const int cBars = (int)m_vWavesData.size();
 	if (idxCurr > cBars - 1)
 		return;
@@ -554,14 +867,6 @@ void CUIWaves::Redraw()
 	BkDbg_DrawElemFrame();
 }
 
-void CUIWaves::OnTimer(UINT uTimerID)
-{
-    if (uTimerID == CWndBK::IDT_PGS)
-    {
-        Redraw();
-    }
-}
-
 
 BOOL CUISpe::InitElem()
 {
@@ -578,8 +883,8 @@ void CUISpe::Redraw()
     float fData[128];
 	if (App->GetPlayer().GetBass().GetData(fData, BASS_DATA_FFT256) == -1)
     {
-        ZeroMemory(m_piOldHeight, m_cbDataUnit);
-        ZeroMemory(m_piHeight, m_cbDataUnit);
+        ZeroMemory(m_piOldHeight, m_cbPerUnit);
+        ZeroMemory(m_piHeight, m_cbPerUnit);
         ZeroMemory(fData, sizeof(fData));
     }
 
@@ -587,8 +892,7 @@ void CUISpe::Redraw()
     for (int i = 0; i < m_iCount; i++)
     {
         ++m_piTime[i];
-        m_piHeight[i] = abs((int)(fData[i] * 300.0f));
-
+		m_piHeight[i] = abs((int)(fData[i] * m_cy * 2.f));
         //////////////////频谱条
         if (m_piHeight[i] > m_cy)// 超高
             m_piHeight[i] = m_cy;// 回来
@@ -614,9 +918,7 @@ void CUISpe::Redraw()
 
         if (m_piOldMaxPos[i] < 3)// 太低了
             m_piOldMaxPos[i] = 3;// 回来
-
         //////////////////绘制
-
         //////////频谱条
         D2D_RECT_F D2DRectF;
         D2DRectF.left = (FLOAT)(m_rcF.left + (m_cxBar + m_cxGap) * i);
@@ -638,7 +940,6 @@ void CUISpe::Redraw()
 
 void CUISpe::SetCount(int i)
 {
-    delete[] m_pBaseData;
     if (i > 0)
     {
         // c * cxBar + (c - 1) * cxDiv = cx
@@ -647,32 +948,30 @@ void CUISpe::SetCount(int i)
         m_cxBar = (m_cx - (i - 1) * m_cxGap) / i;
         if (m_cxBar <= 0)
             goto Fail;
-
-        m_cbDataUnit = sizeof(int) * i * 4;
-
-        m_pBaseData = new int[i * 4];
-        m_piOldHeight = m_pBaseData;
-        m_piHeight = m_pBaseData + i;
-        m_piOldMaxPos = m_pBaseData + i * 2;
-        m_piTime = m_pBaseData + i * 3;
+        m_cbPerUnit = sizeof(int) * i;
+        m_vBuf.resize(i * 4);
+        m_piOldHeight = m_vBuf.data();
+        m_piHeight = m_vBuf.data() + i;
+        m_piOldMaxPos = m_vBuf.data() + i * 2;
+        m_piTime = m_vBuf.data() + i * 3;
         return;
     }
 Fail:
     m_iCount = 0;
     m_cxBar = 0.f;
-    m_cbDataUnit = 0;
-    m_pBaseData = m_piOldHeight = m_piHeight = m_piOldMaxPos = m_piTime = NULL;
+    m_cbPerUnit = 0;
+    m_vBuf.clear();
+    m_piOldHeight = m_piHeight = m_piOldMaxPos = m_piTime = NULL;
 }
 
 CUISpe::CUISpe()
 {
     m_uType = UIET_SPE;
-    m_uFlags = UIEF_NOEVENT | UIEF_WANTTIMEREVENT;
+    m_uFlags = UIEF_NOEVENT | UIEF_WANTTIMEREVENT | UIEF_ONLYPAINTONTIMER;
 }
 
 CUISpe::~CUISpe()
 {
-    delete[] m_pBaseData;
     SAFE_RELEASE(m_pBrBar);
 }
 
@@ -693,14 +992,6 @@ LRESULT CUISpe::OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam)
     return DefElemEventProc(uEvent, wParam, lParam);
 }
 
-void CUISpe::OnTimer(UINT uTimerID)
-{
-    if (uTimerID == CWndBK::IDT_PGS)
-    {
-        Redraw();
-    }
-}
-
 
 BOOL CUISpe2::InitElem()
 {
@@ -713,7 +1004,7 @@ BOOL CUISpe2::InitElem()
 CUISpe2::CUISpe2()
 {
     m_uType = UIET_SPE2;
-    m_uFlags = UIEF_NOEVENT | UIEF_WANTTIMEREVENT;
+    m_uFlags = UIEF_NOEVENT | UIEF_WANTTIMEREVENT | UIEF_ONLYPAINTONTIMER;
 }
 
 CUISpe2::~CUISpe2()
@@ -852,7 +1143,7 @@ void CUIProgBar::Redraw()
     BkDbg_DrawElemFrame();
 }
 
-LRESULT CUIProgBar::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
+BOOL CUIProgBar::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {
@@ -960,8 +1251,9 @@ void CUIProgBar::OnTimer(UINT uTimerID)
 {
     if (uTimerID == CWndBK::IDT_PGS)
     {
-        m_ullPos = m_pBK->m_ullMusicPos;
+        m_ullPos = App->GetPlayer().GetPos();
         Redraw();
+        m_pBK->m_vDirtyRect.emplace_back(m_rcInWnd);
     }
 }
 
@@ -972,7 +1264,7 @@ LRESULT CUIProgBar::OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam
     {
     case UIEE_ONPLAYINGCTRL:
     {
-        SetMax(m_pBK->m_ullMusicLength);
+        SetMax(App->GetPlayer().GetLength());
         SetPos(0ull);
     }
     break;
@@ -985,20 +1277,6 @@ CUIToolBar::CUIToolBar()
 {
     m_uType = UIET_TOOLBAR;
     m_uFlags = UIEF_WANTTIMEREVENT;
-    HWND hWndBK = m_pBK->m_hWnd;
-    m_hToolTip = CreateWindowExW(0, TOOLTIPS_CLASSW, NULL, TTS_NOPREFIX | TTS_ALWAYSTIP,
-        0, 0, 0, 0, hWndBK, NULL, NULL, NULL);// 创建工具提示
-
-    m_ti = { sizeof(TTTOOLINFOW),TTF_TRACK | TTF_IDISHWND | TTF_ABSOLUTE,hWndBK,(UINT_PTR)hWndBK,{0},App->GetHInstance(),NULL,0};
-    SendMessageW(m_hToolTip, TTM_ADDTOOLW, 0, (LPARAM)&m_ti);
-
-    m_rcFTimeLabel.left = m_rcF.left;
-    m_rcFTimeLabel.top = m_rcF.top;
-    m_rcFTimeLabel.right = m_rcFTimeLabel.left + (float)m_pBK->m_Ds.cxTime;
-    m_rcFTimeLabel.bottom = m_rcF.bottom;
-    m_rcTimeLabel = eck::MakeRect(m_rcFTimeLabel);
-
-    m_cchTime = lstrlenW(m_szTime);
 }
 
 CUIToolBar::~CUIToolBar()
@@ -1027,6 +1305,21 @@ BOOL CUIToolBar::InitElem()
         9, L"zh-cn", &m_pTfTime);
     m_pTfTime->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
     m_pTfTime->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+
+    HWND hWndBK = m_pBK->m_hWnd;
+    m_hToolTip = CreateWindowExW(0, TOOLTIPS_CLASSW, NULL, TTS_NOPREFIX | TTS_ALWAYSTIP,
+        0, 0, 0, 0, hWndBK, NULL, NULL, NULL);// 创建工具提示
+
+    m_ti = { sizeof(TTTOOLINFOW),TTF_TRACK | TTF_IDISHWND | TTF_ABSOLUTE,hWndBK,(UINT_PTR)hWndBK,{0},App->GetHInstance(),NULL,0 };
+    SendMessageW(m_hToolTip, TTM_ADDTOOLW, 0, (LPARAM)&m_ti);
+
+    m_rcFTimeLabel.left = m_rcF.left;
+    m_rcFTimeLabel.top = m_rcF.top;
+    m_rcFTimeLabel.right = m_rcFTimeLabel.left + (float)m_pBK->m_Ds.cxTime;
+    m_rcFTimeLabel.bottom = m_rcF.bottom;
+    m_rcTimeLabel = eck::MakeRect(m_rcFTimeLabel);
+
+    m_cchTime = lstrlenW(m_szTime);
     return TRUE;
 }
 
@@ -1131,7 +1424,7 @@ void CUIToolBar::RedrawTimeInfo()
     BkDbg_DrawElemFrame();
 }
 
-LRESULT CUIToolBar::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
+BOOL CUIToolBar::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {
@@ -1404,16 +1697,16 @@ LRESULT CUIToolBar::OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam
 }
 
 
-void CUIInfo::UpdateTF()
+void CUIInfo::UpdateTextFormat()
 {
     SAFE_RELEASE(m_pTfTitle);
     SAFE_RELEASE(m_pTfTip);
     App->m_pDwFactory->CreateTextFormat(L"微软雅黑", NULL,
         DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-        13, L"zh-cn", &m_pTfTitle);
+		m_pBK->Dpi(18.f), L"zh-cn", &m_pTfTitle);
     App->m_pDwFactory->CreateTextFormat(L"微软雅黑", NULL,
         DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-        9, L"zh-cn", &m_pTfTip);
+        m_pBK->Dpi(12.f), L"zh-cn", &m_pTfTip);
 
     DWRITE_TRIMMING DWTrimming
     {
@@ -1457,7 +1750,7 @@ void CUIInfo::Redraw()
     D2D1_RECT_F rcF{ m_rcF.left,m_rcF.top,m_rcF.right,m_rcF.top + (FLOAT)m_pBK->m_Ds.cyTopTitle };
     pDC->DrawTextW(psz, lstrlenW(psz), m_pTfTitle, &rcF, m_pBrBigTip);
     ///////////画其他信息
-    const PCWSTR pszTip[4] =
+    constexpr PCWSTR pszTip[4]
     {
         L"标题：",
         L"艺术家：",
@@ -1490,7 +1783,7 @@ void CUIInfo::Redraw()
     int cxElem = m_rc.right - m_rc.left;
     for (int i = 0; i < sizeof(pszTip) / sizeof(PCWSTR); ++i)
     {
-        pDC->DrawTextW(pszTip[i], cchTip2[i], m_pTfTip, &rcF, m_pBrSmallTip);
+        pDC->DrawTextW(pszTip[i], (UINT32)wcslen(pszTip[i]), m_pTfTip, &rcF, m_pBrSmallTip);
         if (pszTip2[i])
         {
             rcF.left += (FLOAT)cxTopTip;
@@ -1512,7 +1805,7 @@ BOOL CUIInfo::InitElem()
     auto pDC = m_pBK->m_pDC;
     pDC->CreateSolidColorBrush(c_D2DClrCyanDeeper, &m_pBrBigTip);
     pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_pBrSmallTip);
-    UpdateTF();
+    UpdateTextFormat();
     return TRUE;
 }
 
@@ -1522,4 +1815,373 @@ CUIInfo::~CUIInfo()
     SAFE_RELEASE(m_pBrSmallTip);
     SAFE_RELEASE(m_pTfTitle); 
     SAFE_RELEASE(m_pTfTip);
+}
+
+
+CUIButton::CUIButton()
+{
+    m_uType = UIET_BUTTON;
+    m_uFlags = UIEF_NONE;
+}
+
+CUIButton::~CUIButton()
+{
+    m_pBrHot->Release();
+    m_pBrPressed->Release();
+}
+
+void CUIButton::Redraw()
+{
+    auto pDC = m_pBK->m_pDC;
+    if (!eck::IsBitSet(m_uStyle, UIES_NOERASEBK))
+    pDC->DrawBitmap(m_pBK->m_pBmpBKStatic, &m_rcF, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, &m_rcF);
+
+    if (m_bLBtnDown)
+        pDC->FillRectangle(&m_rcF, m_pBrPressed);
+    else if (m_bHot)
+        pDC->FillRectangle(&m_rcF, m_pBrHot);
+
+    pDC->DrawBitmap(m_pBmp, m_rcfImg, 1.f, D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC);
+
+    BkDbg_DrawElemFrame();
+}
+
+BOOL CUIButton::InitElem()
+{
+    SAFE_RELEASE(m_pBrHot);
+    SAFE_RELEASE(m_pBrPressed);
+    auto pDC = m_pBK->m_pDC;
+    pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Gray, 0.6f), &m_pBrHot);
+    pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Gray, 0.9f), &m_pBrPressed);
+    return TRUE;
+}
+
+BOOL CUIButton::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch (uMsg)
+	{
+	case WM_MOUSEMOVE:
+	{
+        if (PtInRect(&m_rc, GET_PT_LPARAM(lParam)))
+        {
+            if (!m_bHot)
+            {
+                m_bHot = TRUE;
+                Redraw(TRUE);
+            }
+        }
+        else if (m_bHot)
+        {
+            m_bHot = FALSE;
+            Redraw(TRUE);
+        }
+	}
+	return FALSE;
+    case WM_MOUSELEAVE:
+    {
+        if (m_bHot)
+        {
+            m_bHot = FALSE;
+            Redraw(TRUE);
+        }
+    }
+    return FALSE;
+    case WM_LBUTTONDOWN:
+    {
+        if (PtInRect(&m_rc, GET_PT_LPARAM(lParam)))
+        {
+            m_bLBtnDown = TRUE;
+            SetCapture(m_pBK->m_hWnd);
+            Redraw(TRUE);
+            return TRUE;
+        }
+    }
+    return FALSE;
+    case WM_LBUTTONUP:
+    {
+        if (m_bLBtnDown)
+        {
+            ReleaseCapture();
+            m_bLBtnDown = FALSE;
+            Redraw(TRUE);
+        }
+    }
+    return FALSE;
+	}
+
+    return FALSE;
+}
+
+LRESULT CUIButton::OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam)
+{
+    auto lResult = DefElemEventProc(uEvent, wParam, lParam);
+    switch (uEvent)
+    {
+    case UIEE_SETRECT:
+    {
+        const float cx = m_rcfImg.right - m_rcfImg.left;
+        const float cy = m_rcfImg.bottom - m_rcfImg.top;
+        m_rcfImg.left = m_rcF.left + ((m_cx - cx) / 2);
+        m_rcfImg.top = m_rcF.top + ((m_cy - cy) / 2);
+        m_rcfImg.right = m_rcfImg.left + cx;
+        m_rcfImg.bottom = m_rcfImg.top + cy;
+    }
+    break;
+    }
+    return lResult;
+}
+
+CUIRoundButton::CUIRoundButton()
+{
+    m_uType = UIET_ROUNDBUTTON;
+    m_uFlags = UIEF_NONE;
+}
+
+CUIRoundButton::~CUIRoundButton()
+{
+    SAFE_RELEASE(m_pBrNormal);
+}
+
+void CUIRoundButton::Redraw()
+{
+	auto pDC = m_pBK->m_pDC;
+	if (!eck::IsBitSet(m_uStyle, UIES_NOERASEBK))
+		pDC->DrawBitmap(m_pBK->m_pBmpBKStatic, &m_rcF, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, &m_rcF);
+
+    if (m_bLBtnDown)
+        pDC->FillEllipse(&m_Ellipse, m_pBrPressed);
+    else if (m_bHot)
+        pDC->FillEllipse(&m_Ellipse, m_pBrHot);
+    else
+        pDC->FillEllipse(&m_Ellipse, m_pBrNormal);
+
+    pDC->DrawBitmap(m_pBmp, m_rcfImg, 1.f, D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC);
+
+    BkDbg_DrawElemFrame();
+}
+
+BOOL CUIRoundButton::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch (uMsg)
+    {
+    case WM_MOUSEMOVE:
+    {
+        POINT pt GET_PT_LPARAM(lParam);
+		if (PtInRect(&m_rc, pt) &&
+            powf(m_Ellipse.point.x - pt.x, 2.f) + powf(m_Ellipse.point.y - pt.y, 2.f) <= powf(m_Ellipse.radiusX, 2.f))
+        {
+            if (!m_bHot)
+            {
+                m_bHot = TRUE;
+                CUIButton::Redraw(TRUE);
+            }
+        }
+        else if (m_bHot)
+        {
+            m_bHot = FALSE;
+            CUIButton::Redraw(TRUE);
+        }
+    }
+    return FALSE;
+    case WM_LBUTTONDOWN:
+    {
+        if (PtInRect(&m_rc, GET_PT_LPARAM(lParam)))
+        {
+            m_bLBtnDown = TRUE;
+            SetCapture(m_pBK->m_hWnd);
+            CUIButton::Redraw(TRUE);
+            return TRUE;
+        }
+    }
+    return FALSE;
+    }
+    return CUIButton::OnEvent(uMsg, wParam, lParam);
+}
+
+LRESULT CUIRoundButton::OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam)
+{
+	auto lResult = CUIButton::OnElemEvent(uEvent, wParam, lParam);
+	if (uEvent == UIEE_SETRECT)
+	{
+		const float fRadius = std::min(m_cxHalf, m_cyHalf);
+		m_Ellipse =
+		{
+			{
+				m_rcF.left + m_cxHalf,
+				m_rcF.top + m_cyHalf
+			},
+			fRadius,
+			fRadius
+		};
+	}
+	return lResult;
+}
+
+BOOL CUIRoundButton::InitElem()
+{
+    CUIButton::InitElem();
+    SAFE_RELEASE(m_pBrNormal);
+    auto pDC = m_pBK->m_pDC;
+	pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Gray, 0.4f), &m_pBrNormal);
+    return TRUE;
+}
+
+
+
+CUIPlayingCtrl::CUIPlayingCtrl()
+{
+    
+}
+
+void CUIPlayingCtrl::Redraw()
+{
+    auto pDC = m_pBK->m_pDC;
+    pDC->DrawBitmap(m_pBK->m_pBmpBKStatic, &m_rcF, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, &m_rcF);
+    pDC->PushAxisAlignedClip(&m_rcF, D2D1_ANTIALIAS_MODE_ALIASED);
+    for (auto pElem : m_vChildren)
+        pElem->Redraw();
+    pDC->PopAxisAlignedClip();
+
+    BkDbg_DrawElemFrame();
+}
+
+BOOL CUIPlayingCtrl::InitElem()
+{
+    m_pBTOptions = new CUIButton;
+    m_pBTPlayOpt = new CUIButton;
+    m_pBTRepeatMode = new CUIButton;
+    m_pBTPrev = new CUIButton;
+    m_pBTPlay = new CUIRoundButton;
+    m_pBTNext = new CUIButton;
+    m_pBTStop = new CUIButton;
+    m_pBTLrc = new CUIButton;
+    m_pBTAbout = new CUIButton;
+    m_pBTOptions->m_uStyle |= UIES_NOERASEBK;
+    m_pBTPlayOpt->m_uStyle |= UIES_NOERASEBK;
+    m_pBTRepeatMode->m_uStyle |= UIES_NOERASEBK;
+    m_pBTPrev->m_uStyle |= UIES_NOERASEBK;
+    m_pBTPlay->m_uStyle |= UIES_NOERASEBK;
+    m_pBTNext->m_uStyle |= UIES_NOERASEBK;
+    m_pBTStop->m_uStyle |= UIES_NOERASEBK;
+    m_pBTLrc->m_uStyle |= UIES_NOERASEBK;
+    m_pBTAbout->m_uStyle |= UIES_NOERASEBK;
+    m_pBK->AddElem(m_pBTOptions);
+    m_pBK->AddElem(m_pBTPlayOpt);
+    m_pBK->AddElem(m_pBTRepeatMode);
+    m_pBK->AddElem(m_pBTPrev);
+    m_pBK->AddElem(m_pBTPlay);
+    m_pBK->AddElem(m_pBTNext);
+    m_pBK->AddElem(m_pBTStop);
+    m_pBK->AddElem(m_pBTLrc);
+    m_pBK->AddElem(m_pBTAbout);
+    m_pBTOptions->SetParent(this);
+    m_pBTPlayOpt->SetParent(this);
+    m_pBTRepeatMode->SetParent(this);
+    m_pBTPrev->SetParent(this);
+    m_pBTPlay->SetParent(this);
+    m_pBTNext->SetParent(this);
+    m_pBTStop->SetParent(this);
+    m_pBTLrc->SetParent(this);
+    m_pBTAbout->SetParent(this);
+
+    m_pBTOptions->InitElem();
+    m_pBTPlayOpt->InitElem();
+    m_pBTRepeatMode->InitElem();
+    m_pBTPrev->InitElem();
+    m_pBTPlay->InitElem();
+    m_pBTNext->InitElem();
+    m_pBTStop->InitElem();
+    m_pBTLrc->InitElem();
+    m_pBTAbout->InitElem();
+    m_pBTOptions->SetImg(m_pBK->m_pBmpIcon[CWndBK::ICIDX_Options]);
+    m_pBTPlayOpt->SetImg(m_pBK->m_pBmpIcon[CWndBK::ICIDX_PlayOpt]);
+    m_pBTRepeatMode->SetImg(m_pBK->m_pBmpIcon[CWndBK::ICIDX_RMAllLoop]);
+    m_pBTPrev->SetImg(m_pBK->m_pBmpIcon[CWndBK::ICIDX_Prev]);
+    m_pBTPlay->SetImg(m_pBK->m_pBmpIcon[CWndBK::ICIDX_Play]);
+    m_pBTNext->SetImg(m_pBK->m_pBmpIcon[CWndBK::ICIDX_Next]);
+    m_pBTStop->SetImg(m_pBK->m_pBmpIcon[CWndBK::ICIDX_Stop]);
+    m_pBTLrc->SetImg(m_pBK->m_pBmpIcon[CWndBK::ICIDX_Lrc]);
+    m_pBTAbout->SetImg(m_pBK->m_pBmpIcon[CWndBK::ICIDX_About]);
+
+    for (auto pElem : m_vChildren)
+        if (pElem->m_uType == UIET_BUTTON || pElem->m_uType == UIET_ROUNDBUTTON)
+            ((CUIButton*)pElem)->SetImgSize(m_pBK->m_Ds.cxIcon, m_pBK->m_Ds.cyIcon);
+
+    return TRUE;
+}
+
+LRESULT CUIPlayingCtrl::OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam)
+{
+    auto lResult = DefElemEventProc(uEvent, wParam, lParam);
+    switch (uEvent)
+    {
+    case UIEE_SETRECT:
+    {
+		const int cxTotal = m_pBK->m_Ds.iPCBTGap * 8 + m_pBK->m_Ds.cxPCBT * 8 + m_pBK->m_Ds.cxPCBTBig;
+        int xLeft = (m_cx - cxTotal) / 2;
+        const int yTop = (m_cy - m_pBK->m_Ds.cyPCBT) / 2;
+        const int cxBT = m_pBK->m_Ds.cxPCBT;
+        const int iGap = m_pBK->m_Ds.iPCBTGap;
+        RECT rc{ 0,yTop,0,yTop + m_pBK->m_Ds.cyPCBT };
+        rc.left = xLeft;
+        rc.right = rc.left + cxBT;
+        m_pBTOptions->SetElemRect(&rc);
+        xLeft += (cxBT + iGap);
+        rc.left = xLeft;
+        rc.right = rc.left + cxBT;
+        m_pBTPlayOpt->SetElemRect(&rc);
+        xLeft += (cxBT + iGap);
+        rc.left = xLeft;
+        rc.right = rc.left + cxBT;
+        m_pBTRepeatMode->SetElemRect(&rc);
+        xLeft += (cxBT + iGap);
+        rc.left = xLeft;
+        rc.right = rc.left + cxBT;
+        m_pBTPrev->SetElemRect(&rc);
+
+        xLeft += (cxBT + iGap);
+        const int xBigBT = xLeft;
+		xLeft += (iGap + m_pBK->m_Ds.cxPCBTBig);
+        rc.left = xLeft;
+        rc.right = rc.left + cxBT;
+        m_pBTNext->SetElemRect(&rc);
+        xLeft += (cxBT + iGap);
+        rc.left = xLeft;
+        rc.right = rc.left + cxBT;
+        m_pBTStop->SetElemRect(&rc);
+        xLeft += (cxBT + iGap);
+        rc.left = xLeft;
+        rc.right = rc.left + cxBT;
+        m_pBTLrc->SetElemRect(&rc);
+        xLeft += (cxBT + iGap);
+        rc.left = xLeft;
+        rc.right = rc.left + cxBT;
+        m_pBTAbout->SetElemRect(&rc);
+
+        rc.left = xBigBT;
+        rc.top = (m_cy - m_pBK->m_Ds.cyPCBTBig) / 2;
+        rc.right = rc.left + m_pBK->m_Ds.cxPCBTBig;
+        rc.bottom = rc.top + m_pBK->m_Ds.cyPCBTBig;
+        m_pBTPlay->SetElemRect(&rc);
+    }
+    break;
+    case UIEE_CHILDREDRAW:
+    {
+        auto pDC = m_pBK->m_pDC;
+        auto pElem = (CUIElem*)wParam;
+        pDC->BeginDraw();
+        pDC->DrawBitmap(m_pBK->m_pBmpBKStatic, &pElem->m_rcF, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, &pElem->m_rcF);
+        pElem->Redraw();
+        pDC->EndDraw();
+    }
+    break;
+    }
+
+    return lResult;
+}
+
+BOOL CUIPlayingCtrl::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	DispatchEvent(uMsg, wParam, lParam);
+    return FALSE;
 }

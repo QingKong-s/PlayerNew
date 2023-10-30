@@ -1,4 +1,4 @@
-#include "CBass.h"
+﻿#include "CBass.h"
 
 static const std::unordered_map<int, PCWSTR> c_BassErrorMap
 {
@@ -51,7 +51,7 @@ CBass::~CBass()
 DWORD CBass::Open(PCWSTR pszFile, DWORD dwFlagsHS, DWORD dwFlagsHM, DWORD dwFlagsHMIDI)
 {
 	if (m_hStream)
-		Free();
+		Close();
 	constexpr DWORD dwCommFlags = BASS_SAMPLE_FLOAT | BASS_UNICODE;
 	DWORD h = BASS_StreamCreateFile(FALSE, pszFile, 0, 0, dwCommFlags | dwFlagsHS);
 

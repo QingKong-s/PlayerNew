@@ -20,8 +20,8 @@ private:
 		Midi
 	};
 
-	MusicType m_eMusicType;
-	DWORD m_hStream;
+	MusicType m_eMusicType = MusicType::Invalid;
+	DWORD m_hStream = NULL;
 
 public:
 	~CBass();

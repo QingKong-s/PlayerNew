@@ -55,6 +55,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	AdjustWindowRectEx(&rc, dwStyle, FALSE, dwExStyle);
 	Wnd.Create(L"", dwStyle, dwExStyle, 100, 100, rc.right, rc.bottom, NULL, 0);
 
+	
+
 	MSG msg;
 	while (GetMessageW(&msg, NULL, 0, 0))
 	{

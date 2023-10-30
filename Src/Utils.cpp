@@ -133,7 +133,10 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 {
 	eck::CFile File;
 	if (File.Open(pszFile) == INVALID_HANDLE_VALUE)
+	{
+		EckDbgPrintFormatMessage(GetLastError());
 		return FALSE;
+	}
 	DWORD cbFile = File.GetSize32();
 
 	BYTE by[4];
@@ -161,7 +164,7 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 			if (pHeader->Flags & 0x20)// 有扩展头
 				r += (4 + eck::ReverseDWORD(pExtHeader->ExtHeaderSize));
 		}
-		else if (pHeader->Ver = 4)// 2.4
+		else if (pHeader->Ver == 4)// 2.4
 		{
 			if (pHeader->Flags & 0x20)// 有扩展头
 				r += SynchSafeIntToDWORD(pExtHeader->ExtHeaderSize);
@@ -175,9 +178,9 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 			r.SkipPointer(pFrame);
 
 			if (pHeader->Ver == 3)
-				cbUnit = eck::ReverseDWORD(pFrame->Size);// 2.3：32位数据，不包括帧头（偏4B）
-			else if (pHeader->Ver = 4)
-				cbUnit = SynchSafeIntToDWORD(pFrame->Size);//2.4：28位数据（同步安全整数）
+				cbUnit = eck::ReverseDWORD(pFrame->Size);// 2.3：32位数据，不包括帧头（偏4字节）
+			else if (pHeader->Ver == 4)
+				cbUnit = SynchSafeIntToDWORD(pFrame->Size);// 2.4：28位数据（同步安全整数）
 
 			if (memcmp(pFrame->ID, "TIT2", 4) == 0)// 标题
 			{

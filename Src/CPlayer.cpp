@@ -1,6 +1,23 @@
 ﻿#include "CPlayer.h"
 #include "CApp.h"
 #include "COptionsMgr.h"
+#include "CWndBK.h"
+
+HRESULT CPlayer::CreateWicBmpCover()
+{
+	SAFE_RELEASE(m_pWicCoverBmp);
+	HRESULT hr = CApp::WICCreateBitmap(m_MusicInfo.pCoverData, &m_pWicCoverBmp);
+	if (FAILED(hr))
+	{
+		hr = CApp::WICCreateBitmap((eck::GetRunningPath() + LR"(\Img\DefCover.png)").Data(), &m_pWicCoverBmp);
+	}
+	return hr;
+}
+
+CPlayer::~CPlayer()
+{
+	SAFE_RELEASE(m_pWicCoverBmp);
+}
 
 PlayOpErr CPlayer::Play(int idx)
 {
@@ -8,31 +25,41 @@ PlayOpErr CPlayer::Play(int idx)
 	Stop();
 	auto& Item = m_List.At(idx);
 
+	m_rsCurrFile = Item.rsFile;
+	m_idxCurrFile = idx;
+	Utils::GetMusicInfo(m_rsCurrFile.Data(), m_MusicInfo);
+	CreateWicBmpCover();
+
 	m_Bass.Open(Item.rsFile.Data());
 	if (!m_Bass.GetHStream())
 		return PlayOpErr::BassError;
-	m_rsCurrFile = Item.rsFile;
-	m_idxCurrFile = idx;
+	m_bHasActiveFile = TRUE;
 	m_Bass.TempoCreate();
 	m_Bass.Play();
 	ApplyPrevEffect();
 
 	m_ullLength = (ULONGLONG)(m_Bass.GetLength() * 1000.);
 
-	Utils::GetMusicInfo(m_rsCurrFile.Data(), m_MusicInfo);
 	Utils::ParseLrc(m_rsCurrFile.Data(), 0u, m_vLrc, m_vLrcLabel, COptionsMgr::GetInst().iLrcFileEncoding);
 	if (!m_vLrc.size())
 		Utils::ParseLrc(m_MusicInfo.rsLrc.Data(), m_MusicInfo.rsLrc.ByteSize(), m_vLrc, m_vLrcLabel, Utils::LrcEncoding::UTF16LE);
+	m_pWndBK->OnPlayingControl(PCT_PLAY);
 	return PlayOpErr::Ok;
 }
 
-void CPlayer::Stop()
+void CPlayer::Stop(BOOL bNoGap)
 {
 	m_Bass.Stop();
 	m_Bass.Close();
 
 	m_idxCurrFile = -1;
 	m_idxCurrLrc = -1;
+
+	if (!bNoGap)
+	{
+		m_bHasActiveFile = FALSE;
+		m_pWndBK->OnPlayingControl(PCT_STOP);
+	}
 }
 
 PlayOpErr CPlayer::Next()
@@ -287,4 +314,48 @@ int CPlayer::MoveItems(int idxDst, const int* pidx, int cItems)
 		}
 	}
 	return idxDst - n;
+}
+
+TICKCHANGING CPlayer::Tick()
+{
+	TICKCHANGING uRet = TKC_NONE;
+	m_fPos = (float)m_Bass.GetPosition();
+	m_ullPos = (ULONGLONG)(m_fPos * 1000.f);
+
+	const int cLrc = (int)m_vLrc.size();
+	if (cLrc)
+	{
+		if (m_idxCurrLrc >= 0)
+		{
+			if (m_idxCurrLrc + 1 < cLrc)
+			{
+				if (m_fPos >= m_vLrc[m_idxCurrLrc].fTime && m_fPos < m_vLrc[m_idxCurrLrc + 1].fTime)
+					goto EndFindLrc;
+			}
+			else if (m_fPos >= m_vLrc[m_idxCurrLrc].fTime)
+				goto EndFindLrc;
+		}
+		auto it = std::lower_bound(m_vLrc.begin(), m_vLrc.end(), m_fPos, [](const Utils::LRCINFO& Item, float fPos)->bool
+			{
+				return Item.fTime < fPos;
+			});
+		if (it == m_vLrc.end())
+		{
+			if (m_fPos < m_vLrc.front().fTime)
+				m_idxCurrLrc = -1;
+			else
+				m_idxCurrLrc = -2;
+		}
+		else
+			m_idxCurrLrc = (int)std::distance(m_vLrc.begin(), it);
+		
+		if (m_idxCurrLrc != m_idxLastLrc)
+		{
+			m_idxLastLrc = m_idxCurrLrc;
+			uRet |= TKC_LRCPOSUPDATED;
+		}
+	}
+EndFindLrc:
+
+	return uRet;
 }

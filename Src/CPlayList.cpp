@@ -49,7 +49,7 @@ int CPlayList::Insert(int idxPos, const LISTFILEITEM_1& Info, PCWSTR pszName, PC
 
 void CPlayList::InsertBookmark(int idxItem, PCWSTR pszName, int cchName, COLORREF crColor)
 {
-	EckAssert(!m_vList[idxItem].bBookmark);
+	//EckAssert(!m_vList[idxItem].bBookmark);
 
 	BOOKMAEKLISTUNIT Item;
 	Item.rsName.ReSizeAbs(cchName);

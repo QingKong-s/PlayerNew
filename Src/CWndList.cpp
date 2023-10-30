@@ -1289,7 +1289,7 @@ void CWndList::PlayListItem(int idx)
 		std::wstring s;
 		if (iBassErr != BASS_OK)
 		{
-			s = std::format(L"{}错误代码：0x{:08X}。", pszErrMsg, iBassErr);
+			s = std::format(L"播放出错！\n{}\n错误代码：0x{:08X}。", pszErrMsg, iBassErr);
 			pszErrMsg = s.c_str();
 		}
 		CApp::ShowError(m_hWnd, (DWORD)uRet, CApp::ErrSrc::None, pszErrMsg);

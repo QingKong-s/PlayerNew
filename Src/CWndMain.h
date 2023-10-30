@@ -29,7 +29,7 @@ private:
 	ID2D1Bitmap1* m_pBmpBK = NULL;
 	ID2D1Bitmap1* m_pBmpPauseBK = NULL;
 
-	CWndBK m_Bk{};
+	CWndBK m_BK{};
 	CWndList m_List{ *this };
 
 	int m_xSeparateBar = 0;
@@ -56,6 +56,7 @@ private:
 
 	void UpdateDpi(int iDpi);
 
+	void InitBK();
 private:
 	static LRESULT CALLBACK WndProc_Main(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
