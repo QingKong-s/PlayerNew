@@ -440,7 +440,6 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	return TRUE;
 
 
-
 	m_vStr.resize(100000);
 	EckCounter(m_vStr.size(), i)
 	{

@@ -260,7 +260,7 @@
     <ClInclude Include="Src\CWndMain.h" />
     <ClInclude Include="Src\DragDrop.h" />
     <ClInclude Include="Src\Entry.h" />
-    <ClInclude Include="Src\resource.h" />
+    <ClInclude Include="Src\Resource.h" />
     <ClInclude Include="Src\targetver.h" />
     <ClInclude Include="Src\Utils.h" />
   </ItemGroup>
@@ -297,7 +297,17 @@
     <ClCompile Include="Src\CPlayList.cpp" />
     <ClCompile Include="Src\CPlayListFile.cpp" />
     <ClCompile Include="Src\CSimpleList.cpp" />
+    <ClCompile Include="Src\CUIAlbum.cpp" />
+    <ClCompile Include="Src\CUIAlbumRotating.cpp" />
+    <ClCompile Include="Src\CUIButton.cpp" />
+    <ClCompile Include="Src\CUIElem.cpp" />
+    <ClCompile Include="Src\CUIInfo.cpp" />
     <ClCompile Include="Src\CUILrc.cpp" />
+    <ClCompile Include="Src\CUIPlayingCtrl.cpp" />
+    <ClCompile Include="Src\CUIProgBar.cpp" />
+    <ClCompile Include="Src\CUISpe.cpp" />
+    <ClCompile Include="Src\CUISpe2.cpp" />
+    <ClCompile Include="Src\CUIWaves.cpp" />
     <ClCompile Include="Src\CWndBK.cpp" />
     <ClCompile Include="Src\CWndList.cpp" />
     <ClCompile Include="Src\CWndMain.cpp" />

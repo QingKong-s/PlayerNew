@@ -8,6 +8,9 @@
 
 constexpr inline auto WCN_MAINBK = L"PlayerNew.WndClass.MainBK";
 
+constexpr inline D2D1_COLOR_F c_D2DClrCyanDeeper{ 0.f,0.3764f,0.7529f,1.f };
+constexpr inline D2D1_COLOR_F c_D2DCrUIProgBarTempMark{ 0.0f,0.502f,1.0f,1.0f };
+
 // UI元素类型
 enum UIELEMTYPE
 {
@@ -24,6 +27,7 @@ enum UIELEMTYPE
 	UIET_INFO,
 	UIET_BUTTON,
 	UIET_ROUNDBUTTON,
+	UIET_PLAYINGCTRL,
 };
 
 // UI元素标志
@@ -48,6 +52,7 @@ enum UIELEMEVENT
 	UIEE_ONPLAYINGCTRL = 2,		// (type, 0)	播放控制操作已发生
 	UIEE_ONSETTINGSCHANGE = 3,	// (0, 0)		设置已被更改
 	UIEE_CHILDREDRAW = 4,		// (pElem, 0)	子元素请求重画，只会在有UIES_NOERASEBK样式的子元素执行即时重画时发送
+	UIEE_DESTROY = 5,			// (0, 0)		销毁元素
 };
 
 // 播放控制类型
@@ -139,36 +144,26 @@ private:
 
 	int m_iDpi = USER_DEFAULT_SCREEN_DPI;
 	ECK_DS_BEGIN(DPIS)
-		ECK_DS_ENTRY(sizeAlbumLevel, 15)
-		ECK_DS_ENTRY(cxWaveLine, 2)
-		ECK_DS_ENTRY(cxSepLine, 2)
-		ECK_DS_ENTRY(cyProgBarTrack, 6)
 		ECK_DS_ENTRY(cxTime, 100)
-		ECK_DS_ENTRY(cxTopTip, 50)
-		ECK_DS_ENTRY(cyTopTip, 18)
-		ECK_DS_ENTRY(cyTopTitle, 30)
-		ECK_DS_ENTRY(sizeTopTipGap, 6)
-		ECK_DS_ENTRY(cxIcon, 25)
-		ECK_DS_ENTRY(cyIcon, 25)
-		ECK_DS_ENTRY(cxPCBT, 40)
-		ECK_DS_ENTRY(cyPCBT, 40)
-		ECK_DS_ENTRY(cxPCBTBig, 54)
-		ECK_DS_ENTRY(cyPCBTBig, 54)
-		ECK_DS_ENTRY(iPCBTGap, 5)
+		ECK_DS_ENTRY(cxPCBT, 36)
+		ECK_DS_ENTRY(cyPCBT, 36)
+		ECK_DS_ENTRY(cxPCBTBig, 52)
+		ECK_DS_ENTRY(cyPCBTBig, 52)
+		ECK_DS_ENTRY(iPCBTGap, 8)
 		;
 	ECK_DS_END_VAR(m_Ds);
 
 	ECK_DS_BEGIN(DPIS_F)
+		ECK_DS_ENTRY_F(sizeAlbumLevel, 15)
 		ECK_DS_ENTRY_F(cxWaveLine, 2.f)
 		ECK_DS_ENTRY_F(cxSepLine, 2.f)
 		ECK_DS_ENTRY_F(cyProgBarTrack, 6.f)
-		ECK_DS_ENTRY_F(cxTime, 100.f)
 		ECK_DS_ENTRY_F(cxTopTip, 50.f)
 		ECK_DS_ENTRY_F(cyTopTip, 18.f)
 		ECK_DS_ENTRY_F(cyTopTitle, 30.f)
 		ECK_DS_ENTRY_F(sizeTopTipGap, 6.f)
-		ECK_DS_ENTRY_F(cxIcon, 25.f)
-		ECK_DS_ENTRY_F(cyIcon, 25.f)
+		ECK_DS_ENTRY_F(cxIcon, 20.f)
+		ECK_DS_ENTRY_F(cyIcon, 20.f)
 		;
 	ECK_DS_END_VAR(m_DsF);
 
@@ -177,6 +172,8 @@ private:
 	BOOL OnCreate(HWND hWnd, CREATESTRUCTW* pcs);
 
 	void OnSize(HWND hWnd, UINT state, int cx, int cy);
+
+	void OnDestroy(HWND hWnd);
 
 	/// <summary>
 	/// 生成元素事件
@@ -777,10 +774,10 @@ public:
 		m_pBmp = pBmp;
 	}
 
-	PNInline void SetImgSize(int cx, int cy)
+	PNInline void SetImgSize(float cx, float cy)
 	{
-		m_rcfImg.left = m_rcF.left + (float)((m_cx - cx) / 2);
-		m_rcfImg.top = m_rcF.top + (float)((m_cy - cy) / 2);
+		m_rcfImg.left = m_rcF.left + (m_cx - cx) / 2.f;
+		m_rcfImg.top = m_rcF.top + (m_cy - cy) / 2.f;
 		m_rcfImg.right = m_rcfImg.left + cx;
 		m_rcfImg.bottom = m_rcfImg.top + cy;
 	}
