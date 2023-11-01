@@ -10,11 +10,13 @@ struct FONTOPTIONS
 
 enum class RepeatMode
 {
-	AllLoop,
+	P_Begin = 0,
+	AllLoop = P_Begin,
 	All,
 	Radom,
 	SingleLoop,
 	Single,
+	P_End
 };
 
 class COptionsMgr
@@ -33,5 +35,14 @@ public:
 	{
 		static COptionsMgr om;
 		return om;
+	}
+
+	static RepeatMode NextRepeatMode(RepeatMode i)
+	{
+		auto ii = (int)i;
+		++ii;
+		if (ii >= (int)RepeatMode::P_End)
+			ii = (int)RepeatMode::P_Begin;
+		return (RepeatMode)ii;
 	}
 };

@@ -55,19 +55,31 @@ enum UIELEMEVENT
 	UIEE_DESTROY = 5,			// (0, 0)		销毁元素
 };
 
-// 播放控制类型
-enum PLAYINGCTRLTYPE
-{
-	PCT_PLAY,
-	PCT_PAUSE,
-	PCT_STOP
-};
 
 enum class ThreadState
 {
 	Stopped,
 	Running,
 	Error
+};
+
+enum PCBTID
+{
+	PCBTI_OPT = 101,
+	PCBTI_PLAYOPT,
+	PCBTI_REPEATMODE,
+	PCBTI_PREV,
+	PCBTI_PLAY,
+	PCBTI_NEXT,
+	PCBTI_STOP,
+	PCBTI_LRC,
+	PCBTI_ABOUT,
+};
+
+enum CUIBTNNOTIFY
+{
+	CUIBN_CLICK,
+	CUIBN_RCLICK,
 };
 
 #define CUI_FRIEND_ALL_ELEM \
@@ -113,6 +125,8 @@ private:
 	std::vector<CUIElem*> m_vAllElems{};
 
 	std::vector<RECT> m_vDirtyRect{};
+
+	UINT m_uMsgCUIButton = 0;// (uCode, pElem)
 
 	enum
 	{
@@ -174,6 +188,8 @@ private:
 	void OnSize(HWND hWnd, UINT state, int cx, int cy);
 
 	void OnDestroy(HWND hWnd);
+
+	void OnPCBtnClick(UINT uCode, CUIElem* pElem);
 
 	/// <summary>
 	/// 生成元素事件
@@ -750,12 +766,14 @@ protected:
 	ID2D1SolidColorBrush* m_pBrPressed = NULL;
 	ID2D1Bitmap1* m_pBmp = NULL;
 
-	BOOL m_bHot = FALSE;
-	BOOL m_bLBtnDown = FALSE;
-
 	D2D1_RECT_F m_rcfImg{};
+
+	int m_iId = 0;
+	BITBOOL m_bHot : 1 = FALSE;
+	BITBOOL m_bLBtnDown : 1 = FALSE;
+	BITBOOL m_bRBtnDown : 1 = FALSE;
 public:
-	CUIButton();
+	CUIButton(int iID);
 
 	~CUIButton();
 
@@ -798,6 +816,10 @@ public:
 			EckDbgBreak();
 #endif
 	}
+
+	PNInline void SetID(int iID) { m_iId = iID; }
+
+	PNInline int GetID() { return m_iId; }
 };
 
 class CUIRoundButton final :public CUIButton
@@ -807,7 +829,9 @@ private:
 
 	D2D1_ELLIPSE m_Ellipse{};
 public:
-	CUIRoundButton();
+	CUIRoundButton() = delete;
+
+	CUIRoundButton(int iID);
 
 	~CUIRoundButton();
 
@@ -818,6 +842,8 @@ public:
 	LRESULT OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam) override;
 
 	BOOL InitElem() override;
+
+	CUI_DeclRedrawAndPresent;
 
 	/// <summary>
 	/// 置颜色

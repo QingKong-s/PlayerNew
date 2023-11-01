@@ -53,7 +53,6 @@ void CApp::LoadRes()
 		if (FAILED(hr = WICCreateBitmap(rs.Data(), &m_pWicRes[i])))
 			ShowError(NULL, hr, ErrSrc::HResult, L"加载资源时出错", std::format(LR"("{}"加载失败)", rs.Data()).c_str());
 	}
-	int a = 0;
 }
 
 CApp::~CApp()

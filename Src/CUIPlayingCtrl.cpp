@@ -20,15 +20,15 @@ void CUIPlayingCtrl::Redraw()
 
 BOOL CUIPlayingCtrl::InitElem()
 {
-    m_pBTOptions = new CUIButton;
-    m_pBTPlayOpt = new CUIButton;
-    m_pBTRepeatMode = new CUIButton;
-    m_pBTPrev = new CUIButton;
-    m_pBTPlay = new CUIRoundButton;
-    m_pBTNext = new CUIButton;
-    m_pBTStop = new CUIButton;
-    m_pBTLrc = new CUIButton;
-    m_pBTAbout = new CUIButton;
+    m_pBTOptions = new CUIButton(PCBTI_OPT);
+    m_pBTPlayOpt = new CUIButton(PCBTI_PLAYOPT);
+    m_pBTRepeatMode = new CUIButton(PCBTI_REPEATMODE);
+    m_pBTPrev = new CUIButton(PCBTI_PREV);
+    m_pBTPlay = new CUIRoundButton(PCBTI_PLAY);
+    m_pBTNext = new CUIButton(PCBTI_NEXT);
+    m_pBTStop = new CUIButton(PCBTI_STOP);
+    m_pBTLrc = new CUIButton(PCBTI_LRC);
+    m_pBTAbout = new CUIButton(PCBTI_ABOUT);
     m_pBTOptions->m_uStyle |= UIES_NOERASEBK;
     m_pBTPlayOpt->m_uStyle |= UIES_NOERASEBK;
     m_pBTRepeatMode->m_uStyle |= UIES_NOERASEBK;
@@ -148,6 +148,10 @@ LRESULT CUIPlayingCtrl::OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lP
         pDC->EndDraw();
     }
     break;
+    case UIEE_ONPLAYINGCTRL:
+        if (wParam == PCT_PLAY)
+            m_pBTPlay->SetImg(m_pBK->m_pBmpIcon[CWndBK::ICIDX_Pause]);
+        break;
     }
 
     return lResult;
@@ -156,5 +160,33 @@ LRESULT CUIPlayingCtrl::OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lP
 BOOL CUIPlayingCtrl::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     DispatchEvent(uMsg, wParam, lParam);
+    if (uMsg == m_pBK->m_uMsgCUIButton)
+    {
+        auto pBtn = (CUIButton*)lParam;
+        switch (pBtn->GetID())
+        {
+        case PCBTI_PLAY:
+            if (App->GetPlayer().GetBass().IsActive() == BASS_ACTIVE_PLAYING)
+                pBtn->SetImg(m_pBK->m_pBmpIcon[CWndBK::ICIDX_Pause]);
+            else
+                pBtn->SetImg(m_pBK->m_pBmpIcon[CWndBK::ICIDX_Play]);
+            break;
+        case PCBTI_REPEATMODE:
+        {
+            constexpr int idx[]
+            {
+                CWndBK::ICIDX_RMAllLoop,
+                CWndBK::ICIDX_RMAll,
+                CWndBK::ICIDX_RMRadom,
+                CWndBK::ICIDX_RMSingleLoop,
+                CWndBK::ICIDX_RMSingle,
+            };
+            auto iRM = (int)COptionsMgr::GetInst().iRepeatMode;
+            EckAssert(iRM >= 0 && iRM < ARRAYSIZE(idx));
+            pBtn->SetImg(m_pBK->m_pBmpIcon[idx[iRM]]);
+        }
+        break;
+        }
+    }
     return FALSE;
 }

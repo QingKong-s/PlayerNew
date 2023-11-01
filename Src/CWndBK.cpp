@@ -29,6 +29,15 @@ constexpr PCWSTR c_szBtmTip[]
 LRESULT CWndBK::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	auto p = (CWndBK*)GetWindowLongPtrW(hWnd, 0);
+    if (uMsg == WM_NCCREATE)
+    {
+        p = (CWndBK*)((CREATESTRUCTW*)lParam)->lpCreateParams;
+        SetWindowLongPtrW(hWnd, 0, (LONG_PTR)p);
+    }
+
+    if (uMsg == p->m_uMsgCUIButton)
+        p->OnPCBtnClick((UINT)wParam, (CUIElem*)lParam);// 落到元素事件处理
+
 	switch (uMsg)
 	{
 	case WM_TIMER:
@@ -48,7 +57,7 @@ LRESULT CWndBK::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					p->m_vDirtyRect.emplace_back(pElem->m_rcInWnd);
 				}
 				else
-					pElem->OnTimer(wParam);
+					pElem->OnTimer((UINT)wParam);
 			}
 			p->m_pDC->EndDraw();
 			DXGI_PRESENT_PARAMETERS dpp{};
@@ -61,7 +70,7 @@ LRESULT CWndBK::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		default:
 		{
             for (auto pElem : p->m_vElemsWantTimer)
-                pElem->OnTimer(wParam);
+                pElem->OnTimer((UINT)wParam);
         }
         return 0;
         }
@@ -80,10 +89,6 @@ LRESULT CWndBK::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_SIZE:
 		return HANDLE_WM_SIZE(hWnd, wParam, lParam, p->OnSize);
-	case WM_NCCREATE:
-		p = (CWndBK*)((CREATESTRUCTW*)lParam)->lpCreateParams;
-		SetWindowLongPtrW(hWnd, 0, (LONG_PTR)p);
-		break;
 	case WM_CREATE:
 		return HANDLE_WM_CREATE(hWnd, wParam, lParam, p->OnCreate);
     case WM_DESTROY:
@@ -116,6 +121,7 @@ LRESULT CWndBK::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 BOOL CWndBK::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 {
+    m_uMsgCUIButton = RegisterWindowMessageW(L"PlayerNew.Message.CUIButtonClick");
     m_iDpi = eck::GetDpi(hWnd);
     eck::UpdateDpiSize(m_Ds, m_iDpi);
     eck::UpdateDpiSizeF(m_DsF, m_iDpi);
@@ -260,18 +266,60 @@ void CWndBK::OnSize(HWND hWnd, UINT state, int cx, int cy)
 
 void CWndBK::OnDestroy(HWND hWnd)
 {
-    GenElemEvent(UIEE_DESTROY, 0, 0);
-    for (auto pElem : m_vAllElems)
-        delete pElem;
-    m_pBrWhite->Release();
-    m_pBrWhite2->Release();
-    m_pBmpAlbum->Release();
-    m_pBmpBKStatic->Release();
-    m_pBmpBK->Release();
-    for (auto pBmp : m_pBmpIcon)
-        pBmp->Release();
-    m_pDC->Release();
-    m_pSwapChain->Release();
+	GenElemEvent(UIEE_DESTROY, 0, 0);
+	for (auto pElem : m_vAllElems)
+		delete pElem;
+    m_vAllElems.clear();
+    m_vElems.clear();
+    m_vElemsWantTimer.clear();
+	m_pBrWhite->Release();
+	m_pBrWhite2->Release();
+	if (m_pBmpAlbum)
+		m_pBmpAlbum->Release();
+	m_pBmpBKStatic->Release();
+	m_pBmpBK->Release();
+	for (auto pBmp : m_pBmpIcon)
+		pBmp->Release();
+	m_pDC->Release();
+	m_pSwapChain->Release();
+}
+
+void CWndBK::OnPCBtnClick(UINT uCode, CUIElem* pElem)
+{
+    auto pBtn = (CUIButton*)pElem;
+    auto& Player = App->GetPlayer();
+    PlayOpErr uErr;
+    switch (pBtn->GetID())
+    {
+	case PCBTI_OPT:
+		break;
+	case PCBTI_PLAYOPT:
+		break;
+	case PCBTI_REPEATMODE:
+        COptionsMgr::GetInst().iRepeatMode = COptionsMgr::NextRepeatMode(COptionsMgr::GetInst().iRepeatMode);
+		break;
+	case PCBTI_PREV:
+		uErr = Player.Prev();
+		goto ProcPlayErr;
+	case PCBTI_PLAY:
+		uErr = Player.PlayOrPause();
+        goto ProcPlayErr;
+	case PCBTI_NEXT:
+		uErr = Player.Next();
+        goto ProcPlayErr;
+	case PCBTI_STOP:
+		Player.Stop();
+		break;
+	case PCBTI_LRC:
+		break;
+	case PCBTI_ABOUT:
+		break;
+	}
+
+    return;
+ProcPlayErr:
+    if (uErr != PlayOpErr::Ok)
+        CPlayer::ShowPlayErr(m_hWnd, uErr);
 }
 
 void CWndBK::GenElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam)
@@ -360,16 +408,15 @@ void CWndBK::UpdateStaticBmp()
     if (m_cxClient <= 0 || m_cyClient <= 0)
         return;
     IWICBitmap* pWICBitmapOrg = App->GetPlayer().GetWicBmpCover();// 原始WIC位图
-
+    if (!pWICBitmapOrg)
+        pWICBitmapOrg = App->GetWicRes()[IIDX_DefCover];
     ////////////////////绘制静态位图
     m_pDC->BeginDraw();
     m_pDC->SetTarget(m_pBmpBKStatic);
 
     UINT cx0, cy0;
-    float cxRgn/*截取区域宽*/, cyRgn/*截取区域高*/, cx/*缩放后图片宽*/, cy/*缩放后图片高*/;
-    D2D_RECT_F D2DRectF;
+    float cyRgn/*截取区域高*/, cx/*缩放后图片宽*/, cy/*缩放后图片高*/;
 
-    ID2D1SolidColorBrush* pBrush;
     if (pWICBitmapOrg)
     {
         /*

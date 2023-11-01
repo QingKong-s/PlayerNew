@@ -24,6 +24,20 @@ private:
 	DWORD m_hStream = NULL;
 
 public:
+	static int GetError(PCWSTR* ppszErr = NULL);
+
+	static PCWSTR GetErrorMsg(int iErrCode);
+
+	static void Init(int iDevice = -1, DWORD dwFreq = 44100, DWORD dwFlags = 0, HWND hWnd = NULL)
+	{
+		BASS_Init(iDevice, dwFreq, dwFlags, hWnd, NULL);
+	}
+
+	static void Free()
+	{
+		BASS_Free();
+	}
+
 	~CBass();
 
 	DWORD Open(PCWSTR pszFile,
@@ -31,34 +45,34 @@ public:
 		DWORD dwFlagsHM = BASS_SAMPLE_FX | BASS_MUSIC_PRESCAN | BASS_STREAM_DECODE,
 		DWORD dwFlagsHMIDI = BASS_SAMPLE_FX | BASS_STREAM_DECODE);
 
-	PNInline void Play(BOOL bReset = FALSE) const
+	PNInline BOOL Play(BOOL bReset = FALSE) const
 	{
-		BASS_ChannelPlay(m_hStream, bReset);
+		return BASS_ChannelPlay(m_hStream, bReset);
 	}
 
-	PNInline void Pause() const
+	PNInline BOOL Pause() const
 	{
-		BASS_ChannelPause(m_hStream);
+		return BASS_ChannelPause(m_hStream);
 	}
 
-	PNInline void Stop() const
+	PNInline BOOL Stop() const
 	{
-		BASS_ChannelStop(m_hStream);
+		return BASS_ChannelStop(m_hStream);
 	}
 
-	PNInline void SetVolume(float fVolume) const
+	PNInline BOOL SetVolume(float fVolume) const
 	{
-		BASS_ChannelSetAttribute(m_hStream, BASS_ATTRIB_VOL, fVolume);
+		return BASS_ChannelSetAttribute(m_hStream, BASS_ATTRIB_VOL, fVolume);
 	}
 
-	PNInline void SetPan(float fPan) const
+	PNInline BOOL SetPan(float fPan) const
 	{
-		BASS_ChannelSetAttribute(m_hStream, BASS_ATTRIB_PAN, fPan);
+		return BASS_ChannelSetAttribute(m_hStream, BASS_ATTRIB_PAN, fPan);
 	}
 
-	PNInline void SetPosition(double fTime) const
+	PNInline BOOL SetPosition(double fTime) const
 	{
-		BASS_ChannelSetPosition(m_hStream, BASS_ChannelSeconds2Bytes(m_hStream, fTime), BASS_POS_BYTE);
+		return BASS_ChannelSetPosition(m_hStream, BASS_ChannelSeconds2Bytes(m_hStream, fTime), BASS_POS_BYTE);
 	}
 
 	PNInline double GetPosition() const
@@ -91,18 +105,9 @@ public:
 		return m_hStream;
 	}
 
-	static int GetError(PCWSTR* ppszErr = NULL);
-
-	static PCWSTR GetErrorMsg(int iErrCode);
-
-	static void Init(int iDevice = -1, DWORD dwFreq = 44100, DWORD dwFlags = 0, HWND hWnd = NULL)
+	PNInline DWORD IsActive()
 	{
-		BASS_Init(iDevice, dwFreq, dwFlags, hWnd, NULL);
-	}
-
-	static void Free()
-	{
-		BASS_Free();
+		return BASS_ChannelIsActive(m_hStream);
 	}
 };
 

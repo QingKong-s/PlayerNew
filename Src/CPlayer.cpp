@@ -19,31 +19,44 @@ CPlayer::~CPlayer()
 	SAFE_RELEASE(m_pWicCoverBmp);
 }
 
+void CPlayer::ShowPlayErr(HWND hWnd, PlayOpErr uErr)
+{
+	int iBassErr;
+	auto pszErrMsg = CPlayer::GetErrMsgToShow(uErr, &iBassErr);
+	std::wstring sDetail;
+	if (iBassErr != BASS_OK)
+	{
+		sDetail = std::format(L"{}\nBass错误代码：0x{:08X}。", pszErrMsg, iBassErr);
+		pszErrMsg = sDetail.c_str();
+	}
+	CApp::ShowError(hWnd, (DWORD)uErr, CApp::ErrSrc::None, L"播放出错", pszErrMsg);
+}
+
 PlayOpErr CPlayer::Play(int idx)
 {
 	EckAssert(idx >= 0 && idx < m_List.GetCount());
 	Stop();
 	auto& Item = m_List.At(idx);
 
-	m_rsCurrFile = Item.rsFile;
-	m_idxCurrFile = idx;
-	Utils::GetMusicInfo(m_rsCurrFile.Data(), m_MusicInfo);
-	CreateWicBmpCover();
-
 	m_Bass.Open(Item.rsFile.Data());
 	if (!m_Bass.GetHStream())
 		return PlayOpErr::BassError;
 	m_bHasActiveFile = TRUE;
+	m_rsCurrFile = Item.rsFile;
+	const auto idxPrev = m_idxCurrFile;
+	m_idxCurrFile = idx;
 	m_Bass.TempoCreate();
 	m_Bass.Play();
 	ApplyPrevEffect();
 
 	m_ullLength = (ULONGLONG)(m_Bass.GetLength() * 1000.);
 
+	Utils::GetMusicInfo(m_rsCurrFile.Data(), m_MusicInfo);
+	CreateWicBmpCover();
 	Utils::ParseLrc(m_rsCurrFile.Data(), 0u, m_vLrc, m_vLrcLabel, COptionsMgr::GetInst().iLrcFileEncoding);
 	if (!m_vLrc.size())
 		Utils::ParseLrc(m_MusicInfo.rsLrc.Data(), m_MusicInfo.rsLrc.ByteSize(), m_vLrc, m_vLrcLabel, Utils::LrcEncoding::UTF16LE);
-	m_pWndBK->OnPlayingControl(PCT_PLAY);
+	m_fnPayingCtrl(PCT_PLAY, idxPrev, 0);
 	return PlayOpErr::Ok;
 }
 
@@ -52,13 +65,14 @@ void CPlayer::Stop(BOOL bNoGap)
 	m_Bass.Stop();
 	m_Bass.Close();
 
+	const auto idxOld = m_idxCurrFile;
 	m_idxCurrFile = -1;
 	m_idxCurrLrc = -1;
 
 	if (!bNoGap)
 	{
 		m_bHasActiveFile = FALSE;
-		m_pWndBK->OnPlayingControl(PCT_STOP);
+		m_fnPayingCtrl(PCT_STOP, idxOld, 0);
 	}
 }
 
@@ -70,7 +84,9 @@ PlayOpErr CPlayer::Next()
 	if (m_idxLaterPlay >= 0)
 	{
 		Play(m_idxLaterPlay);
+		const auto idxOld = m_idxLaterPlay;
 		m_idxLaterPlay = -1;
+		m_fnPayingCtrl(PCT_REMOVE_LATER_PLAY, idxOld, 0);
 		return PlayOpErr::Ok;
 	}
 
@@ -139,6 +155,27 @@ PlayOpErr CPlayer::AutoNext()
 		return PlayOpErr::LoopTerminated;
 	}
 	return PlayOpErr::Ok;
+}
+
+PlayOpErr CPlayer::PlayOrPause()
+{
+	auto iAct = m_Bass.IsActive();
+	BOOL b = FALSE;
+	switch (iAct)
+	{
+	case BASS_ACTIVE_PAUSED:
+		b = m_Bass.Play();
+		break;
+	case BASS_ACTIVE_PLAYING:
+		b = m_Bass.Pause();
+		break;
+	default:
+		return PlayOpErr::NoCurrPlaying;
+	}
+	if (b)
+		return PlayOpErr::Ok;
+	else
+		return PlayOpErr::BassError;
 }
 
 void CPlayer::Sort(SortFlags uFlags, int idxBegin, int idxEnd)

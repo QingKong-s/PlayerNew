@@ -67,6 +67,7 @@ enum
 	IIDX_TickRed,
 	IIDX_Triangle,
 	IIDX_TriangleSolid,
+	IIDX_DefCover,
 
 	IIDX__MAX,
 };
@@ -114,6 +115,7 @@ private:
 		LR"(\Img\TickRed.png)",
 		LR"(\Img\Triangle.png)",
 		LR"(\Img\TriangleSolid.png)",
+		LR"(\Img\DefCover.png)",
 	};
 	static_assert(IIDX__MAX == ARRAYSIZE(CApp::c_szResFile));
 public:

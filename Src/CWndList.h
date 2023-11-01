@@ -27,6 +27,7 @@ class CWndMain;
 class CWndList : public eck::CWnd
 {
 	friend class CDropTargetList;
+	friend class CWndMain;
 private:
 	eck::CLabel m_LAListName{};
 	eck::CEditExt m_EDSearch{};

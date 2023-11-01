@@ -8,7 +8,6 @@ CUIAlbum::CUIAlbum()
 
 void CUIAlbum::Redraw()
 {
-    //auto pWICBmp = m_CurrSongInfo.mi.pWICBitmap;
     if (!m_pBK->m_pBmpAlbum)
         return;
 
@@ -21,7 +20,6 @@ void CUIAlbum::Redraw()
     int cx0 = m_pBK->m_cxAlbum, cy0 = m_pBK->m_cyAlbum;
     D2D1_RECT_F rcF;
 
-    // 还得是祖传代码好用
     if ((float)m_cx / (float)m_cy > (float)cx0 / (float)cy0)// y对齐
     {
         iSize = cx0 * m_cy / cy0;

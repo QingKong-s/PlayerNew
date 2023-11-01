@@ -378,6 +378,8 @@ void CWndMain::InitBK()
 	//		}
 	//		return 0;
 	//	}, m_BK);
+
+	m_BK.Redraw();
 }
 
 LRESULT CWndMain::WndProc_Main(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -395,6 +397,9 @@ LRESULT CWndMain::WndProc_Main(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 		return HANDLE_WM_SIZE(hWnd, wParam, lParam, p->OnSize);
 	case WM_DPICHANGED:
 		return HANDLE_WM_DPICHANGED(hWnd, wParam, lParam, p->OnDpiChanged);
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		return 0;
 	}
 	return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 }
@@ -417,9 +422,26 @@ void CWndMain::OnSize(HWND hWnd, UINT uState, int cx, int cy)
 
 BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 {
+	App->GetPlayer().SetPlayingCtrlCallBack([this](PLAYINGCTRLTYPE uType, INT_PTR i1, INT_PTR i2)
+		{
+			switch (uType)
+			{
+			case PCT_PLAY:
+				if (i1 >= 0)
+					m_List.m_LVList.RedrawItem((int)i1);
+				m_List.m_LVList.RedrawItem(App->GetPlayer().GetCurrFile());
+				break;
+			case PCT_STOP:
+				m_List.m_LVList.RedrawItem(i1);
+				break;
+			case PCT_REMOVE_LATER_PLAY:
+				m_List.m_LVList.RedrawItem(i1);
+				break;
+			}
+			m_BK.OnPlayingControl(uType);
+		});
 	UpdateDpi(eck::GetDpi(hWnd));
 	m_BK.Create(NULL, WS_CHILD, 0, 0, 0, 0, 0, hWnd, IDC_BK);
-	App->GetPlayer().SetWndBK(&m_BK);
 	m_List.Create(L"列表", WS_CHILD | WS_CLIPCHILDREN, 0, 0, 0, 0, 0, hWnd, IDC_LIST);
 
 	RECT rc;

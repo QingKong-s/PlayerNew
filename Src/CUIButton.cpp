@@ -1,9 +1,10 @@
 ﻿#include "CWndBK.h"
 
-CUIButton::CUIButton()
+CUIButton::CUIButton(int iID)
 {
     m_uType = UIET_BUTTON;
     m_uFlags = UIEF_NONE;
+    m_iId = iID;
 }
 
 CUIButton::~CUIButton()
@@ -18,7 +19,7 @@ void CUIButton::Redraw()
     if (!eck::IsBitSet(m_uStyle, UIES_NOERASEBK))
         pDC->DrawBitmap(m_pBK->m_pBmpBKStatic, &m_rcF, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, &m_rcF);
 
-    if (m_bLBtnDown)
+	if (m_bLBtnDown || m_bRBtnDown)
         pDC->FillRectangle(&m_rcF, m_pBrPressed);
     else if (m_bHot)
         pDC->FillRectangle(&m_rcF, m_pBrHot);
@@ -83,8 +84,31 @@ BOOL CUIButton::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
         if (m_bLBtnDown)
         {
+            SendMessageW(m_pBK->GetHWND(), m_pBK->m_uMsgCUIButton, CUIBN_CLICK, (LPARAM)this);
             ReleaseCapture();
             m_bLBtnDown = FALSE;
+            Redraw(TRUE);
+        }
+    }
+    return FALSE;
+    case WM_RBUTTONDOWN:
+    {
+        if (PtInRect(&m_rc, GET_PT_LPARAM(lParam)))
+        {
+            m_bRBtnDown = TRUE;
+            SetCapture(m_pBK->m_hWnd);
+            Redraw(TRUE);
+            return TRUE;
+        }
+    }
+    return FALSE;
+    case WM_RBUTTONUP:
+    {
+        if (m_bRBtnDown)
+        {
+            SendMessageW(m_pBK->GetHWND(), m_pBK->m_uMsgCUIButton, CUIBN_RCLICK, (LPARAM)this);
+            ReleaseCapture();
+            m_bRBtnDown = FALSE;
             Redraw(TRUE);
         }
     }
@@ -113,7 +137,7 @@ LRESULT CUIButton::OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam)
     return lResult;
 }
 
-CUIRoundButton::CUIRoundButton()
+CUIRoundButton::CUIRoundButton(int iID) :CUIButton(iID)
 {
     m_uType = UIET_ROUNDBUTTON;
     m_uFlags = UIEF_NONE;
@@ -130,7 +154,7 @@ void CUIRoundButton::Redraw()
     if (!eck::IsBitSet(m_uStyle, UIES_NOERASEBK))
         pDC->DrawBitmap(m_pBK->m_pBmpBKStatic, &m_rcF, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, &m_rcF);
 
-    if (m_bLBtnDown)
+	if (m_bLBtnDown || m_bRBtnDown)
         pDC->FillEllipse(&m_Ellipse, m_pBrPressed);
     else if (m_bHot)
         pDC->FillEllipse(&m_Ellipse, m_pBrHot);
@@ -163,13 +187,28 @@ BOOL CUIRoundButton::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
             m_bHot = FALSE;
             CUIButton::Redraw(TRUE);
         }
-    }
+	}
+	return FALSE;
+	case WM_LBUTTONDOWN:
+	{
+        POINT pt GET_PT_LPARAM(lParam);
+		if (PtInRect(&m_rc, pt) &&
+			powf(m_Ellipse.point.x - pt.x, 2.f) + powf(m_Ellipse.point.y - pt.y, 2.f) <= powf(m_Ellipse.radiusX, 2.f))
+		{
+			m_bLBtnDown = TRUE;
+			SetCapture(m_pBK->m_hWnd);
+			CUIButton::Redraw(TRUE);
+			return TRUE;
+		}
+	}
     return FALSE;
-    case WM_LBUTTONDOWN:
+    case WM_RBUTTONDOWN:
     {
-        if (PtInRect(&m_rc, GET_PT_LPARAM(lParam)))
+        POINT pt GET_PT_LPARAM(lParam);
+        if (PtInRect(&m_rc, pt) &&
+            powf(m_Ellipse.point.x - pt.x, 2.f) + powf(m_Ellipse.point.y - pt.y, 2.f) <= powf(m_Ellipse.radiusX, 2.f))
         {
-            m_bLBtnDown = TRUE;
+            m_bRBtnDown = TRUE;
             SetCapture(m_pBK->m_hWnd);
             CUIButton::Redraw(TRUE);
             return TRUE;

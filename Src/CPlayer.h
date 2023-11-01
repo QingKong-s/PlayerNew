@@ -27,10 +27,20 @@ PNInline TICKCHANGING operator|=(TICKCHANGING& x1, TICKCHANGING x2)
 	return x1 = (TICKCHANGING)(x1 | x2);
 }
 
+// 播放控制类型
+enum PLAYINGCTRLTYPE
+{
+	PCT_PLAY,				// (idxOld, 0)
+	PCT_PAUSE,
+	PCT_STOP,				// (idxOld, 0)
+	PCT_REMOVE_LATER_PLAY	// (idxLaterPlay, 0)
+};
 
-class CWndBK;
+
 class CPlayer
 {
+public:
+	using FOnPlayingControl = std::function<void(PLAYINGCTRLTYPE uType, INT_PTR i1, INT_PTR i2)>;
 private:
 	CBass m_Bass{};
 	float m_fPos = 0.f;
@@ -56,7 +66,8 @@ private:
 	Utils::MUSICINFO m_MusicInfo{};
 	IWICBitmap* m_pWicCoverBmp = NULL;
 
-	CWndBK* m_pWndBK = NULL;
+	FOnPlayingControl m_fnPayingCtrl{};
+
 
 	void ApplyPrevEffect()
 	{
@@ -99,6 +110,8 @@ public:
 		}
 	}
 
+	static void ShowPlayErr(HWND hWnd, PlayOpErr uErr);
+
 	PlayOpErr Play(int idx);
 
 	void Stop(BOOL bNoGap = FALSE);
@@ -108,6 +121,8 @@ public:
 	PlayOpErr Prev();
 
 	PlayOpErr AutoNext();
+
+	PlayOpErr PlayOrPause();
 
 	/// <summary>
 	/// 置稍后播放项
@@ -275,7 +290,7 @@ public:
 
 	PNInline IWICBitmap* GetWicBmpCover() const { return m_pWicCoverBmp; }
 
-	PNInline void SetWndBK(CWndBK* p) { m_pWndBK = p; }
+	PNInline void SetPlayingCtrlCallBack(FOnPlayingControl fn) { m_fnPayingCtrl = fn; }
 
 	TICKCHANGING Tick();
 };

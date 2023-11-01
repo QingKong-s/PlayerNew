@@ -1269,9 +1269,8 @@ void CWndList::PlayListItem(int idx)
 				m_LVSearch.RedrawItem((int)std::distance(vResult.begin(), it));
 		}
 	}
-	int iBassErr = BASS_OK;
-	auto pszErrMsg = CPlayer::GetErrMsgToShow(uRet, &iBassErr);
-	if (!pszErrMsg)
+
+	if (uRet == PlayOpErr::Ok)
 	{
 		m_LVList.RedrawItem(idx);
 		if (Player.IsSearching())
@@ -1284,14 +1283,5 @@ void CWndList::PlayListItem(int idx)
 		m_WndMain.SetText(Player.GetList().At(idx).rsName.Data());
 	}
 	else
-	{
-		m_WndMain.SetText(c_szDefMainWndText);
-		std::wstring s;
-		if (iBassErr != BASS_OK)
-		{
-			s = std::format(L"播放出错！\n{}\n错误代码：0x{:08X}。", pszErrMsg, iBassErr);
-			pszErrMsg = s.c_str();
-		}
-		CApp::ShowError(m_hWnd, (DWORD)uRet, CApp::ErrSrc::None, pszErrMsg);
-	}
+		CPlayer::ShowPlayErr(m_hWnd, uRet);
 }

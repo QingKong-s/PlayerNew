@@ -132,7 +132,7 @@ eck::CRefStrW GetMP3ID3v2_ProcString(BYTE* pStream, int cb, int iTextEncoding = 
 BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 {
 	eck::CFile File;
-	if (File.Open(pszFile) == INVALID_HANDLE_VALUE)
+	if (File.Open(pszFile, eck::CFile::ModeExisting, GENERIC_READ, FILE_SHARE_READ) == INVALID_HANDLE_VALUE)
 	{
 		EckDbgPrintFormatMessage(GetLastError());
 		return FALSE;
