@@ -44,6 +44,8 @@ struct SLGETDISPINFO
 struct SLHITTEST
 {
 	int idxGroup;
+	BITBOOL bHitThumb : 1;
+	BITBOOL bHitCover : 1;
 };
 
 class CSimpleList : public eck::CWnd
@@ -68,12 +70,18 @@ private:
 	ID2D1Bitmap1* m_pBmpBK = NULL;
 
 	IDWriteTextFormat* m_pTextFormat = NULL;
+	IDWriteTextFormat* m_pTfGroupTitle = NULL;
+
 	ID2D1SolidColorBrush* m_pBrText = NULL;
 	ID2D1SolidColorBrush* m_pBrHot = NULL;
 	ID2D1SolidColorBrush* m_pBrBk = NULL;
 	ID2D1SolidColorBrush* m_pBrGroup = NULL;
+	ID2D1SolidColorBrush* m_pBrGroupText = NULL;
+	ID2D1SolidColorBrush* m_pBrSBThumb = NULL;
+
 	int m_cxClient = 0;
 	int m_cyClient = 0;
+	int m_cxView = 0;// 排除滚动条后的区域宽度
 
 	int m_cyItem = 0;
 	int m_cyGroupHeader = 40;
@@ -89,13 +97,42 @@ private:
 
 	int m_cxCover = 0;
 
+	float m_cxSBThumb = 0.f;
+
 	eck::CInertialScrollView m_ScrollView{};
 
 	BOOL m_bGroup = TRUE;
+	BOOL m_bHoverThumb = FALSE;
+	BOOL m_bThumbLBtnDown = FALSE;
 	std::vector<ITEM> m_Item{};
 	std::vector<GROUPITEM> m_Group{};
 
+	D2D1_RECT_F m_rcfThumb{};
+	eck::CEasingAn<eck::Easing::FOutSine> m_AnThumb{};
+
 	constexpr static int c_iMinLinePerGroup = 3;
+
+	int m_iDpi = USER_DEFAULT_SCREEN_DPI;
+	ECK_DS_BEGIN(DPIS)
+		ECK_DS_ENTRY_F(cxTextPadding, 4.f)
+		ECK_DS_ENTRY_F(EmText, 12.f)
+		ECK_DS_ENTRY_F(EmGroupText, 16.f)
+		ECK_DS_ENTRY_F(cyGroupLine, 1.f)
+		ECK_DS_ENTRY_F(cxScrollBarMini, 1.5f)
+		ECK_DS_ENTRY_F(cxScrollBar, 8.f)
+		ECK_DS_ENTRY_F(cyMinSBThumb, 30.f)
+		;
+	ECK_DS_END_VAR(m_DsF);
+
+	enum
+	{
+		IDT_THUMBAN = 101,
+	};
+
+	enum
+	{
+		ELAPSE_THUMBAN = 20,
+	};
 
 	static void ScrollProc(int iPos, int iPrevPos, LPARAM lParam);
 
@@ -111,6 +148,10 @@ private:
 
 	void OnMouseWheel(HWND hWnd, int xPos, int yPos, int zDelta, UINT fwKeys);
 
+	void OnLButtonDown(HWND hWnd, BOOL bDoubleClick, int x, int y, UINT uKeyFlags);
+
+	void OnLButtonUp(HWND hWnd, int x, int y, UINT uKeyFlags);
+
 	BOOL RedrawItem(int idxItem, D2D1_RECT_F& rcItem)
 	{
 		SLGETDISPINFO sldi{};
@@ -124,7 +165,7 @@ private:
 		{
 			0.f,
 			(float)(idxItem * m_cyItem - m_ScrollView.GetPos()),
-			(float)m_cxClient,
+			(float)m_cxView,
 			(float)((idxItem + 1) * m_cyItem - m_ScrollView.GetPos()),
 		};
 		if (rcItem.bottom < 0.f || rcItem.top > m_cyClient)
@@ -140,7 +181,10 @@ private:
 			else
 				m_pDC->FillRectangle(rcItem, m_pBrBk);
 
-			m_pDC->DrawTextW(sldi.Item.pszText, sldi.Item.cchText, m_pTextFormat, rcItem, m_pBrText, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
+			rcItem.left += m_DsF.cxTextPadding;
+			m_pDC->DrawTextW(sldi.Item.pszText, sldi.Item.cchText, m_pTextFormat,
+				rcItem, m_pBrText, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
+			rcItem.left -= m_DsF.cxTextPadding;
 		}
 		else
 			m_pDC->FillRectangle(rcItem, m_pBrBk);
@@ -161,7 +205,7 @@ private:
 		{
 			(float)m_cxCover,
 			(float)(Item.y - m_ScrollView.GetPos()),
-			(float)m_cxClient,
+			(float)m_cxView,
 			(float)(Item.y + m_cyItem - m_ScrollView.GetPos()),
 		};
 
@@ -178,7 +222,10 @@ private:
 			else
 				m_pDC->FillRectangle(rcItem, m_pBrBk);
 
-			m_pDC->DrawTextW(sldi.Item.pszText, sldi.Item.cchText, m_pTextFormat, rcItem, m_pBrText, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
+			rcItem.left += m_DsF.cxTextPadding;
+			m_pDC->DrawTextW(sldi.Item.pszText, sldi.Item.cchText, m_pTextFormat,
+				rcItem, m_pBrText, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
+			rcItem.left -= m_DsF.cxTextPadding;
 		}
 		else
 			m_pDC->FillRectangle(rcItem, m_pBrBk);
@@ -199,7 +246,7 @@ private:
 		{
 			0.f,
 			(float)(Group.y - m_ScrollView.GetPos()),
-			(float)m_cxClient,
+			(float)m_cxView,
 			(float)(Group.y + m_cyGroupHeader - m_ScrollView.GetPos()),
 		};
 
@@ -224,7 +271,7 @@ private:
 			{
 				(float)m_cxCover,
 				(float)(Group.Item.back().y + m_cyItem),
-				(float)m_cxClient,
+				(float)m_cxView,
 				(float)(Group.Item.front().y + m_cyItem * c_iMinLinePerGroup)
 			};
 			m_pDC->FillRectangle(&rcTemp, m_pBrBk);
@@ -242,16 +289,45 @@ private:
 			//	m_pDC->FillRectangle(rcItem, m_pBrHot);
 			//else
 				m_pDC->FillRectangle(rcGroup, m_pBrBk);
-			m_pDC->FillRectangle(rcGroup, m_pBrGroup);
-			m_pDC->DrawTextW(sldi.Group.pszText, sldi.Group.cchText,
-				m_pTextFormat, rcGroup, m_pBrText, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
+			//m_pDC->FillRectangle(rcGroup, m_pBrGroup);
+
+			IDWriteTextLayout* pLayout;
+			App->m_pDwFactory->CreateTextLayout(sldi.Group.pszText, sldi.Group.cchText, m_pTfGroupTitle,
+				(float)m_cxView, (float)m_cyGroupHeader, &pLayout);
+			DWRITE_TEXT_METRICS Metrics;
+			pLayout->GetMetrics(&Metrics);
+
+			m_pDC->DrawTextLayout({ rcGroup.left + m_DsF.cxTextPadding,rcGroup.top }, pLayout,
+				m_pBrGroupText, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
+			pLayout->Release();
+
+			const float yLine = rcGroup.top + (float)(m_cyGroupHeader / 2);
+			m_pDC->DrawLine({ rcGroup.left + m_DsF.cxTextPadding * 2.f + Metrics.width,yLine },
+				{ (float)m_cxView - m_DsF.cxTextPadding,yLine }, m_pBrGroupText, m_DsF.cyGroupLine);
 		}
 		else
 			m_pDC->FillRectangle(rcGroup, m_pBrBk);
 		return TRUE;
 	}
 
+	void DrawScrollBar()
+	{
+		const D2D1_RECT_F rcF
+		{
+			(float)m_cxClient - m_DsF.cxScrollBar,
+			0,
+			(float)m_cxClient,
+			(float)m_cyClient
+		};
+		m_pDC->FillRectangle(&rcF, m_pBrBk);
+		m_pDC->FillRectangle(&m_rcfThumb, m_pBrSBThumb);
+	}
+
 	void CalcTopItem();
+
+	void CalcThumb();
+
+	void BeginSBThumbAn(BOOL bEnlarge);
 public:
 	CSimpleList()
 	{
@@ -304,6 +380,6 @@ public:
 
 	void Redraw(int idxGroup, std::initializer_list<int> idxItem);
 
-	int HitTest(POINT pt, SLHITTEST* pslht = NULL);
+	int HitTest(POINT pt, SLHITTEST* pslht);
 };
 

@@ -435,52 +435,56 @@ void CWndMain::OnSize(HWND hWnd, UINT uState, int cx, int cy)
 
 BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 {
-	//App->GetPlayer().SetPlayingCtrlCallBack([this](PLAYINGCTRLTYPE uType, INT_PTR i1, INT_PTR i2)
-	//	{
-	//		switch (uType)
-	//		{
-	//		case PCT_PLAY:
-	//			if (i1 >= 0)
-	//				m_List.m_LVList.RedrawItem((int)i1);
-	//			m_List.m_LVList.RedrawItem(App->GetPlayer().GetCurrFile());
-	//			break;
-	//		case PCT_STOP:
-	//			m_List.m_LVList.RedrawItem((int)i1);
-	//			break;
-	//		case PCT_REMOVE_LATER_PLAY:
-	//			m_List.m_LVList.RedrawItem((int)i1);
-	//			break;
-	//		}
-	//		m_BK.OnPlayingControl(uType);
-	//	});
-	//UpdateDpi(eck::GetDpi(hWnd));
-	//m_BK.Create(NULL, WS_CHILD, 0, 0, 0, 0, 0, hWnd, IDC_BK);
-	//m_List.Create(L"列表", WS_CHILD | WS_CLIPCHILDREN, 0, 0, 0, 0, 0, hWnd, IDC_LIST);
-	//m_SPB.Create(NULL, WS_CHILD, 0, 0, 0, 0, 0, hWnd, IDC_SPB);
-	//m_SPB.SetNotifyMsg(SPBM_POSCHANGE);
+	App->GetPlayer().SetPlayingCtrlCallBack([this](PLAYINGCTRLTYPE uType, INT_PTR i1, INT_PTR i2)
+		{
+			switch (uType)
+			{
+			case PCT_PLAY:
+				if (i1 >= 0)
+					m_List.m_LVList.RedrawItem((int)i1);
+				m_List.m_LVList.RedrawItem(App->GetPlayer().GetCurrFile());
+				break;
+			case PCT_STOP:
+				m_List.m_LVList.RedrawItem((int)i1);
+				break;
+			case PCT_REMOVE_LATER_PLAY:
+				m_List.m_LVList.RedrawItem((int)i1);
+				break;
+			}
+			m_BK.OnPlayingControl(uType);
+		});
+	UpdateDpi(eck::GetDpi(hWnd));
+	m_BK.Create(NULL, WS_CHILD, 0, 0, 0, 0, 0, hWnd, IDC_BK);
+	m_List.Create(L"列表", WS_CHILD | WS_CLIPCHILDREN, 0, 0, 0, 0, 0, hWnd, IDC_LIST);
+	m_SPB.Create(NULL, WS_CHILD, 0, 0, 0, 0, 0, hWnd, IDC_SPB);
+	m_SPB.SetNotifyMsg(SPBM_POSCHANGE);
 
-	//RECT rc;
-	//GetClientRect(hWnd, &rc);
+	RECT rc;
+	GetClientRect(hWnd, &rc);
 
-	//m_xSeparateBar = rc.right * 2 / 3;
-	//OnSize(hWnd, 0, rc.right, rc.bottom);
+	m_xSeparateBar = rc.right * 2 / 3;
+	OnSize(hWnd, 0, rc.right, rc.bottom);
 
-	//m_BK.Show(SW_SHOWNOACTIVATE);
-	//m_List.Show(SW_SHOWNOACTIVATE);
-	//m_SPB.Show(SW_SHOWNOACTIVATE);
+	m_BK.Show(SW_SHOWNOACTIVATE);
+	m_List.Show(SW_SHOWNOACTIVATE);
+	m_SPB.Show(SW_SHOWNOACTIVATE);
 
-	//m_pDropTarget = new CDropTargetList(*this);
-	//HRESULT hr = RegisterDragDrop(hWnd, m_pDropTarget);
-	//if (FAILED(hr))
-	//	CApp::ShowError(hWnd, hr, CApp::ErrSrc::HResult, L"注册拖放目标失败");
-	//
-	//InitBK();
-	//return TRUE;
+	m_pDropTarget = new CDropTargetList(*this);
+	HRESULT hr = RegisterDragDrop(hWnd, m_pDropTarget);
+	if (FAILED(hr))
+		CApp::ShowError(hWnd, hr, CApp::ErrSrc::HResult, L"注册拖放目标失败");
+	
+	InitBK();
+	return TRUE;
 	WIN32_FIND_DATAW wfd;
 	HANDLE hFind = FindFirstFileW(LR"(D:\@重要文件\@音乐\*.mp3)", &wfd);
+	int i = 0;
 	do
 	{
+		++i;
 		using namespace std::literals;
+		if (i < 600)
+			continue;
 		auto p = new Utils::MUSICINFO{};
 		Utils::GetMusicInfo((LR"(D:\@重要文件\@音乐\)"s + wfd.cFileName).c_str(), *p);
 		m_vItem.emplace_back(p);
@@ -488,13 +492,9 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 		m_vGroup.back().Items.emplace_back(p);
 		m_vGroup.back().Items.emplace_back(p);
 		m_vGroup.back().Items.emplace_back(p);
-		m_vGroup.back().Items.emplace_back(p);
-		m_vGroup.back().Items.emplace_back(p);
-		m_vGroup.back().Items.emplace_back(p);
-		m_vGroup.back().Items.emplace_back(p);
-		m_vGroup.back().Items.emplace_back(p);
-		m_vGroup.back().Items.emplace_back(p);
-		m_vGroup.back().Items.emplace_back(p);
+		
+		if (i > 680)
+			break;
 	} while (FindNextFileW(hFind, &wfd));
 	FindClose(hFind);
 
