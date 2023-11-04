@@ -84,10 +84,10 @@ BOOL CUIButton::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
         if (m_bLBtnDown)
         {
-            SendMessageW(m_pBK->GetHWND(), m_pBK->m_uMsgCUIButton, CUIBN_CLICK, (LPARAM)this);
             ReleaseCapture();
             m_bLBtnDown = FALSE;
             Redraw(TRUE);
+            SendMessageW(m_pBK->GetHWND(), m_pBK->m_uMsgCUIButton, CUIBN_CLICK, (LPARAM)this);
         }
     }
     return FALSE;
@@ -106,10 +106,10 @@ BOOL CUIButton::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
         if (m_bRBtnDown)
         {
-            SendMessageW(m_pBK->GetHWND(), m_pBK->m_uMsgCUIButton, CUIBN_RCLICK, (LPARAM)this);
             ReleaseCapture();
             m_bRBtnDown = FALSE;
             Redraw(TRUE);
+            SendMessageW(m_pBK->GetHWND(), m_pBK->m_uMsgCUIButton, CUIBN_RCLICK, (LPARAM)this);
         }
     }
     return FALSE;
@@ -224,7 +224,7 @@ LRESULT CUIRoundButton::OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lP
     auto lResult = CUIButton::OnElemEvent(uEvent, wParam, lParam);
     if (uEvent == UIEE_SETRECT)
     {
-        const float fRadius = std::min(m_cxHalf, m_cyHalf);
+        const float fRadius = (float)std::min(m_cxHalf, m_cyHalf);
         m_Ellipse =
         {
             {

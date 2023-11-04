@@ -229,6 +229,9 @@
     <ClInclude Include="Src\CSimpleList.h">
       <Filter>视觉对象</Filter>
     </ClInclude>
+    <ClInclude Include="Src\CDlgAbout.h">
+      <Filter>对话框</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\WinEzCtrlKit\eck\DlgHelper.cpp">
@@ -378,10 +381,20 @@
     <ClCompile Include="Src\CUIPlayingCtrl.cpp">
       <Filter>视觉对象</Filter>
     </ClCompile>
+    <ClCompile Include="Src\CDlgAbout.cpp">
+      <Filter>对话框</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinEzCtrlKit\eck\CSplitBar.cpp">
+      <Filter>eck</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="Src\Win32Template.rc">
+    <ResourceCompile Include="Src\PlayerNew.rc">
       <Filter>资源文件</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Tools\CompileTime" />
+    <None Include="Tools\CompileCount" />
   </ItemGroup>
 </Project>

@@ -22,7 +22,8 @@
 
 constexpr inline int c_cyLVItem = 24;
 
-constexpr PCWSTR c_szDefMainWndText = L"PlayerNew - 未播放";
+constexpr inline PCWSTR c_szDefMainWndText = L"PlayerNew - 未播放";
+constexpr inline PCWSTR c_szVer = L"0.1";
 
 class CApp;
 extern CApp* App;

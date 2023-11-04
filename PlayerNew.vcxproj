@@ -247,6 +247,7 @@
     <ClInclude Include="Src\bass_fx.h" />
     <ClInclude Include="Src\CApp.h" />
     <ClInclude Include="Src\CBass.h" />
+    <ClInclude Include="Src\CDlgAbout.h" />
     <ClInclude Include="Src\CDlgBookmark.h" />
     <ClInclude Include="Src\CDlgListFile.h" />
     <ClInclude Include="Src\CDlgNewBookmark.h" />
@@ -279,6 +280,7 @@
     <ClCompile Include="..\WinEzCtrlKit\eck\CListBoxExt.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\CRefBin.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\CRefStr.cpp" />
+    <ClCompile Include="..\WinEzCtrlKit\eck\CSplitBar.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\CTabHeader.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\CTaskGroupList.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\CWnd.cpp" />
@@ -289,6 +291,7 @@
     <ClCompile Include="..\WinEzCtrlKit\eck\WndHelper.cpp" />
     <ClCompile Include="Src\CApp.cpp" />
     <ClCompile Include="Src\CBass.cpp" />
+    <ClCompile Include="Src\CDlgAbout.cpp" />
     <ClCompile Include="Src\CDlgBookmark.cpp" />
     <ClCompile Include="Src\CDlgListFile.cpp" />
     <ClCompile Include="Src\CDlgNewBookmark.cpp" />
@@ -316,7 +319,11 @@
     <ClCompile Include="Src\Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="Src\Win32Template.rc" />
+    <ResourceCompile Include="Src\PlayerNew.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Tools\CompileCount" />
+    <None Include="Tools\CompileTime" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

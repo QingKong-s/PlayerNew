@@ -1,19 +1,39 @@
-#include "CSimpleList.h"
-UINT eck::CInertialScrollView::s_uTimerNotify = 0;
+ï»¿#include "CSimpleList.h"
+
 void CSimpleList::ScrollProc(int iPos, int iPrevPos, LPARAM lParam)
 {
 	auto p = (CSimpleList*)lParam;
+
+	p->CalcTopItem();
+
 	DXGI_PRESENT_PARAMETERS dpp;
-	POINT ptOffset = { 0,iPrevPos - iPos };
-	if(ptOffset.y == 0)
+	POINT ptOffset{ 0,iPrevPos - iPos };
+	if (ptOffset.y == 0)
 		return;
 	dpp.pScrollOffset = &ptOffset;
 
 	RECT rcClient{ 0,0,p->m_cxClient,p->m_cyClient };
-	if(ptOffset.y > 0)
-		rcClient.top = ptOffset.y;
+	if (ptOffset.y > 0)
+	{
+		if (ptOffset.y >= p->m_cyClient)// æ»šåŠ¨è·ç¦»è¶…è¿‡é¡µé¢å¤§å°ï¼Œç›´æŽ¥é‡ç”»æ•´ä¸ªé¡µé¢
+		{
+			p->Redraw();
+			return;
+		}
+		else
+			rcClient.top = ptOffset.y;
+	}
 	else
-		rcClient.bottom += ptOffset.y;
+	{
+		if (-ptOffset.y >= p->m_cyClient)// æ»šåŠ¨è·ç¦»è¶…è¿‡é¡µé¢å¤§å°ï¼Œç›´æŽ¥é‡ç”»æ•´ä¸ªé¡µé¢
+		{
+			p->Redraw();
+			return;
+		}
+		else
+			rcClient.bottom += ptOffset.y;
+	}
+
 	dpp.pScrollRect = &rcClient;
 
 	RECT rcDirty;
@@ -21,38 +41,80 @@ void CSimpleList::ScrollProc(int iPos, int iPrevPos, LPARAM lParam)
 	dpp.DirtyRectsCount = 1;
 
 	D2D1_RECT_F rcItem;
-	p->m_idxTop = iPos / p->m_cyItem;
-	p->m_cyInvisibleTop = iPos - p->m_idxTop * p->m_cyItem;
 
 	auto pDC = p->m_pDC;
 	pDC->BeginDraw();
-	if (ptOffset.y < 0)// ÏòÉÏ¹ö¶¯
+	if (ptOffset.y < 0)// æ»šåŠ¨æ¡æ»‘å—å‘ä¸‹
 	{
 		rcDirty = { 0,p->m_cyClient + ptOffset.y,p->m_cxClient,p->m_cyClient };
 
-		int idxBottom = (p->m_ScrollView.GetPos() + p->m_cyClient) / p->m_cyItem;
-		if(idxBottom >= p->m_cItems)
-			idxBottom = p->m_cItems - 1;
-		for (int i = idxBottom; i >= 0; --i)
+		if (p->m_bGroup)
 		{
-			p->RedrawItem(i, rcItem);
-			if (rcItem.bottom <= rcDirty.top)
-				break;
+			auto it = std::lower_bound(p->m_Group.begin(), p->m_Group.end(), p->m_cyClient + ptOffset.y, [](const GROUPITEM& x, int iPos)
+				{
+					return x.y < iPos;
+				});
+
+			--it;
+			int idxTopNew = (int)std::distance(p->m_Group.begin(), it);
+			for (int i = idxTopNew; i < (int)p->m_Group.size(); ++i)
+			{
+				p->DrawGroup(i, rcItem);
+				if (rcItem.top >= rcDirty.bottom)
+					break;
+				EckCounter(p->m_Group[i].Item.size(), j)
+				{
+					p->DrawGroupItem(i, j, rcItem);
+					if (rcItem.top > rcDirty.bottom)
+						break;
+				}
+			}
+		}
+		else
+		{
+			int idxBottom = (p->m_ScrollView.GetPos() + p->m_cyClient) / p->m_cyItem;
+			if (idxBottom >= p->m_cItems)
+				idxBottom = p->m_cItems - 1;
+			for (int i = idxBottom; i >= 0; --i)
+			{
+				p->RedrawItem(i, rcItem);
+				if (rcItem.bottom <= rcDirty.top)
+					break;
+			}
 		}
 	}
-	else
+	else// æ»šåŠ¨æ¡æ»‘å—å‘ä¸Š
 	{
 		rcDirty = { 0,0,p->m_cxClient,ptOffset.y };
 
-		for (int i = p->m_idxTop; i < p->m_cItems; ++i)
+		if (p->m_bGroup)
 		{
-			p->RedrawItem(i, rcItem);
-			if (rcItem.top >= rcDirty.bottom)
-				break;
+			for (int i = p->m_idxTop; i < (int)p->m_Group.size(); ++i)
+			{
+				p->DrawGroup(i, rcItem);
+				if (rcItem.top > rcDirty.bottom)
+					break;
+				EckCounter(p->m_Group[i].Item.size(), j)
+				{
+					p->DrawGroupItem(i, j, rcItem);
+					if (rcItem.top >= rcDirty.bottom)
+						break;
+				}
+			}
+		}
+		else
+		{
+			for (int i = p->m_idxTop; i < p->m_cItems; ++i)
+			{
+				p->RedrawItem(i, rcItem);
+				if (rcItem.top >= rcDirty.bottom)
+					break;
+			}
 		}
 	}
+
 	pDC->EndDraw();
-	p->m_pSwapChain->Present1(0, 0, &dpp);
+	p->m_pSwapChain->Present1(1, 0, &dpp);
 }
 
 LRESULT CSimpleList::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -95,7 +157,7 @@ BOOL CSimpleList::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 		2,
 		DXGI_SCALING_NONE,
 		DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL,
-		DXGI_ALPHA_MODE_UNSPECIFIED,
+		DXGI_ALPHA_MODE_IGNORE,
 		0
 	};
 
@@ -106,32 +168,32 @@ BOOL CSimpleList::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 		&DxgiSwapChainDesc,
 		NULL,
 		NULL,
-		&m_pSwapChain)))// ´´½¨½»»»Á´
+		&m_pSwapChain)))// åˆ›å»ºäº¤æ¢é“¾
 	{
 		assert(FALSE);
 	}
 
-	if (FAILED(hr = App->m_pD2dDevice->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &m_pDC)))// ´´½¨Éè±¸ÉÏÏÂÎÄ
+	if (FAILED(hr = App->m_pD2dDevice->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &m_pDC)))// åˆ›å»ºè®¾å¤‡ä¸Šä¸‹æ–‡
 	{
 		assert(FALSE);
 	}
 
 	IDXGISurface1* pSurface;
-	if (FAILED(hr = m_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pSurface))))// È¡»º³åÇø
+	if (FAILED(hr = m_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pSurface))))// å–ç¼“å†²åŒº
 	{
 		assert(FALSE);
 	}
 
 	D2D1_BITMAP_PROPERTIES1 D2dBmpProp
 	{
-		{DXGI_FORMAT_B8G8R8A8_UNORM,D2D1_ALPHA_MODE_PREMULTIPLIED},
+		{DXGI_FORMAT_B8G8R8A8_UNORM,D2D1_ALPHA_MODE_IGNORE},
 		96,
 		96,
 		D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
 		NULL
 	};
 
-	if (FAILED(hr = m_pDC->CreateBitmapFromDxgiSurface(pSurface, &D2dBmpProp, &m_pBmpBK)))// ´´½¨Î»Í¼×ÔDXGI±íÃæ
+	if (FAILED(hr = m_pDC->CreateBitmapFromDxgiSurface(pSurface, &D2dBmpProp, &m_pBmpBK)))// åˆ›å»ºä½å›¾è‡ªDXGIè¡¨é¢
 	{
 		assert(FALSE);
 	}
@@ -143,12 +205,12 @@ BOOL CSimpleList::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	m_pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_pBrText);
 	m_pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::LightGray), &m_pBrHot);
 	m_pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &m_pBrBk);
+	m_pDC->CreateSolidColorBrush(D2D1::ColorF(0x66CCFF, 0.6f), &m_pBrGroup);
 
-	App->m_pDwFactory->CreateTextFormat(L"Î¢ÈíÑÅºÚ", NULL, DWRITE_FONT_WEIGHT_NORMAL,
-		DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 26.f, L"zh-cn", &m_pTextFormat);
+	App->m_pDwFactory->CreateTextFormat(L"å¾®è½¯é›…é»‘", NULL, DWRITE_FONT_WEIGHT_NORMAL,
+		DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, eck::DpiScaleF(12.f, eck::GetDpi(hWnd)), L"zh-cn", &m_pTextFormat);
 
 	m_ScrollView.SetHWND(hWnd);
-	m_ScrollView.SetTimerID(1001);
 
 	return TRUE;
 }
@@ -158,7 +220,7 @@ void CSimpleList::OnSize(HWND hWnd, UINT uState, int cx, int cy)
 	m_cxClient = cx;
 	m_cyClient = cy;
 
-	m_pDC->SetTarget(NULL);// ÒÆ³ýÒýÓÃ
+	m_pDC->SetTarget(NULL);// ç§»é™¤å¼•ç”¨
 	m_pBmpBK->Release();
 
 	HRESULT hr;
@@ -199,11 +261,27 @@ void CSimpleList::OnSize(HWND hWnd, UINT uState, int cx, int cy)
 
 void CSimpleList::OnMouseMove(HWND hWnd, int x, int y, UINT keyFlags)
 {
-	int idxHot = HitTest({ x,y });
-	if (idxHot != m_idxHot)
+	int idxHot;
+	if (m_bGroup)
 	{
-		std::swap(idxHot, m_idxHot);
-		Redraw({ idxHot,m_idxHot });
+		SLHITTEST slht;
+		idxHot = HitTest({ x,y }, &slht);
+		if (idxHot != m_idxHot || m_idxHotItemSGroup != slht.idxGroup)
+		{
+			std::swap(idxHot, m_idxHot);
+			std::swap(slht.idxGroup, m_idxHotItemSGroup);
+			Redraw(slht.idxGroup, { idxHot });
+			Redraw(m_idxHotItemSGroup, { m_idxHot });
+		}
+	}
+	else
+	{
+		idxHot = HitTest({ x,y });
+		if (idxHot != m_idxHot)
+		{
+			std::swap(idxHot, m_idxHot);
+			Redraw({ idxHot,m_idxHot });
+		}
 	}
 
 	TRACKMOUSEEVENT tme;
@@ -216,17 +294,56 @@ void CSimpleList::OnMouseMove(HWND hWnd, int x, int y, UINT keyFlags)
 void CSimpleList::OnMouseLeave(HWND hWnd)
 {
 	int idx = -1;
-	std::swap(idx, m_idxHot);
-	if (idx >= 0)
-		Redraw({ idx });
+	if (m_bGroup)
+	{
+		int idxGroup = -1;
+		std::swap(idx, m_idxHot);
+		std::swap(idxGroup, m_idxHotItemSGroup);
+		Redraw(idxGroup, { idx });
+	}
+	else
+	{
+		std::swap(idx, m_idxHot);
+		if (idx >= 0)
+			Redraw({ idx });
+	}
 }
 
 void CSimpleList::OnMouseWheel(HWND hWnd, int xPos, int yPos, int zDelta, UINT fwKeys)
 {
-	//int iOldPos = m_ScrollView.GetPos();
-	//m_ScrollView.OnMouseWheel(zDelta / WHEEL_DELTA);
-
 	m_ScrollView.OnMouseWheel2(-zDelta / WHEEL_DELTA, ScrollProc, (LPARAM)this);
+}
+
+void CSimpleList::CalcTopItem()
+{
+	if (m_bGroup)
+	{
+		if (!m_Group.size())
+		{
+			m_idxTop = 0;
+			return;
+		}
+		auto it = std::lower_bound(m_Group.begin(), m_Group.end(), m_ScrollView.GetPos(), [](const GROUPITEM& x, int iPos)
+			{
+				return x.y < iPos;
+			});
+
+		if (it == m_Group.end())
+			EckDbgBreak();
+
+		if (it == m_Group.begin())
+		{
+			m_idxTop = 0;
+			return;
+		}
+		--it;
+		m_idxTop = (int)std::distance(m_Group.begin(), it);
+	}
+	else
+	{
+		m_idxTop = m_ScrollView.GetPos() / m_cyItem;
+		m_cyInvisibleTop = m_ScrollView.GetPos() - m_idxTop * m_cyItem;
+	}
 }
 
 ATOM CSimpleList::RegisterWndClass()
@@ -250,43 +367,70 @@ HWND CSimpleList::Create(PCWSTR pszText, DWORD dwStyle, DWORD dwExStyle, int x, 
 
 void CSimpleList::Redraw()
 {
-	m_pDC->BeginDraw();
-
 	D2D1_RECT_F rcItem{};
 
-	for (int i = m_idxTop; i < m_cItems; ++i)
+	if (m_bGroup)
 	{
-		RedrawItem(i, rcItem);
-		if (rcItem.top > m_cyClient)
-			break;
+		if (!m_Group.size())
+			return;
+
+		m_pDC->BeginDraw();
+		m_pDC->Clear(D2D1::ColorF(D2D1::ColorF::White));
+
+		for (int i = m_idxTop; i < (int)m_Group.size(); ++i)
+		{
+			DrawGroup(i, rcItem);
+
+			EckCounter(m_Group[i].Item.size(), j)
+			{
+				DrawGroupItem(i, j, rcItem);
+			}
+		}
+	}
+	else
+	{
+		for (int i = m_idxTop; i < m_cItems; ++i)
+		{
+			RedrawItem(i, rcItem);
+			if (rcItem.top > m_cyClient)
+				break;
+		}
 	}
 
 	m_pDC->EndDraw();
-	m_pSwapChain->Present(0, 0);
+	m_pSwapChain->Present(1, 0);
 }
 
 void CSimpleList::Redraw(std::initializer_list<int> idxItem)
 {
-	m_pDC->BeginDraw();
-
 	std::vector<RECT> UpdateRects{};
 	UpdateRects.reserve(idxItem.size());
 
 	D2D1_RECT_F rcItem{};
-	int idxBottom = (m_ScrollView.GetPos() + m_cyClient) / m_cyItem;
-	for (int idx : idxItem)
+
+	if (m_bGroup)
 	{
-		if (idx < m_idxTop || idx > idxBottom)
-			continue;
+		return;
+	}
+	else
+	{
+		m_pDC->BeginDraw();
+		int idxBottom = (m_ScrollView.GetPos() + m_cyClient) / m_cyItem;
+		for (int idx : idxItem)
+		{
+			if (idx < m_idxTop || idx > idxBottom)
+				continue;
 
-		RedrawItem(idx, rcItem);
+			if (RedrawItem(idx, rcItem))
+			{
+				if (rcItem.bottom > m_cyClient)
+					rcItem.bottom = (float)m_cyClient;
+				if (rcItem.top < 0.f)
+					rcItem.top = 0.f;
 
-		if (rcItem.bottom > m_cyClient)
-			rcItem.bottom = (float)m_cyClient;
-		if (rcItem.top < 0.f)
-			rcItem.top = 0.f;
-
-		UpdateRects.push_back({ (long)rcItem.left,(long)rcItem.top,(long)rcItem.right,(long)rcItem.bottom });
+				UpdateRects.push_back({ (long)rcItem.left,(long)rcItem.top,(long)rcItem.right,(long)rcItem.bottom });
+			}
+		}
 	}
 
 	m_pDC->EndDraw();
@@ -294,12 +438,105 @@ void CSimpleList::Redraw(std::initializer_list<int> idxItem)
 	DXGI_PRESENT_PARAMETERS dpp{};
 	dpp.DirtyRectsCount = (UINT)UpdateRects.size();
 	dpp.pDirtyRects = UpdateRects.data();
-	m_pSwapChain->Present1(0, 0, &dpp);
+	m_pSwapChain->Present1(1, 0, &dpp);
 }
 
-int CSimpleList::HitTest(POINT pt)
+void CSimpleList::Redraw(int idxGroup, std::initializer_list<int> idxItem)
+{
+	if (!m_bGroup || idxGroup < 0)
+		return;
+	std::vector<RECT> UpdateRects{};
+	UpdateRects.reserve(idxItem.size());
+
+	D2D1_RECT_F rcItem{};
+
+	m_pDC->BeginDraw();
+	
+	for (int idx : idxItem)
+	{
+		if (idx < 0)
+			continue;
+		if (DrawGroupItem(idxGroup, idx, rcItem))
+		{
+			if (rcItem.bottom > m_cyClient)
+				rcItem.bottom = (float)m_cyClient;
+			if (rcItem.top < 0.f)
+				rcItem.top = 0.f;
+
+			UpdateRects.push_back({ (long)rcItem.left,(long)rcItem.top,(long)rcItem.right,(long)rcItem.bottom });
+		}
+	}
+
+	m_pDC->EndDraw();
+	if (!UpdateRects.size())
+		return;
+	DXGI_PRESENT_PARAMETERS dpp{};
+	dpp.DirtyRectsCount = (UINT)UpdateRects.size();
+	dpp.pDirtyRects = UpdateRects.data();
+	m_pSwapChain->Present1(1, 0, &dpp);
+}
+
+int CSimpleList::HitTest(POINT pt, SLHITTEST* pslht)
 {
 	if (pt.x < 0 || pt.x >= m_cxClient || pt.y < 0 || pt.y >= m_cyClient)
 		return -1;
-	return (pt.y + m_ScrollView.GetPos()) / m_cyItem;
+	if (m_bGroup)
+	{
+		auto it = std::lower_bound(m_Group.begin(), m_Group.end(), pt.y + m_ScrollView.GetPos(), [](const GROUPITEM& x, int iPos)
+			{
+				return x.y < iPos;
+			});
+		
+		pslht->idxGroup = -1;
+		if (it == m_Group.end() || it == m_Group.begin())
+			return -1;
+
+		--it;
+		const int idxGroup = std::distance(m_Group.begin(), it);
+		if (pt.y > it->y && pt.y < it->y + m_cyGroupHeader)
+		{
+			pslht->idxGroup = idxGroup;
+			return -1;
+		}
+
+		pslht->idxGroup = idxGroup;
+		const int y = pt.y + m_ScrollView.GetPos() - it->y - m_cyGroupHeader;
+		if (y >= 0)
+		{
+			int idx = y / m_cyItem;
+			if (idx < (int)it->Item.size())
+				return idx;
+		}
+		return -1;
+	}
+	else
+	{
+		const int idx = (pt.y + m_ScrollView.GetPos()) / m_cyItem;
+		if (idx >= (int)m_Item.size())
+			return -1;
+		else
+			return idx;
+	}
+}
+
+void CSimpleList::ReCalc(int idxBegin)
+{
+	int y = 0;
+	for (int i = idxBegin; i < m_Group.size(); ++i)
+	{
+		auto& Group = m_Group[i];
+		Group.y = y;
+		y += m_cyGroupHeader;
+		for (auto& Item : Group.Item)
+		{
+			Item.y = y;
+			y += m_cyItem;
+		}
+		
+		if (Group.Item.size() < c_iMinLinePerGroup)
+		{
+			y += ((c_iMinLinePerGroup - Group.Item.size()) * m_cyItem);
+		}
+	}
+	m_ScrollView.SetMax(y);
 }

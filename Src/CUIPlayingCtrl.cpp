@@ -1,4 +1,5 @@
 ﻿#include "CWndBK.h"
+#include "CDlgAbout.h"
 
 CUIPlayingCtrl::CUIPlayingCtrl()
 {
@@ -170,6 +171,7 @@ BOOL CUIPlayingCtrl::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
                 pBtn->SetImg(m_pBK->m_pBmpIcon[CWndBK::ICIDX_Pause]);
             else
                 pBtn->SetImg(m_pBK->m_pBmpIcon[CWndBK::ICIDX_Play]);
+            pBtn->Redraw(TRUE);
             break;
         case PCBTI_REPEATMODE:
         {
@@ -184,6 +186,13 @@ BOOL CUIPlayingCtrl::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
             auto iRM = (int)COptionsMgr::GetInst().iRepeatMode;
             EckAssert(iRM >= 0 && iRM < ARRAYSIZE(idx));
             pBtn->SetImg(m_pBK->m_pBmpIcon[idx[iRM]]);
+            pBtn->Redraw(TRUE);
+        }
+        break;
+        case PCBTI_ABOUT:
+        {
+            CDlgAbout Dlg{};
+            Dlg.DlgBox(m_pBK->GetHWND());
         }
         break;
         }

@@ -215,7 +215,7 @@ public:
 	void AddElem(CUIElem* pElem);
 
 	/// <summary>
-	/// 新歌曲初始化完毕
+	/// 播放控制操作已发生
 	/// </summary>
 	void OnPlayingControl(PLAYINGCTRLTYPE uType);
 

@@ -387,16 +387,24 @@ LRESULT CWndMain::WndProc_Main(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 	auto p = (CWndMain*)GetWindowLongPtrW(hWnd, 0);
 	switch (uMsg)
 	{
+	case WM_SIZE:
+		return HANDLE_WM_SIZE(hWnd, wParam, lParam, p->OnSize);
+	case SPBM_POSCHANGE:
+	{
+		p->m_xSeparateBar = (int)lParam;
+		RECT rc;
+		GetClientRect(hWnd, &rc);
+		p->OnSize(hWnd, 0, rc.right, rc.bottom);
+	}
+	return 0;
+	case WM_DPICHANGED:
+		return HANDLE_WM_DPICHANGED(hWnd, wParam, lParam, p->OnDpiChanged);
 	case WM_NCCREATE:
 		p = (CWndMain*)((CREATESTRUCTW*)lParam)->lpCreateParams;
 		SetWindowLongPtrW(hWnd, 0, (LONG_PTR)p);
 		break;
 	case WM_CREATE:
 		return HANDLE_WM_CREATE(hWnd, wParam, lParam, p->OnCreate);
-	case WM_SIZE:
-		return HANDLE_WM_SIZE(hWnd, wParam, lParam, p->OnSize);
-	case WM_DPICHANGED:
-		return HANDLE_WM_DPICHANGED(hWnd, wParam, lParam, p->OnDpiChanged);
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
@@ -412,6 +420,11 @@ void CWndMain::OnSize(HWND hWnd, UINT uState, int cx, int cy)
 		0,
 		m_xSeparateBar,
 		cy, SWP_NOZORDER | SWP_NOACTIVATE);
+	hDwp = DeferWindowPos(hDwp, m_SPB.GetHWND(), NULL,
+		m_xSeparateBar,
+		0,
+		m_Ds.cxSeparateBar,
+		cy, SWP_NOZORDER | SWP_NOACTIVATE);
 	hDwp = DeferWindowPos(hDwp, m_List.GetHWND(), NULL,
 		m_xSeparateBar + m_Ds.cxSeparateBar,
 		0,
@@ -422,60 +435,122 @@ void CWndMain::OnSize(HWND hWnd, UINT uState, int cx, int cy)
 
 BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 {
-	App->GetPlayer().SetPlayingCtrlCallBack([this](PLAYINGCTRLTYPE uType, INT_PTR i1, INT_PTR i2)
-		{
-			switch (uType)
-			{
-			case PCT_PLAY:
-				if (i1 >= 0)
-					m_List.m_LVList.RedrawItem((int)i1);
-				m_List.m_LVList.RedrawItem(App->GetPlayer().GetCurrFile());
-				break;
-			case PCT_STOP:
-				m_List.m_LVList.RedrawItem(i1);
-				break;
-			case PCT_REMOVE_LATER_PLAY:
-				m_List.m_LVList.RedrawItem(i1);
-				break;
-			}
-			m_BK.OnPlayingControl(uType);
-		});
-	UpdateDpi(eck::GetDpi(hWnd));
-	m_BK.Create(NULL, WS_CHILD, 0, 0, 0, 0, 0, hWnd, IDC_BK);
-	m_List.Create(L"列表", WS_CHILD | WS_CLIPCHILDREN, 0, 0, 0, 0, 0, hWnd, IDC_LIST);
+	//App->GetPlayer().SetPlayingCtrlCallBack([this](PLAYINGCTRLTYPE uType, INT_PTR i1, INT_PTR i2)
+	//	{
+	//		switch (uType)
+	//		{
+	//		case PCT_PLAY:
+	//			if (i1 >= 0)
+	//				m_List.m_LVList.RedrawItem((int)i1);
+	//			m_List.m_LVList.RedrawItem(App->GetPlayer().GetCurrFile());
+	//			break;
+	//		case PCT_STOP:
+	//			m_List.m_LVList.RedrawItem((int)i1);
+	//			break;
+	//		case PCT_REMOVE_LATER_PLAY:
+	//			m_List.m_LVList.RedrawItem((int)i1);
+	//			break;
+	//		}
+	//		m_BK.OnPlayingControl(uType);
+	//	});
+	//UpdateDpi(eck::GetDpi(hWnd));
+	//m_BK.Create(NULL, WS_CHILD, 0, 0, 0, 0, 0, hWnd, IDC_BK);
+	//m_List.Create(L"列表", WS_CHILD | WS_CLIPCHILDREN, 0, 0, 0, 0, 0, hWnd, IDC_LIST);
+	//m_SPB.Create(NULL, WS_CHILD, 0, 0, 0, 0, 0, hWnd, IDC_SPB);
+	//m_SPB.SetNotifyMsg(SPBM_POSCHANGE);
 
-	RECT rc;
-	GetClientRect(hWnd, &rc);
+	//RECT rc;
+	//GetClientRect(hWnd, &rc);
 
-	m_xSeparateBar = rc.right * 2 / 3;
-	OnSize(hWnd, 0, rc.right, rc.bottom);
+	//m_xSeparateBar = rc.right * 2 / 3;
+	//OnSize(hWnd, 0, rc.right, rc.bottom);
 
-	ShowWindow(m_BK.GetHWND(), SW_SHOWNOACTIVATE);
-	ShowWindow(m_List.GetHWND(), SW_SHOWNOACTIVATE);
+	//m_BK.Show(SW_SHOWNOACTIVATE);
+	//m_List.Show(SW_SHOWNOACTIVATE);
+	//m_SPB.Show(SW_SHOWNOACTIVATE);
 
-	m_pDropTarget = new CDropTargetList(*this);
-	HRESULT hr = RegisterDragDrop(hWnd, m_pDropTarget);
-	if (FAILED(hr))
-		CApp::ShowError(hWnd, hr, CApp::ErrSrc::HResult, L"注册拖放目标失败");
-	
-	InitBK();
-	return TRUE;
-
-
-	m_vStr.resize(100000);
-	EckCounter(m_vStr.size(), i)
+	//m_pDropTarget = new CDropTargetList(*this);
+	//HRESULT hr = RegisterDragDrop(hWnd, m_pDropTarget);
+	//if (FAILED(hr))
+	//	CApp::ShowError(hWnd, hr, CApp::ErrSrc::HResult, L"注册拖放目标失败");
+	//
+	//InitBK();
+	//return TRUE;
+	WIN32_FIND_DATAW wfd;
+	HANDLE hFind = FindFirstFileW(LR"(D:\@重要文件\@音乐\*.mp3)", &wfd);
+	do
 	{
-		m_vStr[i] = std::format(L"第{}行", i).c_str();
-	}
-	m_Sl.SetItemHeight(40);
+		using namespace std::literals;
+		auto p = new Utils::MUSICINFO{};
+		Utils::GetMusicInfo((LR"(D:\@重要文件\@音乐\)"s + wfd.cFileName).c_str(), *p);
+		m_vItem.emplace_back(p);
+		m_vGroup.emplace_back(p->rsAlbum);
+		m_vGroup.back().Items.emplace_back(p);
+		m_vGroup.back().Items.emplace_back(p);
+		m_vGroup.back().Items.emplace_back(p);
+		m_vGroup.back().Items.emplace_back(p);
+		m_vGroup.back().Items.emplace_back(p);
+		m_vGroup.back().Items.emplace_back(p);
+		m_vGroup.back().Items.emplace_back(p);
+		m_vGroup.back().Items.emplace_back(p);
+		m_vGroup.back().Items.emplace_back(p);
+		m_vGroup.back().Items.emplace_back(p);
+	} while (FindNextFileW(hFind, &wfd));
+	FindClose(hFind);
+
+	
+
+	//m_vStr.resize(100000);
+	//EckCounter(m_vStr.size(), i)
+	//{
+	//	m_vStr[i] = std::format(L"第{}行", i).c_str();
+	//}
+	m_Sl.SetItemHeight(60);
 	m_Sl.SetDispInfoProc([this](SLGETDISPINFO* p)
 		{
-			p->pItemInfo->pszText= m_vStr[p->pItemInfo->idxItem].Data();
-			p->pItemInfo->cchText = m_vStr[p->pItemInfo->idxItem].Size();
+			if (p->bItem)
+			{
+				if (p->Item.idxGroup < 0)
+				{
+					p->Item.pszText = m_vStr[p->Item.idxItem].Data();
+					p->Item.cchText = m_vStr[p->Item.idxItem].Size();
+				}
+				else
+				{
+					auto& rs = m_vGroup[p->Item.idxGroup].Items[p->Item.idxItem]->rsTitle;
+					p->Item.pszText = rs.Data();
+					p->Item.cchText = rs.Size();
+				}
+			}
+			else
+			{
+				p->Group.pszText = m_vGroup[p->Group.idxItem].rs.Data();
+				p->Group.cchText = m_vGroup[p->Group.idxItem].rs.Size();
+				if (m_vGroup[p->Group.idxItem].pBmp)
+				{
+					p->Group.pBmp = m_vGroup[p->Group.idxItem].pBmp;
+				}
+				else
+				{
+					IWICBitmap* pWicBmp;
+					CApp::WICCreateBitmap(m_vGroup[p->Group.idxItem].Items[0]->pCoverData, &pWicBmp);
+					if (!pWicBmp)
+						pWicBmp = App->GetWicRes()[IIDX_DefCover];
+					p->Group.pDC->CreateBitmapFromWicBitmap(pWicBmp, &p->Group.pBmp);
+					m_vGroup[p->Group.idxItem].pBmp = p->Group.pBmp;
+				}
+			}
 			return 0;
 		});
-	m_Sl.Create(NULL, WS_CHILD | WS_VISIBLE | WS_BORDER, 0, 100, 100, 500, 700, hWnd, 0);
-	m_Sl.SetItemCount((int)m_vStr.size());
+	m_Sl.Create(NULL, WS_CHILD | WS_VISIBLE | WS_BORDER, 0, 0, 0, 1100, 900, hWnd, 0);
+	m_Sl.SetGroupCount(m_vGroup.size());
+	EckCounter(m_vGroup.size(), i)
+	{
+		m_Sl.SetGroupItemCount(i, m_vGroup[i].Items.size());
+	}
+	m_Sl.ReCalc(0);
+	m_Sl.Redraw();
+	//m_Sl.SetItemCount((int)m_vStr.size());
 	return TRUE;
 }
 

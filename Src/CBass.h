@@ -2,6 +2,7 @@
 #include <Windows.h>
 
 #include <unordered_map>
+#include <format>
 
 #include "bass.h"
 #include "bass_fx.h"
@@ -28,14 +29,26 @@ public:
 
 	static PCWSTR GetErrorMsg(int iErrCode);
 
-	static void Init(int iDevice = -1, DWORD dwFreq = 44100, DWORD dwFlags = 0, HWND hWnd = NULL)
+	PNInline static BOOL Init(int iDevice = -1, DWORD dwFreq = 44100, DWORD dwFlags = 0, HWND hWnd = NULL)
 	{
-		BASS_Init(iDevice, dwFreq, dwFlags, hWnd, NULL);
+		return BASS_Init(iDevice, dwFreq, dwFlags, hWnd, NULL);
 	}
 
-	static void Free()
+	PNInline static BOOL Free()
 	{
-		BASS_Free();
+		return BASS_Free();
+	}
+
+	PNInline static DWORD GetVer()
+	{
+		return BASS_GetVersion();
+	}
+
+	PNInline static std::wstring VerToString(DWORD dw)
+	{
+		const WORD wHigh = HIWORD(dw);
+		const WORD wLow = LOWORD(dw);
+		return std::format(L"{}.{}.{}.{}", HIBYTE(wHigh), LOBYTE(wHigh), HIBYTE(wLow), LOBYTE(wLow));
 	}
 
 	~CBass();

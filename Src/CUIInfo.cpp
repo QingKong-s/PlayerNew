@@ -71,10 +71,10 @@ void CUIInfo::Redraw()
     };
     const UINT32 cchTip2[]
     {
-        MusicInfo.rsTitle.Size(),
-        MusicInfo.rsArtist.Size(),
-        MusicInfo.rsAlbum.Size(),
-        MusicInfo.rsComment.Size()
+        (UINT32)MusicInfo.rsTitle.Size(),
+        (UINT32)MusicInfo.rsArtist.Size(),
+        (UINT32)MusicInfo.rsAlbum.Size(),
+        (UINT32)MusicInfo.rsComment.Size()
     };
 
     const auto cxTopTip = m_pBK->m_DsF.cxTopTip;
