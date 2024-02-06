@@ -5,7 +5,7 @@ int CPlayList::Insert(int idxPos, const LISTFILEITEM_1& Info, PCWSTR pszName, PC
 	PLAYLISTUNIT Item;
 	if (pszName)
 	{
-		Item.rsName.ReSizeAbs(Info.cchName);
+		Item.rsName.ReSize(Info.cchName);
 		wcsncpy(Item.rsName.Data(), pszName, Info.cchName);
 	}
 	else
@@ -19,7 +19,7 @@ int CPlayList::Insert(int idxPos, const LISTFILEITEM_1& Info, PCWSTR pszName, PC
 		PathRemoveExtensionW(pszFileName);
 
 		int cchName = (int)wcslen(pszFileName);
-		Item.rsName.ReSizeAbs(cchName);
+		Item.rsName.ReSize(cchName);
 		wcscpy(Item.rsName.Data(), pszFileName);
 
 		_freea(pTemp);
@@ -27,11 +27,11 @@ int CPlayList::Insert(int idxPos, const LISTFILEITEM_1& Info, PCWSTR pszName, PC
 
 	if (pszTime)
 	{
-		Item.rsTime.ReSizeAbs(Info.cchTime);
+		Item.rsTime.ReSize(Info.cchTime);
 		wcsncpy(Item.rsTime.Data(), pszTime, Info.cchTime);
 	}
 
-	Item.rsFile.ReSizeAbs(Info.cchFile);
+	Item.rsFile.ReSize(Info.cchFile);
 	wcsncpy(Item.rsFile.Data(), pszFile, Info.cchFile);
 
 	Item.bBookmark = Info.bBookmark;
@@ -52,7 +52,7 @@ void CPlayList::InsertBookmark(int idxItem, PCWSTR pszName, int cchName, COLORRE
 	//EckAssert(!m_vList[idxItem].bBookmark);
 
 	BOOKMAEKLISTUNIT Item;
-	Item.rsName.ReSizeAbs(cchName);
+	Item.rsName.ReSize(cchName);
 	wcscpy(Item.rsName.Data(), pszName);
 
 	Item.crColor = crColor;

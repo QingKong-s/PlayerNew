@@ -67,7 +67,7 @@ LRESULT CDlgBookmark::SubclassProc_ED(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 
 LRESULT CDlgBookmark::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	auto p = (CDlgBookmark*)GetWindowLongPtrW(hWnd, eck::CDialog::OcbPtr1);
+	auto p = (CDlgBookmark*)GetWindowLongPtrW(hWnd, eck::CDialogNew::OcbPtr1);
 	switch (uMsg)
 	{
 	case WM_NOTIFY:
@@ -101,7 +101,7 @@ LRESULT CDlgBookmark::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 		break;
 	case WM_INITDIALOG:
 		p = (CDlgBookmark*)lParam;
-		SetWindowLongPtrW(hWnd, eck::CDialog::OcbPtr1, (LONG_PTR)p);
+		SetWindowLongPtrW(hWnd, eck::CDialogNew::OcbPtr1, (LONG_PTR)p);
 		p->OnInitDialog(hWnd);
 		break;
 	case WM_TIMER:

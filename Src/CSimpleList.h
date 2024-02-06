@@ -136,8 +136,6 @@ private:
 
 	static void ScrollProc(int iPos, int iPrevPos, LPARAM lParam);
 
-	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
 	BOOL OnCreate(HWND hWnd, CREATESTRUCTW* pcs);
 
 	void OnSize(HWND hWnd, UINT uState, int cx, int cy);
@@ -335,8 +333,14 @@ public:
 
 	static ATOM RegisterWndClass();
 
+	LRESULT OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) override;
+
 	HWND Create(PCWSTR pszText, DWORD dwStyle, DWORD dwExStyle,
-		int x, int y, int cx, int cy, HWND hParent, int nID, PCVOID pData = NULL) override;
+		int x, int y, int cx, int cy, HWND hParent, HMENU hMenu, PCVOID pData = NULL) override
+	{
+		return IntCreate(dwExStyle, WCN_SIMPLELIST, pszText, dwStyle,
+			x, y, cx, cy, hParent, NULL, eck::g_hInstance, NULL);
+	}
 
 	void SetDispInfoProc(std::function<int(SLGETDISPINFO*)> fn)
 	{

@@ -2,7 +2,7 @@
 
 BOOL CPlayListFileReader::Open(PCWSTR pszFile)
 {
-	auto p = m_File.Open(pszFile, FILE_MAP_READ, PAGE_READONLY, eck::CFile::ModeExisting, GENERIC_READ);
+	auto p = m_File.Open(pszFile, FILE_MAP_READ, PAGE_READONLY, eck::FCD_ONLYEXISTING, GENERIC_READ);
 	if (!p)
 		return FALSE;
 
@@ -189,7 +189,7 @@ void CPlayListFileReader::ForBookmark(FBookmarkProcessor fnProcessor)
 
 BOOL CPlayListFileWriter::Open(PCWSTR pszFile)
 {
-	if (m_File.Open(pszFile, eck::CFile::ModeCover, GENERIC_WRITE) == INVALID_HANDLE_VALUE)
+	if (m_File.Open(pszFile, eck::FCD_COVER, GENERIC_WRITE) == INVALID_HANDLE_VALUE)
 		return FALSE;
 	m_File.MoveToBegin();
 	m_File += sizeof(LISTFILEHEADER_1);
@@ -223,8 +223,10 @@ void CPlayListFileWriter::PushBackBookmark(const BOOKMARKITEM& Item, PCWSTR pszN
 
 BOOL CPlayListFileWriter::End()
 {
+	auto dwCurr = m_File.GetCurrPos();
 	m_File.MoveToBegin() << m_Header;
 	m_File.MoveTo(m_Header.ocbBookMark) << m_BmHeader;
+	m_File.MoveTo(dwCurr);
 	m_File.End();
 	m_File.Close();
 	m_Header = { {'P','N','P','L'},PNLFVER_0 };

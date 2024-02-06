@@ -120,7 +120,6 @@ private:
 		;
 	ECK_DS_END_VAR(m_Ds);
 
-	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	static LRESULT CALLBACK SubclassProc_LVList(HWND hWnd, UINT uMsg, WPARAM wParam,
 		LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
@@ -186,8 +185,15 @@ public:
 
 	static ATOM RegisterWndClass();
 
+	LRESULT OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) override;
+
+	ECK_CWND_CREATE;
 	HWND Create(PCWSTR pszText, DWORD dwStyle, DWORD dwExStyle,
-		int x, int y, int cx, int cy, HWND hParent, int nID, PCVOID pData = NULL) override;
+		int x, int y, int cx, int cy, HWND hParent, HMENU hMenu, PCVOID pData = NULL) override
+	{
+		return IntCreate(dwExStyle, WCN_LIST, pszText, dwStyle,
+			x, y, cx, cy, hParent, hMenu, App->GetHInstance(), NULL);
+	}
 
 	void PlayListItem(int idx);
 

@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include <Windows.h>
 #include <windowsx.h>
-#include <d2d1_1.h>
+#include <d2d1_2.h>
 #include <dwrite.h>
 #include <d3d11.h>
 #include <dxgi1_2.h>
@@ -17,8 +17,12 @@
 
 #include "Utils.h"
 #include "CPlayer.h"
+#include "COptionsMgr.h"
 
 #include "eck\CWnd.h"
+#include "eck\SystemHelper.h"
+
+using namespace eck::Literals;
 
 constexpr inline int c_cyLVItem = 24;
 
@@ -73,6 +77,7 @@ enum
 	IIDX__MAX,
 };
 
+class CWndMain;
 class CApp
 {
 private:
@@ -129,6 +134,7 @@ public:
 	};
 
 	ID2D1Factory1* m_pD2dFactory = NULL;
+	ID2D1Multithread* m_pD2dMultiThread = NULL;
 	IDWriteFactory* m_pDwFactory = NULL;
 	IWICImagingFactory* m_pWicFactory = NULL;
 
@@ -136,15 +142,17 @@ public:
 
 	IDXGIDevice1* m_pDxgiDevice = NULL;
 	IDXGIFactory2* m_pDxgiFactory = NULL;
+
+	CWndMain* m_pWndMain = NULL;
 private:
 	HINSTANCE m_hInstance = NULL;
 
 	CPlayer m_Player{};
+	COptionsMgr m_OptionsMgr{};
 
 	CLIPFORMAT m_cfListDrag = 0;
 
 	IWICBitmap* m_pWicRes[ARRAYSIZE(c_szResFile)]{};
-
 	HICON m_hIcon[ARRAYSIZE(c_szResFile)]{};
 
 	static HRESULT WICCreateBitmap(IWICBitmapDecoder* pDecoder, IWICBitmap** ppBitmap);
@@ -164,6 +172,10 @@ public:
 	PNInline const auto GetWicRes() { return m_pWicRes; }
 
 	PNInline const auto GetHIconRes() { return m_hIcon; }
+
+	PNInline CWndMain* GetMainWnd() { return m_pWndMain; }
+
+	PNInline COptionsMgr& GetOptionsMgr() { return m_OptionsMgr; }
 
 	static HRESULT WICCreateBitmap(PCWSTR pszFile, IWICBitmap** ppWICBitmap);
 

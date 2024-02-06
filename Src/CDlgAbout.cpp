@@ -1,5 +1,8 @@
 ﻿#include "CDlgAbout.h"
 
+#include "eck\SystemHelper.h"
+#include "eck\Utility.h"
+
 constexpr static PCWSTR c_szPropAbout = L"PlayerNew.Prop.About";
 
 INT_PTR CDlgAbout::DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -85,10 +88,7 @@ BOOL CDlgAbout::OnInitDialog(HWND hDlg, HWND hCtrl, LPARAM lParam)
 		}
 	}
 
-	auto rbFile = eck::ReadInFile((eck::GetRunningPath() + LR"(\Img\PlayerNew.png)").Data());
-	auto pStream = SHCreateMemStream(rbFile.Data(), (UINT)rbFile.Size());
-	GdipCreateBitmapFromStream(pStream, &m_pGpBitmap);
-	pStream->Release();
+	GdipCreateBitmapFromFile((eck::GetRunningPath() + LR"(\Img\PlayerNew.png)").Data(), &m_pGpBitmap);
 	GdipGetImageWidth(m_pGpBitmap, (UINT*)&m_cxImg);
 	GdipGetImageHeight(m_pGpBitmap, (UINT*)&m_cyImg);
 

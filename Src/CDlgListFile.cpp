@@ -1,58 +1,5 @@
 ﻿#include "CDlgListFile.h"
 
-LRESULT CALLBACK CDlgListFile::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	auto p = (CDlgListFile*)GetWindowLongPtrW(hWnd, eck::CDialog::OcbPtr1);
-	switch (uMsg)
-	{
-	case WM_NOTIFY:
-	{
-#pragma warning (suppress:26454)// 算术溢出
-		if (((NMHDR*)lParam)->code == LVN_ITEMCHANGED &&
-			((NMHDR*)lParam)->idFrom == IDC_LV_FILE)
-		{
-			p->OnLVNItemChanged((NMLISTVIEW*)lParam);
-			return 0;
-		}
-	}
-	break;
-
-	case WM_SIZE:
-		return HANDLE_WM_SIZE(hWnd, wParam, lParam, p->OnSize);
-
-	case WM_INITDIALOG:
-	{
-		p = (CDlgListFile*)lParam;
-		SetWindowLongPtrW(hWnd, eck::CDialog::OcbPtr1, (LONG_PTR)p);
-		p->OnInitDialog(hWnd);
-	}
-	return FALSE;
-
-	case WM_DESTROY:
-		return HANDLE_WM_DESTROY(hWnd, wParam, lParam, p->OnDestroy);
-
-	case WM_DPICHANGED:
-		return HANDLE_WM_DPICHANGED(hWnd, wParam, lParam, p->OnDpiChanged);
-
-	case WM_COMMAND:
-	{
-		if (lParam && HIWORD(wParam) == BN_CLICKED)
-			switch (LOWORD(wParam))
-			{
-			case IDOK:
-				p->OnCmdOk();
-				return 0;
-			case IDCANCEL:
-				p->OnCmdCancel();
-				return 0;
-			}
-	}
-	break;
-	}
-
-	return DefDlgProcW(hWnd, uMsg, wParam, lParam);
-}
-
 void CDlgListFile::OnInitDialog(HWND hWnd)
 {
 	UpdateDpiInit(eck::GetDpi(hWnd));
@@ -66,14 +13,14 @@ void CDlgListFile::OnInitDialog(HWND hWnd)
 	m_LVFile.Create(NULL, WS_TABSTOP | WS_CHILD | LVS_REPORT | LVS_SHOWSELALWAYS | LVS_SINGLESEL, 0,
 		m_Ds.iMargin, m_Ds.iMargin + m_Ds.cyEdit + m_Ds.iGap, 0, 0, hWnd, IDC_LV_FILE);
 	constexpr DWORD dwExLVStyle = LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER;
-	eck::LVSetItemHeight(m_LVFile, m_Ds.cyLVItem);
+	eck::LVSetItemHeight(m_LVFile.HWnd, m_Ds.cyLVItem);
 	m_LVFile.SetLVExtendStyle(dwExLVStyle);
 	m_LVFile.SetExplorerTheme();
 	m_LVFile.EnableGroupView(TRUE);
 	m_LVFile.InsertColumn(L"文件名", 0, m_Ds.cxColumn1);
 	m_LVFile.InsertColumn(L"修改时间", 1, m_Ds.cxColumn2);
 
-	auto& vPath = COptionsMgr::GetInst().vListPath;
+	auto& vPath = App->GetOptionsMgr().vListPath;
 
 	LVGROUP lvg;
 	lvg.cbSize = sizeof(LVGROUP);
@@ -254,6 +201,54 @@ void CDlgListFile::UpdateDpi(int iDpi)
 	EndDeferWindowPos(hDwp);
 }
 
+LRESULT CDlgListFile::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	switch (uMsg)
+	{
+	case WM_NOTIFY:
+	{
+#pragma warning (suppress:26454)// 算术溢出
+		if (((NMHDR*)lParam)->code == LVN_ITEMCHANGED &&
+			((NMHDR*)lParam)->idFrom == IDC_LV_FILE)
+		{
+			OnLVNItemChanged((NMLISTVIEW*)lParam);
+			return 0;
+		}
+	}
+	break;
+
+	case WM_SIZE:
+		return HANDLE_WM_SIZE(hWnd, wParam, lParam, OnSize);
+
+	case WM_INITDIALOG:
+		OnInitDialog(hWnd);
+		return FALSE;
+
+	case WM_DESTROY:
+		return HANDLE_WM_DESTROY(hWnd, wParam, lParam, OnDestroy);
+
+	case WM_DPICHANGED:
+		return ECK_HANDLE_WM_DPICHANGED(hWnd, wParam, lParam, OnDpiChanged);
+
+	case WM_COMMAND:
+	{
+		if (lParam && HIWORD(wParam) == BN_CLICKED)
+			switch (LOWORD(wParam))
+			{
+			case IDOK:
+				OnCmdOk();
+				return 0;
+			case IDCANCEL:
+				OnCmdCancel();
+				return 0;
+			}
+	}
+	break;
+	}
+
+	return DefDlgProcW(hWnd, uMsg, wParam, lParam);
+}
+
 INT_PTR CDlgListFile::DlgBox(HWND hParent, void* pData)
 {
 	const HWND hOwner = PreModal(hParent);
@@ -278,10 +273,9 @@ INT_PTR CDlgListFile::DlgBox(HWND hParent, void* pData)
 	const int cx = eck::DpiScale(560, iDpi);
 	const int cy = eck::DpiScale(500, iDpi);
 
-	m_hWnd = CreateWindowExW(0, eck::WCN_DLG, c_szTile[(UINT)m_pParam->uType], WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+	m_hWnd = IntCreate(0, eck::WCN_DLG, c_szTile[(UINT)m_pParam->uType], WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 		rc.left + (rc.right - rc.left - cx) / 2, rc.top + (rc.bottom - rc.top - cy) / 2, cx, cy,
-		hOwner, NULL, eck::g_hInstance, pData);
-	eck::SetWindowProc(m_hWnd, WndProc);
+		hOwner, NULL, eck::g_hInstance, NULL);
 	SendMsg(WM_INITDIALOG, 0, (LPARAM)this);
 
 	MSG msg;

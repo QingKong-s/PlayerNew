@@ -67,13 +67,13 @@ void CDlgNewBookmark::UpdateDpi(int iDpi)
 
 LRESULT CDlgNewBookmark::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	auto p = (CDlgNewBookmark*)GetWindowLongPtrW(hWnd, eck::CDialog::OcbPtr1);
+	auto p = (CDlgNewBookmark*)GetWindowLongPtrW(hWnd, eck::CDialogNew::OcbPtr1);
 	switch (uMsg)
 	{
 	case WM_INITDIALOG:
 	{
 		p = (CDlgNewBookmark*)lParam;
-		SetWindowLongPtrW(hWnd, eck::CDialog::OcbPtr1, (LONG_PTR)p);
+		SetWindowLongPtrW(hWnd, eck::CDialogNew::OcbPtr1, (LONG_PTR)p);
 		p->OnInitDialog(hWnd);
 	}
 	return FALSE;
@@ -86,7 +86,7 @@ LRESULT CDlgNewBookmark::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		return HANDLE_WM_DESTROY(hWnd, wParam, lParam, p->OnDestroy);
 
 	case WM_DPICHANGED:
-		return HANDLE_WM_DPICHANGED(hWnd, wParam, lParam, p->OnDpiChanged);
+		return ECK_HANDLE_WM_DPICHANGED(hWnd, wParam, lParam, p->OnDpiChanged);
 
 	case WM_COMMAND:
 	{

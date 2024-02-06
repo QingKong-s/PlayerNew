@@ -264,7 +264,7 @@ public:
 					while (*pszTempA != '\0')
 					{
 						const int cchA = (int)strlen(pszTempA);
-						rsTemp = eck::StrX2WRs(pszTempA, cchA);
+						rsTemp = eck::StrX2W(pszTempA, cchA);
 						Info.cchFile = rsTemp.Size();
 						Player.Insert(lvhti.iItem, Info, NULL, NULL, rsTemp.Data());
 						r += (cchA + 1);
@@ -285,8 +285,6 @@ public:
 };
 
 
-constexpr PCWSTR c_pszWndClassMain = L"PlayerNew.WndClass.Main";
-
 void CWndMain::UpdateDpi(int iDpi)
 {
 	m_iDpi = iDpi;
@@ -296,16 +294,16 @@ void CWndMain::UpdateDpi(int iDpi)
 void CWndMain::InitBK()
 {
 	RECT rc;
-	auto p1 = new CUIAlbum;
-	m_BK.AddElem(p1);
-	rc = { 30,150,800,700 };
-	p1->SetElemRect(&rc);
+	//auto p1 = new CUIAlbum;
+	//m_BK.AddElem(p1);
+	//rc = { 30,150,800,700 };
+	//p1->SetElemRect(&rc);
 
-	auto p = new CUIInfo;
-	m_BK.AddElem(p);
-	p->InitElem();
-	rc = { 50,10,800,300 };
-	p->SetElemRect(&rc);
+	//auto p = new CUIInfo;
+	//m_BK.AddElem(p);
+	//p->InitElem();
+	//rc = { 50,10,800,300 };
+	//p->SetElemRect(&rc);
 
 	//auto pbtn = new CUIButton;
 	//m_BK.AddElem(pbtn);
@@ -323,22 +321,29 @@ void CWndMain::InitBK()
 	//prb->SetImg(m_BK.m_pBmpIcon[CWndBK::ICIDX_Options]);
 	//prb->SetImgSize(m_BK.m_Ds.cxIcon, m_BK.m_Ds.cyIcon);
 
+	auto plrc = new CUILrc;
+	m_BK.AddElem(plrc);
+	plrc->InitElem();
+	rc = { 0,0,800,730 };
+	plrc->SetElemRect(&rc);
+
 	auto ppc = new CUIPlayingCtrl;
 	m_BK.AddElem(ppc);
 	ppc->InitElem();
-	rc = { 70,760,800,900 };
+	rc = { 70,800,800,900 };
 	ppc->SetElemRect(&rc);
 
 	//auto pw = new CUIWaves;
 	//m_BK.AddElem(pw);
 	//pw->InitElem();
-	//pw->SetElemRect({ 80,50,500,200 });
+	//rc = { 400,730,900,900 };
+	//pw->SetElemRect(&rc);
 	//pw->SetLineWidth((int)(2.f * 1.5f));
 
 	//auto pspe = new CUISpe;
 	//m_BK.AddElem(pspe);
 	//pspe->InitElem();
-	//rc = { 400,120,900,600 };
+	//rc = { 400,730,900,900 };
 	//pspe->SetElemRect(&rc);
 	//pspe->SetGapWidth(1.5f);
 	//pspe->SetCount(40);
@@ -359,7 +364,7 @@ void CWndMain::InitBK()
 	auto p2 = new CUIProgBar;
 	m_BK.AddElem(p2);
 	p2->InitElem();
-	rc = { 90,710,800,750 };
+	rc = { 90,780,800,800 };
 	p2->SetElemRect(&rc);
 	p2->SetMax(10000ull);
 
@@ -380,36 +385,6 @@ void CWndMain::InitBK()
 	//	}, m_BK);
 
 	m_BK.Redraw();
-}
-
-LRESULT CWndMain::WndProc_Main(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	auto p = (CWndMain*)GetWindowLongPtrW(hWnd, 0);
-	switch (uMsg)
-	{
-	case WM_SIZE:
-		return HANDLE_WM_SIZE(hWnd, wParam, lParam, p->OnSize);
-	case SPBM_POSCHANGE:
-	{
-		p->m_xSeparateBar = (int)lParam;
-		RECT rc;
-		GetClientRect(hWnd, &rc);
-		p->OnSize(hWnd, 0, rc.right, rc.bottom);
-	}
-	return 0;
-	case WM_DPICHANGED:
-		return HANDLE_WM_DPICHANGED(hWnd, wParam, lParam, p->OnDpiChanged);
-	case WM_NCCREATE:
-		p = (CWndMain*)((CREATESTRUCTW*)lParam)->lpCreateParams;
-		SetWindowLongPtrW(hWnd, 0, (LONG_PTR)p);
-		break;
-	case WM_CREATE:
-		return HANDLE_WM_CREATE(hWnd, wParam, lParam, p->OnCreate);
-	case WM_DESTROY:
-		PostQuitMessage(0);
-		return 0;
-	}
-	return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 }
 
 void CWndMain::OnSize(HWND hWnd, UINT uState, int cx, int cy)
@@ -454,10 +429,9 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 			m_BK.OnPlayingControl(uType);
 		});
 	UpdateDpi(eck::GetDpi(hWnd));
-	m_BK.Create(NULL, WS_CHILD, 0, 0, 0, 0, 0, hWnd, IDC_BK);
+	m_BK.Create(NULL, WS_CHILD, WS_EX_NOREDIRECTIONBITMAP, 0, 0, 0, 0, hWnd, IDC_BK);
 	m_List.Create(L"列表", WS_CHILD | WS_CLIPCHILDREN, 0, 0, 0, 0, 0, hWnd, IDC_LIST);
 	m_SPB.Create(NULL, WS_CHILD, 0, 0, 0, 0, 0, hWnd, IDC_SPB);
-	m_SPB.SetNotifyMsg(SPBM_POSCHANGE);
 
 	RECT rc;
 	GetClientRect(hWnd, &rc);
@@ -475,6 +449,8 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 		CApp::ShowError(hWnd, hr, CApp::ErrSrc::HResult, L"注册拖放目标失败");
 	
 	InitBK();
+	ShowLrc(1);
+	EckDbgPrint(m_Lrc.HWnd);
 	return TRUE;
 	WIN32_FIND_DATAW wfd;
 	HANDLE hFind = FindFirstFileW(LR"(D:\@重要文件\@音乐\*.mp3)", &wfd);
@@ -483,8 +459,8 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	{
 		++i;
 		using namespace std::literals;
-		if (i < 600)
-			continue;
+		//if (i < 500)
+		//	continue;
 		auto p = new Utils::MUSICINFO{};
 		Utils::GetMusicInfo((LR"(D:\@重要文件\@音乐\)"s + wfd.cFileName).c_str(), *p);
 		m_vItem.emplace_back(p);
@@ -492,9 +468,9 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 		m_vGroup.back().Items.emplace_back(p);
 		m_vGroup.back().Items.emplace_back(p);
 		m_vGroup.back().Items.emplace_back(p);
-		
-		if (i > 680)
-			break;
+		//
+		//if (i > 100)
+		//	break;
 	} while (FindNextFileW(hFind, &wfd));
 	FindClose(hFind);
 
@@ -569,7 +545,7 @@ ATOM CWndMain::RegisterWndClass()
 {
 	WNDCLASSEX wcex{ sizeof(WNDCLASSEX) };
 	wcex.style = CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc = WndProc_Main;
+	wcex.lpfnWndProc = DefWindowProcW;
 	wcex.hInstance = App->GetHInstance();
 	wcex.hIcon = LoadIconW(NULL, IDI_APPLICATION);
 	wcex.hCursor = LoadCursorW(NULL, IDC_ARROW);
@@ -578,10 +554,27 @@ ATOM CWndMain::RegisterWndClass()
 	return RegisterClassExW(&wcex);
 }
 
-HWND CWndMain::Create(PCWSTR pszText, DWORD dwStyle, DWORD dwExStyle,
-	int x, int y, int cx, int cy, HWND hParent, int nID, PCVOID pData)
+LRESULT CWndMain::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	m_hWnd = CreateWindowExW(dwExStyle, c_pszWndClassMain, pszText, dwStyle,
-		x, y, cx, cy, NULL, NULL, App->GetHInstance(), this);
-	return m_hWnd;
+	switch (uMsg)
+	{
+	case WM_SIZE:
+		return HANDLE_WM_SIZE(hWnd, wParam, lParam, OnSize);
+	case SPBM_POSCHANGE:
+	{
+		m_xSeparateBar = (int)lParam;
+		RECT rc;
+		GetClientRect(hWnd, &rc);
+		OnSize(hWnd, 0, rc.right, rc.bottom);
+	}
+	return 0;
+	case WM_DPICHANGED:
+		return ECK_HANDLE_WM_DPICHANGED(hWnd, wParam, lParam, OnDpiChanged);
+	case WM_CREATE:
+		return HANDLE_WM_CREATE(hWnd, wParam, lParam, OnCreate);
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		return 0;
+	}
+	return __super::OnMsg(hWnd, uMsg, wParam, lParam);
 }

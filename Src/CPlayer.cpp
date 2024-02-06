@@ -5,7 +5,7 @@
 
 HRESULT CPlayer::CreateWicBmpCover()
 {
-	SAFE_RELEASE(m_pWicCoverBmp);
+	eck::SafeRelease(m_pWicCoverBmp);
 	HRESULT hr = CApp::WICCreateBitmap(m_MusicInfo.pCoverData, &m_pWicCoverBmp);
 	if (FAILED(hr))
 	{
@@ -16,7 +16,7 @@ HRESULT CPlayer::CreateWicBmpCover()
 
 CPlayer::~CPlayer()
 {
-	SAFE_RELEASE(m_pWicCoverBmp);
+	eck::SafeRelease(m_pWicCoverBmp);
 }
 
 void CPlayer::ShowPlayErr(HWND hWnd, PlayOpErr uErr)
@@ -53,9 +53,11 @@ PlayOpErr CPlayer::Play(int idx)
 
 	Utils::GetMusicInfo(m_rsCurrFile.Data(), m_MusicInfo);
 	CreateWicBmpCover();
-	Utils::ParseLrc(m_rsCurrFile.Data(), 0u, m_vLrc, m_vLrcLabel, COptionsMgr::GetInst().iLrcFileEncoding);
+	Utils::ParseLrc(m_rsCurrFile.Data(), 0u, m_vLrc, m_vLrcLabel,
+		App->GetOptionsMgr().iLrcFileEncoding, (float)m_Bass.GetLength());
 	if (!m_vLrc.size())
-		Utils::ParseLrc(m_MusicInfo.rsLrc.Data(), m_MusicInfo.rsLrc.ByteSize(), m_vLrc, m_vLrcLabel, Utils::LrcEncoding::UTF16LE);
+		Utils::ParseLrc(m_MusicInfo.rsLrc.Data(), m_MusicInfo.rsLrc.ByteSize(), m_vLrc, m_vLrcLabel, 
+			Utils::LrcEncoding::UTF16LE, (float)m_Bass.GetLength());
 	m_fnPayingCtrl(PCT_PLAY, idxPrev, 0);
 	return PlayOpErr::Ok;
 }
@@ -133,7 +135,7 @@ PlayOpErr CPlayer::Prev()
 
 PlayOpErr CPlayer::AutoNext()
 {
-	switch (COptionsMgr::GetInst().iRepeatMode)
+	switch (App->GetOptionsMgr().iRepeatMode)
 	{
 	case RepeatMode::AllLoop:
 		return Next();
@@ -362,37 +364,36 @@ TICKCHANGING CPlayer::Tick()
 	const int cLrc = (int)m_vLrc.size();
 	if (cLrc)
 	{
-		if (m_idxCurrLrc >= 0)
-		{
-			if (m_idxCurrLrc + 1 < cLrc)
-			{
-				if (m_fPos >= m_vLrc[m_idxCurrLrc].fTime && m_fPos < m_vLrc[m_idxCurrLrc + 1].fTime)
-					goto EndFindLrc;
-			}
-			else if (m_fPos >= m_vLrc[m_idxCurrLrc].fTime)
-				goto EndFindLrc;
-		}
+		//if (m_idxCurrLrc >= 0)
+		//{
+		//	if (m_idxCurrLrc + 1 < cLrc)
+		//	{
+		//		if (m_fPos >= m_vLrc[m_idxCurrLrc].fTime && m_fPos < m_vLrc[m_idxCurrLrc + 1].fTime)
+		//		{
+		//			++m_idxCurrLrc;
+		//			goto EndFindLrc;
+		//		}
+		//	}
+		//	else if (m_fPos >= m_vLrc[m_idxCurrLrc].fTime)
+		//		goto EndFindLrc;
+		//}
 		auto it = std::lower_bound(m_vLrc.begin(), m_vLrc.end(), m_fPos, [](const Utils::LRCINFO& Item, float fPos)->bool
 			{
 				return Item.fTime < fPos;
 			});
 		if (it == m_vLrc.end())
-		{
-			if (m_fPos < m_vLrc.front().fTime)
-				m_idxCurrLrc = -1;
-			else
-				m_idxCurrLrc = -2;
-		}
+			m_idxCurrLrc = (int)m_vLrc.size() - 1;
+		else if (it == m_vLrc.begin())
+			m_idxCurrLrc = -1;
 		else
-			m_idxCurrLrc = (int)std::distance(m_vLrc.begin(), it);
-		
+			m_idxCurrLrc = (int)std::distance(m_vLrc.begin(), it - 1);
+
 		if (m_idxCurrLrc != m_idxLastLrc)
 		{
 			m_idxLastLrc = m_idxCurrLrc;
 			uRet |= TKC_LRCPOSUPDATED;
 		}
 	}
-EndFindLrc:
 
 	return uRet;
 }

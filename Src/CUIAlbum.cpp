@@ -1,4 +1,5 @@
 ﻿#include "CWndBK.h"
+#include <DirectXMath.h>
 
 CUIAlbum::CUIAlbum()
 {

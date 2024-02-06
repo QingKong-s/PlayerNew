@@ -3,6 +3,7 @@
 #include "COptionsMgr.h"
 
 #include "eck\CWnd.h"
+#include "eck\CScrollView.h"
 
 #include <thread>
 
@@ -97,6 +98,8 @@ enum CUIBTNNOTIFY
 	friend class CUIRoundButton; \
 	friend class CUIPlayingCtrl;
 
+constexpr UINT WM_BK_LRCANIMATION = eck::WM_USER_SAFE;
+
 class CUIElem;
 class CWndBK :public eck::CWnd
 {
@@ -111,6 +114,12 @@ private:
 	ID2D1Bitmap1* m_pBmpAlbum = NULL;			// 封面原始位图
 	ID2D1SolidColorBrush* m_pBrWhite = NULL;
 	ID2D1SolidColorBrush* m_pBrWhite2 = NULL;
+
+	//IDCompositionDevice* m_pDCompDevice = NULL;
+	//IDCompositionTarget* m_pDCompTarget = NULL;
+	//IDCompositionVisual* m_pDCompVisual = NULL;
+
+	HANDLE m_hObj = NULL;
 
 	int m_cxAlbum = 0;
 	int m_cyAlbum = 0;
@@ -181,7 +190,6 @@ private:
 		;
 	ECK_DS_END_VAR(m_DsF);
 
-	static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 	BOOL OnCreate(HWND hWnd, CREATESTRUCTW* pcs);
 
@@ -205,8 +213,15 @@ public:
 
 	static ATOM RegisterWndClass();
 
+	LRESULT OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) override;
+
+	ECK_CWND_CREATE;
 	HWND Create(PCWSTR pszText, DWORD dwStyle, DWORD dwExStyle,
-		int x, int y, int cx, int cy, HWND hParent, int nID, PCVOID pData = NULL) override;
+		int x, int y, int cx, int cy, HWND hParent, HMENU hMenu, PCVOID pData = NULL) override
+	{
+		return IntCreate(dwExStyle, WCN_MAINBK, pszText, dwStyle,
+			x, y, cx, cy, hParent, hMenu, App->GetHInstance(), NULL);
+	}
 	
 	/// <summary>
 	/// 添加元素
@@ -244,49 +259,25 @@ public:
 #ifndef NDEBUG
 #if 1
 // 【调试用】画元素边框
-#define BkDbg_DrawElemFrame() \
-	{ \
-		ID2D1SolidColorBrush* UIDBG_pBrush___; \
+#define BkDbg_DrawElemFrame()					\
+	{											\
+		ID2D1SolidColorBrush* UIDBG_pBrush___;	\
 		pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Red), &UIDBG_pBrush___); \
-		if (UIDBG_pBrush___) \
-		{ \
+		if (UIDBG_pBrush___)					\
+		{										\
 			pDC->DrawRectangle(m_rcF, UIDBG_pBrush___); \
-			UIDBG_pBrush___->Release(); \
-		} \
+			UIDBG_pBrush___->Release();			\
+		}										\
 	}
 #else
-#define BkDbg_DrawElemFrame()
+#define BkDbg_DrawElemFrame() ;
 #endif // 1
 #else
 // 【调试用】画元素边框
 // Release模式下已被定义为空宏
-#define BkDbg_DrawElemFrame()
+#define BkDbg_DrawElemFrame() ;
 #endif // !NDEBUG
 
-// 在UI元素类中声明可执行立即显示的重绘方法，需要Redraw方法
-#define CUI_DeclRedrawAndPresent \
-	PNInline void Redraw(BOOL bImmdShow) override \
-	{ \
-		auto pDC = m_pBK->m_pDC; \
-		if (m_pParent) \
-		{ \
-			m_pParent->OnElemEvent(UIEE_CHILDREDRAW, (WPARAM)this, 0); \
-			goto CUIRedrawImmdShow; \
-		} \
-		pDC->BeginDraw(); \
-		Redraw(); \
-		pDC->EndDraw(); \
-	CUIRedrawImmdShow: \
-		if (bImmdShow) \
-		{ \
-			DXGI_PRESENT_PARAMETERS pp; \
-			pp.DirtyRectsCount = 1; \
-			pp.pDirtyRects = &m_rc; \
-			pp.pScrollOffset = NULL; \
-			pp.pScrollRect = NULL; \
-			m_pBK->m_pSwapChain->Present1(0, 0, &pp); \
-		} \
-	}
 
 // UI元素类
 class CUIElem
@@ -306,6 +297,8 @@ protected:
 		m_cyHalf = 0;		// 元素高度的一半
 	int m_cx = 0,			// 元素宽度
 		m_cy = 0;			// 元素高度
+
+	PTP_WORK m_pWorkPresent = NULL;
 
 	BOOL m_bShow = TRUE;
 	CWndBK* m_pBK = NULL;
@@ -327,8 +320,24 @@ protected:
 					break;
 		}
 	}
+
+	static VOID CALLBACK WorkCallback(PTP_CALLBACK_INSTANCE Instance, PVOID Context, PTP_WORK Work)
+	{
+		App->m_pD2dMultiThread->Enter();
+		DXGI_PRESENT_PARAMETERS dpp;
+		dpp.DirtyRectsCount = 1;
+		dpp.pDirtyRects = &((CUIElem*)Context)->m_rcInWnd;
+		dpp.pScrollOffset = NULL;
+		dpp.pScrollRect = NULL;
+		((CUIElem*)Context)->m_pBK->m_pSwapChain->Present1(0, DXGI_PRESENT_DO_NOT_WAIT | DXGI_PRESENT_RESTART | DXGI_PRESENT_ALLOW_TEARING, &dpp);
+		App->m_pD2dMultiThread->Leave();
+	}
 public:
 	UINT m_uStyle = 0u;
+	CUIElem()
+	{
+		m_pWorkPresent = CreateThreadpoolWork(WorkCallback, this, 0);
+	}
 
 	virtual ~CUIElem();
 
@@ -364,12 +373,32 @@ public:
 	/// </summary>
 	virtual void Redraw() {}
 
-	/// <summary>
-	/// 通用方法：重画。
-	/// 独立调用BeginDraw/EndDraw
-	/// </summary>
-	/// <param name="bImmdShow">是否立即显示</param>
-	virtual void Redraw(BOOL bImmdShow) {}
+	void Redraw(BOOL bImmdShow)
+	{
+		auto pDC = m_pBK->m_pDC;
+		if (m_pParent)
+		{
+			m_pParent->OnElemEvent(UIEE_CHILDREDRAW, (WPARAM)this, 0);
+			goto CUIRedrawImmdShow;
+		}
+		pDC->BeginDraw();
+		Redraw();
+		pDC->EndDraw();
+	CUIRedrawImmdShow:
+		if (bImmdShow)
+		{
+			//SubmitThreadpoolWork(m_pWorkPresent);
+			DXGI_PRESENT_PARAMETERS dpp;
+			dpp.DirtyRectsCount = 1;
+			dpp.pDirtyRects = &m_rcInWnd;
+			dpp.pScrollOffset = NULL;
+			dpp.pScrollRect = NULL;
+			App->m_pD2dMultiThread->Enter();
+			//m_pBK->m_pSwapChain->Present1(0, DXGI_PRESENT_DO_NOT_WAIT | DXGI_PRESENT_RESTART | 0, &dpp);
+			m_pBK->m_pSwapChain->Present(0, 0);
+			App->m_pD2dMultiThread->Leave();
+		}
+	}
 
 	/// <summary>
 	/// 通用方法：初始化元素信息
@@ -429,7 +458,7 @@ public:
 	void OnTimer(UINT uTimerID) override;
 	LRESULT OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam) override;
 	BOOL InitElem() override;
-	CUI_DeclRedrawAndPresent;
+
 
 	/// <summary>
 	/// 更新位图画刷
@@ -562,109 +591,196 @@ struct LRCITEMHEIGHTDATA
 {
 	float cy;
 };
+
+template <class FwdIt, class Ty, class Pr>
+[[nodiscard]] constexpr FwdIt LowerBound(FwdIt First, const FwdIt Last, const Ty& Val, Pr Pred) {
+
+	auto UFirst = (First);
+	std::iter_difference_t<FwdIt> Count = std::distance(UFirst, (Last));
+
+	while (0 < Count) {
+		const std::iter_difference_t<FwdIt> Count2 = Count / 2;
+		const auto UMid = std::next(UFirst, Count2);
+		if (Pred(UMid, Val)) {
+			UFirst = std::next(UMid);
+			Count -= Count2 + 1;
+		}
+		else
+			Count = Count2;
+	}
+
+	return UFirst;
+}
 // 滚动歌词
 class CUILrc final :public CUIElem
 {
 private:
+	struct ITEM
+	{
+		float y = 0.f;
+		float cy = 0.f;
+		IDWriteTextLayout* pLayout = NULL;
+
+		ITEM() = default;
+		ITEM(const ITEM& x) = delete;
+		ITEM& operator=(const ITEM& x) = delete;
+		ITEM(ITEM&& x) noexcept
+		{
+			memcpy(this, &x, sizeof(*this));
+			x.pLayout = NULL;
+		}
+		ITEM& operator=(ITEM&& x) noexcept
+		{
+			if (pLayout)
+				pLayout->Release();
+			memcpy(this, &x, sizeof(*this));
+			x.pLayout = NULL;
+		}
+		~ITEM()
+		{
+			if (pLayout)
+				pLayout->Release();
+		}
+	};
+
 	ID2D1SolidColorBrush* m_pBrTextNormal = NULL;
 	ID2D1SolidColorBrush* m_pBrTextHighlight = NULL;
 
 	IDWriteTextFormat* m_pTextFormat = NULL;
 
-	int		m_idxCenter = -1;// 中间歌词
-	int		m_idxCurr = -1;	// 当前歌词
-	int		m_idxMouseHover = -1;	// 当前热点歌词
-	int		m_idxLastMouseHover = -1;	// 上次热点歌词
-	int		m_idxLastHighlight = -1;	// 上次高亮歌词
-	float	m_yCenterItem = 0.f;	// 中间句水平中线的顶边
+	eck::CInertialScrollView m_ScrollView{};
+	HANDLE m_hEventSV = NULL;
 
-	int		m_idxTopItem = 0;	// 第一句可见歌词
-	float	m_fOffsetTopIndex = 0.f;	// 第一句可见歌词的遮挡高度
+	int m_idxTop = -1;
+	int m_idxPrevCurr = -1;
+	std::vector<ITEM> m_vItem{};
 
-	//LRCHSCROLLINFO  m_LrcHScrollInfo{ -1 };	// 歌词水平滚动信息，仅适用于当前播放行
-	//LRCVSCROLLINFO  m_LrcVScrollInfo{};		// 垂直滚动动画信息
-	BOOL	m_bVAnOngoing = FALSE;// 垂直滚动动画是否在进行，此成员为TRUE时不能进行在歌词区域内执行其他呈现交换链的操作，否则会有一些奇怪的问题。。。。
+	eck::CEasingAn<eck::Easing::FOutSine> m_AnEnlarge{};
+	BOOL m_bEnlarging = FALSE;
+	int m_idxPrevAnItem = -1,
+		m_idxCurrAnItem = -1;
+	float m_fAnValue = 1.f;
 
-	int		m_iDrawingID = 0;
+	int m_tMouseIdle = 0;
 
-	ULONGLONG m_ullLastDrawingTime = 0ull;
+	enum
+	{
+		IDT_MOUSEIDLE = 1001,
+		TE_MOUSEIDLE = 500,
+		T_MOUSEIDLEMAX = 4500,
+	};
 
-	//int             m_iLastLrcIndex[2] = { -1,-1 };// 0：上次中心；1：上次高亮
+	static void ScrollProc(int iPos, int iPrevPos, LPARAM lParam);
 
-	int m_idxAnStart = -1;
-	int m_idxAnEnd = -1;
+	void CalcTopItem()
+	{
+		auto it = LowerBound(m_vItem.begin(), m_vItem.end(), m_ScrollView.GetPos(),
+			[this](decltype(m_vItem)::iterator it, int iPos)
+			{
+				const auto& e = *it;
+				int y = e.y;
+				const int idx = (int)std::distance(m_vItem.begin(), it);
+				if (idx > m_idxPrevAnItem && m_idxPrevAnItem >= 0)
+					y += (m_vItem[m_idxPrevAnItem].cy * (1.4f - m_fAnValue));
+				if (idx > m_idxCurrAnItem && m_idxCurrAnItem >= 0)
+					y += (m_vItem[m_idxCurrAnItem].cy * (m_fAnValue - 1.f));
+				return y < iPos;
+			});
+		EckAssert(it != m_vItem.end());
 
-	RECT m_rcLrc = {};
-	D2D1_RECT_F m_rcFLrc = {};
-	int m_cxLrc = 0,
-		m_cyLrc = 0;
-	float m_cxLrcF = 0.f,
-		m_cyLrcF = 0.f;
+		if (it == m_vItem.begin())
+		{
+			m_idxTop = 0;
+			return;
+		}
+		--it;
+		m_idxTop = (int)std::distance(m_vItem.begin(), it);
+	}
 
-	BOOL		m_bShowSB = FALSE;
+	BOOL DrawItem(int idx, float& y)
+	{
+		EckAssert(idx >= 0 && idx < (int)m_vItem.size());
+		const auto& Item = m_vItem[idx];
 
-	RECT m_rcSB = {};
-	D2D1_RECT_F m_rcFSB = {};
-	BOOL m_bSBLBtnDown = FALSE;
-	int m_iSBCursorOffset = 0;
-	int m_iThumbSize = 0;
-	RECT m_rcThumb = {};
-	D2D1_RECT_F m_rcFThumb = {};
+		const auto pDC = m_pBK->m_pDC;
+		y = Item.y - m_ScrollView.GetPos() + m_rcF.top;
+		if (idx > m_idxPrevAnItem&&m_idxPrevAnItem >= 0)
+			y += (m_vItem[m_idxPrevAnItem].cy * (1.4f - m_fAnValue));
+		if (idx > m_idxCurrAnItem&& m_idxCurrAnItem >= 0)
+			y += (m_vItem[m_idxCurrAnItem].cy * (m_fAnValue-1.f));
 
-	UINT m_uSBMax = 0u;
-	UINT m_uSBPos = 0u;
 
-	int m_iDelayTime = 0;
+		if (idx == m_idxPrevAnItem)
+		{
+			pDC->SetTransform(D2D1::Matrix3x2F::Scale(2.4f - m_fAnValue, 2.4f - m_fAnValue, { m_rcF.left,y }));
+			pDC->DrawTextLayout({ m_rcF.left,y }, Item.pLayout,
+				idx == App->GetPlayer().GetCurrLrc() ? m_pBrTextHighlight : m_pBrTextNormal);
+			pDC->SetTransform(D2D1::Matrix3x2F::Identity());
+			return TRUE;
+		}
+
+		if (idx == m_idxCurrAnItem)
+		{
+			pDC->SetTransform(D2D1::Matrix3x2F::Scale(m_fAnValue, m_fAnValue, { m_rcF.left,y }));
+			pDC->DrawTextLayout({ m_rcF.left,y }, Item.pLayout,
+				idx == App->GetPlayer().GetCurrLrc() ? m_pBrTextHighlight : m_pBrTextNormal);
+			pDC->SetTransform(D2D1::Matrix3x2F::Identity());
+			return TRUE;
+		}
+
+		pDC->DrawTextLayout({ m_rcF.left,y }, Item.pLayout,
+			idx == App->GetPlayer().GetCurrLrc() ? m_pBrTextHighlight : m_pBrTextNormal);
+		return TRUE;
+	}
+
+	BOOL DrawItem(int idx, D2D1_RECT_F& rcF)
+	{
+		return FALSE;
+		EckAssert(idx >= 0 && idx < (int)m_vItem.size());
+		const auto& Item = m_vItem[idx];
+
+		const auto pDC = m_pBK->m_pDC;
+		const float y = Item.y - m_ScrollView.GetPos() + m_rcF.top;
+		rcF =
+		{
+			m_rcF.left,
+			y,
+			m_rcF.right,
+			y + Item.cy,
+		};
+		if (rcF.top >= m_rcF.bottom || rcF.bottom <= m_rcF.top)
+			return FALSE;
+		if (rcF.top < m_rcF.top)
+			rcF.top = m_rcF.top;
+		if (rcF.bottom > m_rcF.bottom)
+			rcF.bottom = m_rcF.bottom;
+		pDC->PushAxisAlignedClip(&rcF, D2D1_ANTIALIAS_MODE_ALIASED);
+		pDC->DrawBitmap(m_pBK->m_pBmpBKStatic, &rcF, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &rcF);
+		pDC->DrawTextLayout({ rcF.left,y }, Item.pLayout,
+			idx == App->GetPlayer().GetCurrLrc() ? m_pBrTextHighlight : m_pBrTextNormal);
+		pDC->PopAxisAlignedClip();
+		return TRUE;
+	}
+
+	void BeginMouseIdleDetect()
+	{
+		m_tMouseIdle = T_MOUSEIDLEMAX;
+		SetTimer(m_pBK->HWnd, IDT_MOUSEIDLE, TE_MOUSEIDLE, NULL);
+	}
 public:
 	CUILrc();
+
 	~CUILrc();
+
 	BOOL OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
+
 	void Redraw() override;
-	CUI_DeclRedrawAndPresent;
+
 	void OnTimer(UINT uTimerID) override;
+
 	BOOL InitElem() override;
+
 	LRESULT OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam) override;
-
-	/// <summary>
-	/// 从m_idxTopItem项开始向下绘画所有歌词
-	/// </summary>
-	void DrawAllLrc_Top();
-
-	/// <summary>
-	/// 以当前歌词为中间一句绘画所有歌词，中间句歌词位置受m_yCenterItem控制
-	/// </summary>
-	void DrawAllLrc_Center();
-
-	/// <summary>
-	/// 画滚动条
-	/// </summary>
-	/// <param name="bImmdShow">是否立即显示</param>
-	void RedrawSB(BOOL bImmdShow);
-
-	/// <summary>
-	/// 画一句歌词
-	/// </summary>
-	/// <param name="iIndex">索引</param>
-	/// <param name="y">高度，若要使用上次高度，设置为INFINITY</param>
-	/// <param name="bTop">指定"y"参数是否为顶边，TRUE为顶边，FALSE为底边，若y==INFINITY，则此参数必须设为TRUE</param>
-	/// <param name="bClearBK"></param>
-	/// <param name="bImmdShow">是否立即显示</param>
-	/// <returns>高度</returns>
-	float RedrawItem(int iIndex, float y, BOOL bTop, BOOL bClearBK, BOOL bImmdShow, BOOL bCenterLine = FALSE, int* yOut = NULL);
-
-	/// <summary>
-	/// 命中测试
-	/// </summary>
-	/// <param name="pt">测试点</param>
-	/// <returns>成功返回歌词索引，失败返回-1</returns>
-	int HitTest(POINT pt);
-
-	/// <summary>
-	/// 初始化竖直切换动画
-	/// </summary>
-	void InitVAnimation();
-
-	void InitAnimation(int idxPrevCenter, int idxNewCenter);
 };
 
 // 进度条
@@ -690,7 +806,6 @@ public:
 	BOOL InitElem() override;
 	void OnTimer(UINT uTimerID) override;
 	LRESULT OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam) override;
-	CUI_DeclRedrawAndPresent;
 
 	/// <summary>
 	/// 置位置
@@ -779,8 +894,6 @@ public:
 
 	void Redraw() override;
 
-	CUI_DeclRedrawAndPresent;
-
 	BOOL InitElem() override;
 
 	BOOL OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
@@ -842,8 +955,6 @@ public:
 	LRESULT OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam) override;
 
 	BOOL InitElem() override;
-
-	CUI_DeclRedrawAndPresent;
 
 	/// <summary>
 	/// 置颜色
@@ -946,7 +1057,6 @@ public:
 	void OnTimer(UINT uTimerID) override;
 	LRESULT OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam) override;
 	BOOL InitElem() override;
-	CUI_DeclRedrawAndPresent;
 
 	/// <summary>
 	/// 重画时间标签

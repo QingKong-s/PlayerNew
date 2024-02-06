@@ -2,8 +2,8 @@
 
 void CUIInfo::UpdateTextFormat()
 {
-    SAFE_RELEASE(m_pTfTitle);
-    SAFE_RELEASE(m_pTfTip);
+    eck::SafeRelease(m_pTfTitle);
+    eck::SafeRelease(m_pTfTip);
     App->m_pDwFactory->CreateTextFormat(L"微软雅黑", NULL,
         DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
         m_pBK->Dpi(18.f), L"zh-cn", &m_pTfTitle);
@@ -103,8 +103,8 @@ void CUIInfo::Redraw()
 
 BOOL CUIInfo::InitElem()
 {
-    SAFE_RELEASE(m_pBrBigTip);
-    SAFE_RELEASE(m_pBrSmallTip);
+    eck::SafeRelease(m_pBrBigTip);
+    eck::SafeRelease(m_pBrSmallTip);
     auto pDC = m_pBK->m_pDC;
     pDC->CreateSolidColorBrush(c_D2DClrCyanDeeper, &m_pBrBigTip);
     pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_pBrSmallTip);
@@ -114,8 +114,8 @@ BOOL CUIInfo::InitElem()
 
 CUIInfo::~CUIInfo()
 {
-    SAFE_RELEASE(m_pBrBigTip);
-    SAFE_RELEASE(m_pBrSmallTip);
-    SAFE_RELEASE(m_pTfTitle);
-    SAFE_RELEASE(m_pTfTip);
+    eck::SafeRelease(m_pBrBigTip);
+    eck::SafeRelease(m_pBrSmallTip);
+    eck::SafeRelease(m_pTfTitle);
+    eck::SafeRelease(m_pTfTip);
 }

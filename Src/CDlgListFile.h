@@ -9,7 +9,7 @@
 #include "eck\CBk.h"
 
 
-class CDlgListFile :public eck::CDialog
+class CDlgListFile :public eck::CDialogNew
 {
 public:
 	enum class Type
@@ -55,8 +55,6 @@ private:
 	ECK_DS_END_VAR(m_Ds);
 
 
-	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
 	void OnInitDialog(HWND hWnd);
 
 	void OnSize(HWND hWnd, UINT uState, int cx, int cy);
@@ -75,5 +73,7 @@ private:
 
 	void UpdateDpi(int iDpi);
 public:
+	LRESULT OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) override;
+
 	INT_PTR DlgBox(HWND hParent, void* pData = NULL) override;
 };

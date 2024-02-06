@@ -2,7 +2,7 @@
 
 BOOL CUISpe::InitElem()
 {
-    SAFE_RELEASE(m_pBrBar);
+    eck::SafeRelease(m_pBrBar);
     auto pDC = m_pBK->m_pDC;
     pDC->CreateSolidColorBrush(c_D2DClrCyanDeeper, &m_pBrBar);
     return TRUE;
@@ -104,7 +104,7 @@ CUISpe::CUISpe()
 
 CUISpe::~CUISpe()
 {
-    SAFE_RELEASE(m_pBrBar);
+    eck::SafeRelease(m_pBrBar);
 }
 
 LRESULT CUISpe::OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam)

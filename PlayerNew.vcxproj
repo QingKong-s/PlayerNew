@@ -90,7 +90,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
@@ -116,7 +116,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -146,7 +146,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
@@ -172,7 +172,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -195,53 +195,6 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\WinEzCtrlKit\eck\CAllocator.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CArray.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CBk.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CButton.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CColorPicker.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CComboBox.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CComboBoxEx.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CCommDlg.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CDialog.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CDirBox.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CEdit.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CEditExt.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CFile.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CFileDlg.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CHeader.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CHotKey.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CIniFile.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CLabel.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CListBox.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CListBoxExt.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CListView.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CPropertySheet.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CRefBin.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CRefStr.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CResSet.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CResTable.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CScrollBar.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CScrollView.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CStatic.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CSubclassMgr.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CTab.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CTabHeader.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CTaskGroupList.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CTreeView.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CUpDown.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CWnd.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\CWndSizer.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\DbgHelper.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\DlgHelper.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\ECK.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\Env.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\GdiplusFlatDef.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\ImageHelper.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\LunarDateLib.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\ResStruct.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\Utility.h" />
-    <ClInclude Include="..\WinEzCtrlKit\eck\WndHelper.h" />
     <ClInclude Include="Src\bass.h" />
     <ClInclude Include="Src\bassmidi.h" />
     <ClInclude Include="Src\bass_fx.h" />
@@ -258,6 +211,7 @@
     <ClInclude Include="Src\CSimpleList.h" />
     <ClInclude Include="Src\CWndBK.h" />
     <ClInclude Include="Src\CWndList.h" />
+    <ClInclude Include="Src\CWndLrc.h" />
     <ClInclude Include="Src\CWndMain.h" />
     <ClInclude Include="Src\DragDrop.h" />
     <ClInclude Include="Src\Entry.h" />
@@ -266,29 +220,7 @@
     <ClInclude Include="Src\Utils.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\WinEzCtrlKit\eck\CBk.cpp" />
-    <ClCompile Include="..\WinEzCtrlKit\eck\CButton.cpp" />
-    <ClCompile Include="..\WinEzCtrlKit\eck\CColorPicker.cpp" />
-    <ClCompile Include="..\WinEzCtrlKit\eck\CCommDlg.cpp" />
-    <ClCompile Include="..\WinEzCtrlKit\eck\CDialog.cpp" />
-    <ClCompile Include="..\WinEzCtrlKit\eck\CDirBox.cpp" />
-    <ClCompile Include="..\WinEzCtrlKit\eck\CEdit.cpp" />
-    <ClCompile Include="..\WinEzCtrlKit\eck\CEditExt.cpp" />
-    <ClCompile Include="..\WinEzCtrlKit\eck\CFile.cpp" />
-    <ClCompile Include="..\WinEzCtrlKit\eck\CLabel.cpp" />
-    <ClCompile Include="..\WinEzCtrlKit\eck\CListBox.cpp" />
-    <ClCompile Include="..\WinEzCtrlKit\eck\CListBoxExt.cpp" />
-    <ClCompile Include="..\WinEzCtrlKit\eck\CRefBin.cpp" />
-    <ClCompile Include="..\WinEzCtrlKit\eck\CRefStr.cpp" />
-    <ClCompile Include="..\WinEzCtrlKit\eck\CSplitBar.cpp" />
-    <ClCompile Include="..\WinEzCtrlKit\eck\CTabHeader.cpp" />
-    <ClCompile Include="..\WinEzCtrlKit\eck\CTaskGroupList.cpp" />
-    <ClCompile Include="..\WinEzCtrlKit\eck\CWnd.cpp" />
-    <ClCompile Include="..\WinEzCtrlKit\eck\DlgHelper.cpp" />
     <ClCompile Include="..\WinEzCtrlKit\eck\ECK.cpp" />
-    <ClCompile Include="..\WinEzCtrlKit\eck\ImageHelper.cpp" />
-    <ClCompile Include="..\WinEzCtrlKit\eck\Utility.cpp" />
-    <ClCompile Include="..\WinEzCtrlKit\eck\WndHelper.cpp" />
     <ClCompile Include="Src\CApp.cpp" />
     <ClCompile Include="Src\CBass.cpp" />
     <ClCompile Include="Src\CDlgAbout.cpp" />
@@ -313,6 +245,7 @@
     <ClCompile Include="Src\CUIWaves.cpp" />
     <ClCompile Include="Src\CWndBK.cpp" />
     <ClCompile Include="Src\CWndList.cpp" />
+    <ClCompile Include="Src\CWndLrc.cpp" />
     <ClCompile Include="Src\CWndMain.cpp" />
     <ClCompile Include="Src\DragDrop.cpp" />
     <ClCompile Include="Src\Entry.cpp" />

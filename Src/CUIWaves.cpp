@@ -43,8 +43,8 @@ CUIWaves::CUIWaves()
 
 BOOL CUIWaves::InitElem()
 {
-	SAFE_RELEASE(m_pBrLine);
-	SAFE_RELEASE(m_pBrCenterMark);
+	eck::SafeRelease(m_pBrLine);
+	eck::SafeRelease(m_pBrCenterMark);
 	auto pDC = m_pBK->m_pDC;
 	pDC->CreateSolidColorBrush(c_D2DClrCyanDeeper, &m_pBrLine);
 	pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Red), &m_pBrCenterMark);

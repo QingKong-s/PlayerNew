@@ -293,4 +293,6 @@ public:
 	PNInline void SetPlayingCtrlCallBack(FOnPlayingControl fn) { m_fnPayingCtrl = fn; }
 
 	TICKCHANGING Tick();
+
+	PNInline BOOL IsPlaying() { return GetBass().IsActive() == BASS_ACTIVE_PLAYING; }
 };

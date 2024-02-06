@@ -119,50 +119,6 @@ void CSimpleList::ScrollProc(int iPos, int iPrevPos, LPARAM lParam)
 	p->m_pSwapChain->Present1(0, 0, &dpp);
 }
 
-LRESULT CSimpleList::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	auto p = (CSimpleList*)GetWindowLongPtrW(hWnd, 0);
-	switch (uMsg)
-	{
-	case WM_MOUSEMOVE:
-		return HANDLE_WM_MOUSEMOVE(hWnd, wParam, lParam, p->OnMouseMove);
-	case WM_SIZE:
-		return HANDLE_WM_SIZE(hWnd, wParam, lParam, p->OnSize);
-	case WM_TIMER:
-	{
-		if (wParam == IDT_THUMBAN)
-		{
-			p->m_cxSBThumb = p->m_AnThumb.Tick(ELAPSE_THUMBAN);
-			if (p->m_AnThumb.IsEnd())
-				KillTimer(hWnd, IDT_THUMBAN);
-			p->m_rcfThumb.left = p->m_cxClient - p->m_cxSBThumb;
-			p->m_pDC->BeginDraw();
-			p->DrawScrollBar();
-			p->m_pDC->EndDraw();
-			RECT rc{ (long)(p->m_cxClient - p->m_DsF.cxScrollBar),0,p->m_cxClient,p->m_cyClient };
-			DXGI_PRESENT_PARAMETERS dpp{ 1,&rc };
-			p->m_pSwapChain->Present1(0, 0, &dpp);
-		}
-	}
-	return 0;
-	case WM_MOUSELEAVE:
-		return HANDLE_WM_MOUSELEAVE(hWnd, wParam, lParam, p->OnMouseLeave);
-	case WM_MOUSEWHEEL:
-		return HANDLE_WM_MOUSEWHEEL(hWnd, wParam, lParam, p->OnMouseWheel);
-	case WM_LBUTTONDOWN:
-		return HANDLE_WM_LBUTTONDOWN(hWnd, wParam, lParam, p->OnLButtonDown);
-	case WM_LBUTTONUP:
-		return HANDLE_WM_LBUTTONUP(hWnd, wParam, lParam, p->OnLButtonUp);
-	case WM_NCCREATE:
-		p = (CSimpleList*)((CREATESTRUCTW*)lParam)->lpCreateParams;
-		SetWindowLongPtrW(hWnd, 0, (LONG_PTR)p);
-		break;
-	case WM_CREATE:
-		return HANDLE_WM_CREATE(hWnd, wParam, lParam, p->OnCreate);
-	}
-	return DefWindowProcW(hWnd, uMsg, wParam, lParam);
-}
-
 BOOL CSimpleList::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 {
 	m_iDpi = eck::GetDpi(hWnd);
@@ -466,7 +422,7 @@ ATOM CSimpleList::RegisterWndClass()
 {
 	WNDCLASSEX wcex{ sizeof(WNDCLASSEX) };
 	wcex.style = CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc = WndProc;
+	wcex.lpfnWndProc = DefWindowProcW;
 	wcex.hInstance = eck::g_hInstance;
 	wcex.hCursor = LoadCursorW(NULL, IDC_ARROW);
 	wcex.lpszClassName = WCN_SIMPLELIST;
@@ -474,11 +430,43 @@ ATOM CSimpleList::RegisterWndClass()
 	return RegisterClassExW(&wcex);
 }
 
-HWND CSimpleList::Create(PCWSTR pszText, DWORD dwStyle, DWORD dwExStyle, int x, int y, int cx, int cy, HWND hParent, int nID, PCVOID pData)
+LRESULT CSimpleList::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	m_hWnd = CreateWindowExW(dwExStyle, WCN_SIMPLELIST, pszText, dwStyle,
-		x, y, cx, cy, hParent, NULL, eck::g_hInstance, this);
-	return m_hWnd;
+	switch (uMsg)
+	{
+	case WM_MOUSEMOVE:
+		return HANDLE_WM_MOUSEMOVE(hWnd, wParam, lParam, OnMouseMove);
+	case WM_SIZE:
+		return HANDLE_WM_SIZE(hWnd, wParam, lParam, OnSize);
+	case WM_TIMER:
+	{
+		if (wParam == IDT_THUMBAN)
+		{
+			m_cxSBThumb = m_AnThumb.Tick(ELAPSE_THUMBAN);
+			if (m_AnThumb.IsEnd())
+				KillTimer(hWnd, IDT_THUMBAN);
+			m_rcfThumb.left = m_cxClient - m_cxSBThumb;
+			m_pDC->BeginDraw();
+			DrawScrollBar();
+			m_pDC->EndDraw();
+			RECT rc{ (long)(m_cxClient - m_DsF.cxScrollBar),0,m_cxClient,m_cyClient };
+			DXGI_PRESENT_PARAMETERS dpp{ 1,&rc };
+			m_pSwapChain->Present1(0, 0, &dpp);
+		}
+	}
+	return 0;
+	case WM_MOUSELEAVE:
+		return ECK_HANDLE_WM_MOUSELEAVE(hWnd, wParam, lParam, OnMouseLeave);
+	case WM_MOUSEWHEEL:
+		return HANDLE_WM_MOUSEWHEEL(hWnd, wParam, lParam, OnMouseWheel);
+	case WM_LBUTTONDOWN:
+		return HANDLE_WM_LBUTTONDOWN(hWnd, wParam, lParam, OnLButtonDown);
+	case WM_LBUTTONUP:
+		return HANDLE_WM_LBUTTONUP(hWnd, wParam, lParam, OnLButtonUp);
+	case WM_CREATE:
+		return HANDLE_WM_CREATE(hWnd, wParam, lParam, OnCreate);
+	}
+	return __super::OnMsg(hWnd, uMsg, wParam, lParam);
 }
 
 void CSimpleList::Redraw()

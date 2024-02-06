@@ -167,11 +167,11 @@ BOOL CUIPlayingCtrl::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
         switch (pBtn->GetID())
         {
         case PCBTI_PLAY:
-            if (App->GetPlayer().GetBass().IsActive() == BASS_ACTIVE_PLAYING)
+            if (App->GetPlayer().IsPlaying())
                 pBtn->SetImg(m_pBK->m_pBmpIcon[CWndBK::ICIDX_Pause]);
             else
                 pBtn->SetImg(m_pBK->m_pBmpIcon[CWndBK::ICIDX_Play]);
-            pBtn->Redraw(TRUE);
+            pBtn->CUIElem::Redraw(TRUE);
             break;
         case PCBTI_REPEATMODE:
         {
@@ -183,10 +183,10 @@ BOOL CUIPlayingCtrl::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
                 CWndBK::ICIDX_RMSingleLoop,
                 CWndBK::ICIDX_RMSingle,
             };
-            auto iRM = (int)COptionsMgr::GetInst().iRepeatMode;
+            auto iRM = (int)App->GetOptionsMgr().iRepeatMode;
             EckAssert(iRM >= 0 && iRM < ARRAYSIZE(idx));
             pBtn->SetImg(m_pBK->m_pBmpIcon[idx[iRM]]);
-            pBtn->Redraw(TRUE);
+            pBtn->CUIElem::Redraw(TRUE);
         }
         break;
         case PCBTI_ABOUT:

@@ -2,7 +2,7 @@
 
 BOOL CUISpe2::InitElem()
 {
-    SAFE_RELEASE(m_pBrLine);
+    eck::SafeRelease(m_pBrLine);
     auto pDC = m_pBK->m_pDC;
     pDC->CreateSolidColorBrush(c_D2DClrCyanDeeper, &m_pBrLine);
     return TRUE;
@@ -16,7 +16,7 @@ CUISpe2::CUISpe2()
 
 CUISpe2::~CUISpe2()
 {
-    SAFE_RELEASE(m_pBrLine);
+    eck::SafeRelease(m_pBrLine);
 }
 
 void CUISpe2::Redraw()

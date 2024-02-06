@@ -46,7 +46,7 @@ void CApp::LoadRes()
 	HRESULT hr;
 	eck::CRefStrW rs = eck::GetRunningPath();
 	const int cchPath = rs.Size();
-	rs.ReSizeAbs(rs.Size() + MAX_PATH);
+	rs.ReSize(rs.Size() + MAX_PATH);
 	EckCounter(ARRAYSIZE(c_szResFile), i)
 	{
 		wcscpy(rs.Data() + cchPath, c_szResFile[i]);
@@ -68,7 +68,6 @@ CApp::~CApp()
 void CApp::Init(HINSTANCE hInstance)
 {
 	m_hInstance = hInstance;
-	eck::Init(hInstance);
 	CBass::Init();
 
 	m_cfListDrag = (CLIPFORMAT)RegisterClipboardFormatW(L"PlayerNew.CBFmt.ListDrag");
@@ -78,13 +77,14 @@ void CApp::Init(HINSTANCE hInstance)
 #ifndef NDEBUG
 	D2D1_FACTORY_OPTIONS D2DFactoryOptions;
 	D2DFactoryOptions.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
-	hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory1), &D2DFactoryOptions, (void**)&m_pD2dFactory);
+	hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, __uuidof(ID2D1Factory1), &D2DFactoryOptions, (void**)&m_pD2dFactory);
 #else
-	hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, IID_PPV_ARGS(&m_pD2dFactory));
+	hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, IID_PPV_ARGS(&m_pD2dFactory));
 #endif // !NDEBUG
 	if (FAILED(hr))
 	{
 	}
+	m_pD2dFactory->QueryInterface(IID_PPV_ARGS(&m_pD2dMultiThread));
 	//////////////创建DWrite工厂
 	hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown**)&m_pDwFactory);
 	if (FAILED(hr))
@@ -116,7 +116,7 @@ void CApp::Init(HINSTANCE hInstance)
 
 	IDXGIAdapter* pDXGIAdapter;
 	m_pDxgiDevice->GetAdapter(&pDXGIAdapter);
-	m_pDxgiDevice->SetMaximumFrameLatency(1);
+	//m_pDxgiDevice->SetMaximumFrameLatency(1);
 	pDXGIAdapter->GetParent(IID_PPV_ARGS(&m_pDxgiFactory));
 	pDXGIAdapter->Release();
 	//////////////创建DXGI设备

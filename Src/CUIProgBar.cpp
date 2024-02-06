@@ -8,9 +8,9 @@ CUIProgBar::CUIProgBar()
 
 CUIProgBar::~CUIProgBar()
 {
-    SAFE_RELEASE(m_pBrNormal);
-    SAFE_RELEASE(m_pBrBK);
-    SAFE_RELEASE(m_pBrTempMark);
+    eck::SafeRelease(m_pBrNormal);
+    eck::SafeRelease(m_pBrBK);
+    eck::SafeRelease(m_pBrTempMark);
 }
 
 void CUIProgBar::Redraw()
@@ -59,7 +59,7 @@ BOOL CUIProgBar::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
     case WM_LBUTTONDOWN:
     {
-        POINT pt = GET_PT_LPARAM(lParam);
+        POINT pt = ECK_GET_PT_LPARAM(lParam);
         if (PtInRect(&m_rc, pt))
         {
             m_bLBtnDown = TRUE;
@@ -69,7 +69,7 @@ BOOL CUIProgBar::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
             if (HitTest(pt, &ull))
             {
                 SetTempPosMark(ull);
-                Redraw(TRUE);
+                CUIElem::Redraw(TRUE);
             }
         }
     }
@@ -79,7 +79,7 @@ BOOL CUIProgBar::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
         if (m_bLBtnDown)
         {
-            POINT pt = GET_PT_LPARAM(lParam);
+            POINT pt = ECK_GET_PT_LPARAM(lParam);
             m_bLBtnDown = FALSE;
             ReleaseCapture();
             EnableTempPosMark(FALSE);
@@ -89,7 +89,7 @@ BOOL CUIProgBar::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
             {
                 m_ullPos = ull;
                 App->GetPlayer().GetBass().SetPosition(ull / 1000.);
-                Redraw(TRUE);
+                CUIElem::Redraw(TRUE);
             }
         }
     }
@@ -99,12 +99,12 @@ BOOL CUIProgBar::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
         if (m_bShowTempMark)
         {
-            POINT pt = GET_PT_LPARAM(lParam);
+            POINT pt = ECK_GET_PT_LPARAM(lParam);
             ULONGLONG ull;
             if (HitTest(pt, &ull))
             {
                 SetTempPosMark(ull);
-                Redraw(TRUE);
+                CUIElem::Redraw(TRUE);
             }
         }
     }
@@ -119,7 +119,7 @@ BOOL CUIProgBar::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
                 m_bLBtnDown = FALSE;
                 ReleaseCapture();
                 EnableTempPosMark(FALSE);
-                Redraw(TRUE);
+                CUIElem::Redraw(TRUE);
             }
         }
     }
@@ -131,9 +131,9 @@ BOOL CUIProgBar::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 BOOL CUIProgBar::InitElem()
 {
-    SAFE_RELEASE(m_pBrNormal);
-    SAFE_RELEASE(m_pBrBK);
-    SAFE_RELEASE(m_pBrTempMark);
+    eck::SafeRelease(m_pBrNormal);
+    eck::SafeRelease(m_pBrBK);
+    eck::SafeRelease(m_pBrTempMark);
     auto pDC = m_pBK->m_pDC;
     pDC->CreateSolidColorBrush(c_D2DClrCyanDeeper, &m_pBrNormal);
     pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Gray), &m_pBrBK);

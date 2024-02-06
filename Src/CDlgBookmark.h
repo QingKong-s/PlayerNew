@@ -9,7 +9,7 @@
 #include "eck\CButton.h"
 #include "eck\CToolBar.h"
 
-class CDlgBookmark :public eck::CDialog
+class CDlgBookmark :public eck::CDialogNew
 {
 public:
 	struct PARAM

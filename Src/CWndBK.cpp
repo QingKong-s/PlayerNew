@@ -1,4 +1,5 @@
 ﻿#include "CWndBK.h"
+#include "CWndMain.h"
 
 
 #define MYCLR_BTHOT				0xE6E8B1
@@ -26,99 +27,6 @@ constexpr PCWSTR c_szBtmTip[]
     L"循环方式：整体播放"
 };
 
-LRESULT CWndBK::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	auto p = (CWndBK*)GetWindowLongPtrW(hWnd, 0);
-    if (uMsg == WM_NCCREATE)
-    {
-        p = (CWndBK*)((CREATESTRUCTW*)lParam)->lpCreateParams;
-        SetWindowLongPtrW(hWnd, 0, (LONG_PTR)p);
-    }
-
-    if (uMsg == p->m_uMsgCUIButton)
-        p->OnPCBtnClick((UINT)wParam, (CUIElem*)lParam);// 落到元素事件处理
-
-	switch (uMsg)
-	{
-	case WM_TIMER:
-	{
-		switch (wParam)
-		{
-		case IDT_PGS:
-		{
-			App->GetPlayer().Tick();
-			p->m_vDirtyRect.clear();
-			p->m_pDC->BeginDraw();
-			for (auto pElem : p->m_vElemsWantTimer)
-			{
-				if (eck::IsBitSet(pElem->m_uFlags, UIEF_ONLYPAINTONTIMER))
-				{
-					pElem->Redraw();
-					p->m_vDirtyRect.emplace_back(pElem->m_rcInWnd);
-				}
-				else
-					pElem->OnTimer((UINT)wParam);
-			}
-			p->m_pDC->EndDraw();
-			DXGI_PRESENT_PARAMETERS dpp{};
-			dpp.DirtyRectsCount = (UINT)p->m_vDirtyRect.size();
-			dpp.pDirtyRects = p->m_vDirtyRect.data();
-			p->m_pSwapChain->Present1(1, 0, &dpp);
-		}
-		return 0;
-
-		default:
-		{
-            for (auto pElem : p->m_vElemsWantTimer)
-                pElem->OnTimer((UINT)wParam);
-        }
-        return 0;
-        }
-    }
-    return 0;
-
-    case WM_NCHITTEST:
-    case WM_SETCURSOR:
-    case WM_NOTIFY:
-    case WM_MOUSEACTIVATE:
-        return DefWindowProcW(hWnd, uMsg, wParam, lParam);
-
-    case WM_LBUTTONDOWN:
-        SetFocus(hWnd);
-        break;
-
-	case WM_SIZE:
-		return HANDLE_WM_SIZE(hWnd, wParam, lParam, p->OnSize);
-	case WM_CREATE:
-		return HANDLE_WM_CREATE(hWnd, wParam, lParam, p->OnCreate);
-    case WM_DESTROY:
-        return HANDLE_WM_DESTROY(hWnd, wParam, lParam, p->OnDestroy);
-	}
-
-	for (auto pElem : p->m_vElems)
-	{
-        if (!eck::IsBitSet(pElem->m_uFlags, UIEF_NOEVENT))
-            if (pElem->OnEvent(uMsg, wParam, lParam))
-                break;
-	}
-
-	switch (uMsg)
-    {
-    case WM_MOUSEMOVE:
-    {
-        TRACKMOUSEEVENT tme;
-        tme.cbSize = sizeof(tme);
-        tme.hwndTrack = hWnd;
-        tme.dwFlags = TME_LEAVE | TME_HOVER;
-        tme.dwHoverTime = 200;
-        TrackMouseEvent(&tme);
-    }
-    return 0;
-    }
-
-	return DefWindowProcW(hWnd, uMsg, wParam, lParam);
-}
-
 BOOL CWndBK::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 {
     m_uMsgCUIButton = RegisterWindowMessageW(L"PlayerNew.Message.CUIButtonClick");
@@ -137,11 +45,11 @@ BOOL CWndBK::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 		FALSE,
 		{1, 0},
 		DXGI_USAGE_RENDER_TARGET_OUTPUT,
-		2,
-		DXGI_SCALING_NONE,
-		DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL,
+		1,
+		DXGI_SCALING_STRETCH,
+		DXGI_SWAP_EFFECT_SEQUENTIAL,
 		DXGI_ALPHA_MODE_IGNORE,
-		0
+        0
 	};
 
 	HRESULT hr;
@@ -155,6 +63,20 @@ BOOL CWndBK::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	{
 		assert(FALSE);
 	}
+
+    //IDXGISwapChain1* pSwapChain;
+    //if (FAILED(hr = App->m_pDxgiFactory->CreateSwapChainForComposition(
+    //    App->m_pDxgiDevice, &DxgiSwapChainDesc, NULL, &m_pSwapChain)))
+    //{
+    //    EckDbgBreak();
+    //}
+    //pSwapChain->QueryInterface(IID_PPV_ARGS(&m_pSwapChain));
+    //UINT iiii;
+    //m_pSwapChain->GetMaximumFrameLatency(&iiii);
+    //m_hObj = m_pSwapChain->GetFrameLatencyWaitableObject();
+    //m_hObj=CreateEventW(0,TRUE,0)
+
+
 
 	if (FAILED(hr = App->m_pD2dDevice->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &m_pDC)))// 创建设备上下文
 	{
@@ -182,6 +104,14 @@ BOOL CWndBK::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	}
 
 	pSurface->Release();
+
+
+    //DCompositionCreateDevice(App->m_pDxgiDevice, IID_PPV_ARGS(&m_pDCompDevice));
+    //m_pDCompDevice->CreateTargetForHwnd(hWnd, TRUE, &m_pDCompTarget);
+    //m_pDCompDevice->CreateVisual(&m_pDCompVisual);
+    //m_pDCompVisual->SetContent(m_pSwapChain);
+    //m_pDCompTarget->SetRoot(m_pDCompVisual);
+    //m_pDCompDevice->Commit();
 
     D2D_SIZE_U D2DSizeU = { 8,8 };
     D2dBmpProp.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE;
@@ -212,6 +142,18 @@ BOOL CWndBK::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
     m_pDC->CreateBitmapFromWicBitmap(App->GetWicRes()[IIDX_Pause], &m_pBmpIcon[ICIDX_Pause]);
 
     m_pDC->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE);
+
+    //eck::CRTCreateThread([](void* pp)->UINT
+    //    {
+    //        for (;;)
+    //        {
+    //            App->m_pD2dMultiThread->Enter();
+    //            ((IDXGISwapChain2*)pp)->Present(0, 0);
+    //            //Sleep(10);
+    //            App->m_pD2dMultiThread->Leave();
+    //            Sleep(20);
+    //        }
+    //    }, m_pSwapChain);
     return TRUE;
 }
 
@@ -225,7 +167,8 @@ void CWndBK::OnSize(HWND hWnd, UINT state, int cx, int cy)
     m_pBmpBK->Release();
 
     HRESULT hr;
-    if (FAILED(hr = m_pSwapChain->ResizeBuffers(0, std::max(cx, 8), std::max(cy, 8), DXGI_FORMAT_UNKNOWN, 0)))
+    if (FAILED(hr = m_pSwapChain->ResizeBuffers(0, std::max(cx, 8), std::max(cy, 8), DXGI_FORMAT_UNKNOWN, 
+        0)))
     {
         assert(FALSE);
     }
@@ -298,7 +241,7 @@ void CWndBK::OnPCBtnClick(UINT uCode, CUIElem* pElem)
 	case PCBTI_PLAYOPT:
 		break;
 	case PCBTI_REPEATMODE:
-        COptionsMgr::GetInst().iRepeatMode = COptionsMgr::NextRepeatMode(COptionsMgr::GetInst().iRepeatMode);
+        App->GetOptionsMgr().iRepeatMode = COptionsMgr::NextRepeatMode(App->GetOptionsMgr().iRepeatMode);
 		break;
 	case PCBTI_PREV:
 		uErr = Player.Prev();
@@ -342,7 +285,7 @@ ATOM CWndBK::RegisterWndClass()
 {
 	WNDCLASSEX wcex{ sizeof(WNDCLASSEX) };
 	wcex.style = CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc = WndProc;
+	wcex.lpfnWndProc = DefWindowProcW;
 	wcex.hInstance = App->GetHInstance();
 	wcex.hCursor = LoadCursorW(NULL, IDC_ARROW);
 	wcex.lpszClassName = WCN_MAINBK;
@@ -350,11 +293,102 @@ ATOM CWndBK::RegisterWndClass()
 	return RegisterClassExW(&wcex);
 }
 
-HWND CWndBK::Create(PCWSTR pszText, DWORD dwStyle, DWORD dwExStyle, int x, int y, int cx, int cy, HWND hParent, int nID, PCVOID pData)
+LRESULT CWndBK::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	m_hWnd = CreateWindowExW(dwExStyle, WCN_MAINBK, pszText, dwStyle,
-		x, y, cx, cy, hParent, eck::i32ToP<HMENU>(nID), App->GetHInstance(), this);
-	return m_hWnd;
+    if (uMsg == m_uMsgCUIButton)
+        OnPCBtnClick((UINT)wParam, (CUIElem*)lParam);// 落到元素事件处理
+
+    switch (uMsg)
+    {
+    case WM_TIMER:
+    {
+        switch (wParam)
+        {
+        case IDT_PGS:
+        {
+            auto uTickRet = App->GetPlayer().Tick();
+            m_vDirtyRect.clear();
+            m_pDC->BeginDraw();
+            for (auto pElem : m_vElemsWantTimer)
+            {
+                if (eck::IsBitSet(pElem->m_uFlags, UIEF_ONLYPAINTONTIMER))
+                {
+                    pElem->Redraw();
+                    m_vDirtyRect.emplace_back(pElem->m_rcInWnd);
+                }
+                else
+                    pElem->OnTimer((UINT)wParam);
+            }
+			m_pDC->EndDraw();
+			DXGI_PRESENT_PARAMETERS dpp{};
+			dpp.DirtyRectsCount = (UINT)m_vDirtyRect.size();
+			dpp.pDirtyRects = m_vDirtyRect.data();
+			App->m_pD2dMultiThread->Enter();
+			//if (WaitForSingleObjectEx(m_hObj, 1000, 1) == WAIT_OBJECT_0)
+			m_pSwapChain->Present(0, 0);
+			//else
+			//{
+			//    int a = 0;
+			//}
+			//m_pSwapChain->Present1(0, DXGI_PRESENT_RESTART, &dpp);
+			//m_pSwapChain->Present(0, 0);
+			App->m_pD2dMultiThread->Leave();
+
+			if (uTickRet & TKC_LRCPOSUPDATED || App->GetMainWnd()->m_Lrc.IsCacheLayoutTooLong())
+				App->GetMainWnd()->m_Lrc.Draw();
+		}
+		return 0;
+
+        default:
+        {
+            for (auto pElem : m_vElemsWantTimer)
+                pElem->OnTimer((UINT)wParam);
+        }
+        return 0;
+        }
+    }
+    return 0;
+
+    case WM_NCHITTEST:
+    case WM_SETCURSOR:
+    case WM_NOTIFY:
+    case WM_MOUSEACTIVATE:
+        return DefWindowProcW(hWnd, uMsg, wParam, lParam);
+
+    case WM_LBUTTONDOWN:
+        SetFocus(hWnd);
+        break;
+
+    case WM_SIZE:
+        return HANDLE_WM_SIZE(hWnd, wParam, lParam, OnSize);
+    case WM_CREATE:
+        return HANDLE_WM_CREATE(hWnd, wParam, lParam, OnCreate);
+    case WM_DESTROY:
+        return HANDLE_WM_DESTROY(hWnd, wParam, lParam, OnDestroy);
+    }
+
+    for (auto pElem : m_vElems)
+    {
+        if (!eck::IsBitSet(pElem->m_uFlags, UIEF_NOEVENT))
+            if (pElem->OnEvent(uMsg, wParam, lParam))
+                break;
+    }
+
+    switch (uMsg)
+    {
+    case WM_MOUSEMOVE:
+    {
+        TRACKMOUSEEVENT tme;
+        tme.cbSize = sizeof(tme);
+        tme.hwndTrack = hWnd;
+        tme.dwFlags = TME_LEAVE | TME_HOVER;
+        tme.dwHoverTime = 200;
+        TrackMouseEvent(&tme);
+    }
+    return 0;
+    }
+
+    return __super::OnMsg(hWnd, uMsg, wParam, lParam);
 }
 
 void CWndBK::AddElem(CUIElem* pElem)
@@ -373,7 +407,7 @@ void CWndBK::OnPlayingControl(PLAYINGCTRLTYPE uType)
     {
     case PCT_PLAY:
     {
-        SAFE_RELEASE(m_pBmpAlbum);
+        eck::SafeRelease(m_pBmpAlbum);
         m_pDC->CreateBitmapFromWicBitmap(App->GetPlayer().GetWicBmpCover(), &m_pBmpAlbum);
         auto Size = m_pBmpAlbum->GetSize();
         m_cxAlbum = (int)Size.width;
@@ -505,18 +539,18 @@ CUIToolBar::~CUIToolBar()
 {
     DestroyWindow(m_hToolTip);
 
-    SAFE_RELEASE(m_pBrText);
-    SAFE_RELEASE(m_pBrBtnHot);
-    SAFE_RELEASE(m_pBrBtnPushed);
-    SAFE_RELEASE(m_pBrBtnChecked);
+    eck::SafeRelease(m_pBrText);
+    eck::SafeRelease(m_pBrBtnHot);
+    eck::SafeRelease(m_pBrBtnPushed);
+    eck::SafeRelease(m_pBrBtnChecked);
 }
 
 BOOL CUIToolBar::InitElem()
 {
-    SAFE_RELEASE(m_pBrText);
-    SAFE_RELEASE(m_pBrBtnHot);
-    SAFE_RELEASE(m_pBrBtnPushed);
-    SAFE_RELEASE(m_pBrBtnChecked);
+    eck::SafeRelease(m_pBrText);
+    eck::SafeRelease(m_pBrBtnHot);
+    eck::SafeRelease(m_pBrBtnPushed);
+    eck::SafeRelease(m_pBrBtnChecked);
     auto pDC = m_pBK->m_pDC;
     pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_pBrText);
     pDC->CreateSolidColorBrush(D2D1::ColorF(eck::ReverseColorref(MYCLR_BTHOT)), &m_pBrBtnHot);
@@ -652,20 +686,20 @@ BOOL CUIToolBar::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
     case WM_LBUTTONDOWN:
     {
-        POINT pt = GET_PT_LPARAM(lParam);
+        POINT pt = ECK_GET_PT_LPARAM(lParam);
         m_idxPush = HitTest(pt);
         if (m_idxPush >= 0)
         {
             m_bLBtnDown = TRUE;
             SetCapture(m_pBK->m_hWnd);
-            Redraw(TRUE);
+            CUIElem::Redraw(TRUE);
         }
     }
     return 0;
 
     case WM_LBUTTONUP:
     {
-        POINT pt = GET_PT_LPARAM(lParam);
+        POINT pt = ECK_GET_PT_LPARAM(lParam);
         if (m_bLBtnDown)
         {
             m_bLBtnDown = FALSE;
@@ -681,7 +715,7 @@ BOOL CUIToolBar::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
             m_idxLastHot = TBBI_INVALID;
             m_bLBtnDown = FALSE;
 
-            Redraw(TRUE);
+            CUIElem::Redraw(TRUE);
 
             if (i != HitTest(pt))
                 return 0;
@@ -696,7 +730,7 @@ BOOL CUIToolBar::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case WM_MOUSEMOVE:
     {
-        POINT pt = GET_PT_LPARAM(lParam);
+        POINT pt = ECK_GET_PT_LPARAM(lParam);
         if (PtInRect(&m_rc, pt))
         {
             m_bInToolBar = TRUE;
@@ -709,7 +743,7 @@ BOOL CUIToolBar::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
                     SendMessageW(m_hToolTip, TTM_GETTOOLINFOW, 0, (LPARAM)&m_ti);
                     SendMessageW(m_hToolTip, TTM_SETTOOLINFOW, 0, (LPARAM)&m_ti);
                     m_idxLastHot = m_idxHot;
-                    Redraw(TRUE);
+                    CUIElem::Redraw(TRUE);
                 }
             }
         }
@@ -717,7 +751,7 @@ BOOL CUIToolBar::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
         {
             m_bInToolBar = FALSE;
             m_idxLastHot = m_idxHot = TBBI_INVALID;
-            Redraw(TRUE);
+            CUIElem::Redraw(TRUE);
             SendMessageW(m_hToolTip, TTM_TRACKACTIVATE, FALSE, (LPARAM)&m_ti);
         }
     }
@@ -731,7 +765,7 @@ BOOL CUIToolBar::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
             SendMessageW(m_hToolTip, TTM_GETTOOLINFOW, 0, (LPARAM)&m_ti);
             SendMessageW(m_hToolTip, TTM_SETTOOLINFOW, 0, (LPARAM)&m_ti);
             m_idxLastHover = m_idxLastHot = m_idxHot = TBBI_INVALID;
-            Redraw(TRUE);
+            CUIElem::Redraw(TRUE);
             SendMessageW(m_hToolTip, TTM_TRACKACTIVATE, FALSE, (LPARAM)&m_ti);
         }
     }
@@ -741,13 +775,13 @@ BOOL CUIToolBar::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
         if (m_idxHot != -1 && m_idxPush == -1 && m_idxLastHover != m_idxHot)
         {
-            POINT pt = GET_PT_LPARAM(lParam);
+            POINT pt = ECK_GET_PT_LPARAM(lParam);
             ClientToScreen(m_pBK->m_hWnd, &pt);
             m_idxLastHover = m_idxHot;
             m_ti.lpszText = NULL;
 
             if (m_idxHot == 5)
-                m_ti.lpszText = (LPWSTR)c_szBtmTip[BTMBKBTNCOUNT + (int)COptionsMgr::GetInst().iRepeatMode];
+                m_ti.lpszText = (LPWSTR)c_szBtmTip[BTMBKBTNCOUNT + (int)App->GetOptionsMgr().iRepeatMode];
             else
                 m_ti.lpszText = (LPWSTR)c_szBtmTip[m_idxHot];
 
@@ -830,7 +864,7 @@ void CUIToolBar::DoCmd(UITOOLBARBTNINDEX i)
     //    m_iRepeatMode++;
     //    if (m_iRepeatMode > 4)
     //        m_iRepeatMode %= 5;
-    //    Redraw(TRUE);
+    //    CUIElem::Redraw(TRUE);
     //}
     //return;
 

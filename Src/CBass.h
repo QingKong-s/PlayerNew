@@ -100,14 +100,14 @@ public:
 
 	PNInline void Close();
 
-	PNInline DWORD GetHStream() { return m_hStream; }
+	PNInline DWORD GetHStream() const { return m_hStream; }
 
-	PNInline DWORD GetLevel()
+	PNInline DWORD GetLevel() const
 	{
 		return BASS_ChannelGetLevel(m_hStream);
 	}
 
-	PNInline DWORD GetData(float* pBuf, DWORD cbBuf)
+	PNInline DWORD GetData(float* pBuf, DWORD cbBuf) const
 	{
 		return BASS_ChannelGetData(m_hStream, pBuf, cbBuf);
 	}
@@ -118,7 +118,7 @@ public:
 		return m_hStream;
 	}
 
-	PNInline DWORD IsActive()
+	PNInline DWORD IsActive() const
 	{
 		return BASS_ChannelIsActive(m_hStream);
 	}

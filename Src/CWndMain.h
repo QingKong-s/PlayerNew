@@ -6,11 +6,14 @@
 #include "CApp.h"
 #include "CWndBK.h"
 #include "CWndList.h"
+#include "CWndLrc.h"
 
 
 
 
 #include "CSimpleList.h"
+
+constexpr inline PCWSTR c_pszWndClassMain = L"PlayerNew.WndClass.Main";
 
 
 struct DRAGDROPINFO
@@ -23,6 +26,8 @@ class CDropTargetList;
 class CWndMain : public eck::CWnd
 {
 	friend class CDropTargetList;
+	friend class CWndBK;
+	friend class CWndList;
 private:
 	IDXGISwapChain1* m_pSwapChain = NULL;
 	ID2D1DeviceContext* m_pDC = NULL;
@@ -31,6 +36,7 @@ private:
 
 	CWndBK m_BK{};
 	CWndList m_List{ *this };
+	CWndLrc m_Lrc{};
 	eck::CSplitBar m_SPB{};
 
 	int m_xSeparateBar = 0;
@@ -74,8 +80,6 @@ private:
 
 	void InitBK();
 private:
-	static LRESULT CALLBACK WndProc_Main(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
 	void OnSize(HWND hWnd, UINT uState, int cx, int cy);
 
 	BOOL OnCreate(HWND hWnd, CREATESTRUCTW* pcs);
@@ -90,6 +94,21 @@ public:
 	
 	static ATOM RegisterWndClass();
 
+	LRESULT OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) override;
+
 	HWND Create(PCWSTR pszText, DWORD dwStyle, DWORD dwExStyle,
-		int x, int y, int cx, int cy, HWND hParent, int nID, PCVOID pData = NULL) override;
+		int x, int y, int cx, int cy, HWND hParent, HMENU hMenu, PCVOID pData = NULL) override
+	{
+		return IntCreate(dwExStyle, c_pszWndClassMain, pszText, dwStyle,
+			x, y, cx, cy, NULL, NULL, App->GetHInstance(), NULL);
+	}
+
+	void ShowLrc(BOOL bShow)
+	{
+		if (bShow)
+			m_Lrc.Create(NULL, 0, 0, 
+				700, 1100, 1100, 400, NULL, NULL, NULL);
+		else
+			m_Lrc.Destroy();
+	}
 };

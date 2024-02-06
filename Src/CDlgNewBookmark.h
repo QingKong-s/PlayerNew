@@ -7,7 +7,7 @@
 #include "eck\CButton.h"
 #include "eck\CColorPicker.h"
 
-class CDlgNewBookmark :public eck::CDialog
+class CDlgNewBookmark :public eck::CDialogNew
 {
 public:
 	struct PARAM

@@ -45,121 +45,6 @@ public:
 };
 
 
-LRESULT CWndList::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	auto p = (CWndList*)GetWindowLongPtrW(hWnd, 0);
-	switch (uMsg)
-	{
-	case WM_NOTIFY:
-	{
-		if (((NMHDR*)lParam)->hwndFrom == p->m_LVList.GetHWND())
-			switch (((NMHDR*)lParam)->code)
-			{
-			case NM_CUSTOMDRAW:
-				return p->OnListLVNCustomDraw((NMLVCUSTOMDRAW*)lParam);
-			case NM_DBLCLK:
-				p->OnListLVNDbLClick((NMITEMACTIVATE*)lParam);
-				return 0;
-			case NM_RCLICK:
-				return p->OnListLVNRClick((NMITEMACTIVATE*)lParam);
-			case LVN_BEGINDRAG:
-				p->OnListLVNBeginDrag((NMLISTVIEW*)lParam);
-				return 0;
-			}
-		else if (((NMHDR*)lParam)->hwndFrom == p->m_LVSearch.GetHWND())
-			switch (((NMHDR*)lParam)->code)
-			{
-			case NM_CUSTOMDRAW:
-				return p->OnSearchLVNCustomDraw((NMLVCUSTOMDRAW*)lParam);
-			case NM_DBLCLK:
-				p->OnSearchLVNDbLClick((NMITEMACTIVATE*)lParam);
-				return 0;
-			case NM_RCLICK:
-				return p->OnSearchLVNRClick((NMITEMACTIVATE*)lParam);
-			case LVN_BEGINDRAG:
-				p->OnSearchLVNBeginDrag((NMLISTVIEW*)lParam);
-				return 0;
-			}
-	}
-	break;
-	case WM_SIZE:
-		return HANDLE_WM_SIZE(hWnd, wParam, lParam, p->OnSize);
-	case WM_COMMAND:
-	{
-		if (lParam)
-		{
-			if ((HWND)lParam == p->m_TBManage.GetHWND() || HIWORD(wParam) == BN_CLICKED)
-				switch (LOWORD(wParam))
-				{
-				case TBCID_LOCATE:
-					p->OnCmdLocate();
-					return 0;
-				case TBCID_ADD:
-				{
-					RECT rc;
-					p->m_TBManage.GetRect(TBCID_ADD, &rc);
-					eck::ClientToScreen(p->m_TBManage.GetHWND(), &rc);
-					const int iRet = TrackPopupMenu(p->m_hMenuAdd, TPM_NONOTIFY | TPM_RETURNCMD | TPM_VERNEGANIMATION | TPM_RIGHTBUTTON,
-						rc.left, rc.bottom, 0, hWnd, NULL);
-					switch (iRet)
-					{
-					case IDMI_ADDFILE:
-						p->OnMenuAddFile();
-						return 0;
-					case IDMI_ADDDIR:
-						p->OnMenuAddDir();
-						return 0;
-					}
-				}
-				return 0;
-				case TBCID_LOADLIST:
-					p->OnCmdLoadList();
-					return 0;
-				case TBCID_SAVELIST:
-					p->OnCmdSaveList();
-					return 0;
-				case TBCID_EMPTY:
-					p->OnCmdEmpty();
-					return 0;
-				case TBCID_MANAGE:
-					p->OnCmdManage();
-					return 0;
-				}
-			else if ((HWND)lParam == p->m_EDSearch.GetHWND() || HIWORD(wParam) == EN_CHANGE)
-			{
-				p->OnENChange();
-				return 0;
-			}
-		}
-		else
-		{
-
-		}
-	}
-	break;
-	case WM_NCCREATE:
-		p = (CWndList*)((CREATESTRUCTW*)lParam)->lpCreateParams;
-		SetWindowLongPtrW(hWnd, 0, (LONG_PTR)p);
-		break;
-	case WM_CREATE:
-		return HANDLE_WM_CREATE(hWnd, wParam, lParam, p->OnCreate);
-	case WM_DESTROY:
-		return HANDLE_WM_DESTROY(hWnd, wParam, lParam, p->OnDestroy);
-	case WM_DPICHANGED:
-	{
-		auto prc = (RECT*)lParam;
-		p->UpdateDpi(LOWORD(wParam));
-		SetWindowPos(hWnd, NULL, prc->left, prc->top, prc->right - prc->left, prc->bottom - prc->top,
-			SWP_NOZORDER | SWP_NOACTIVATE);
-	}
-	return 0;
-	case WM_DPICHANGED_BEFOREPARENT:
-		p->UpdateDpi(eck::GetDpi(hWnd));
-		return 0;
-	}
-	return DefWindowProcW(hWnd, uMsg, wParam, lParam);
-}
-
 LRESULT CWndList::SubclassProc_LVList(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
 	auto p = (CWndList*)dwRefData;
@@ -261,7 +146,7 @@ void CWndList::UpdateUISize()
 		SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
 	EndDeferWindowPos(hDwp);
 
-	eck::LVSetItemHeight(m_LVList, m_Ds.cyLVItem);
+	eck::LVSetItemHeight(m_LVList.HWnd, m_Ds.cyLVItem);
 	m_TBManage.SetButtonSize(m_Ds.cxToolBtn, m_Ds.cyTool);
 }
 
@@ -796,7 +681,7 @@ BOOL CWndList::OnListLVNRClick(NMITEMACTIVATE* pnmia)
 #pragma message("TODO：删除文件")
 		break;
 	case IDMI_IGNORE:
-		EckBoolNot(List.At(idx).bIgnore);
+		ECKBOOLNOT(List.At(idx).bIgnore);
 		m_LVList.RedrawItem(idx);
 		break;
 	case IDMI_RENAME:
@@ -847,7 +732,7 @@ void CWndList::OnMenuOpenInExplorer()
 			pvSelPaths->emplace_back(List.At(i).rsFile);
 	}
 
-	CloseHandle(eck::CRTCreateThread([](void* pParam)->UINT
+	CloseHandle(eck::CrtCreateThread([](void* pParam)->UINT
 		{
 			auto pvSelPaths = (std::vector<eck::CRefStrW>*)pParam;
 			if (FAILED(CoInitialize(NULL)))
@@ -1236,7 +1121,7 @@ ATOM CWndList::RegisterWndClass()
 {
 	WNDCLASSEX wcex{ sizeof(WNDCLASSEX) };
 	wcex.style = CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc = WndProc;
+	wcex.lpfnWndProc = DefWindowProcW;
 	wcex.hInstance = App->GetHInstance();
 	wcex.hCursor = LoadCursorW(NULL, IDC_ARROW);
 	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
@@ -1245,12 +1130,114 @@ ATOM CWndList::RegisterWndClass()
 	return RegisterClassExW(&wcex);
 }
 
-HWND CWndList::Create(PCWSTR pszText, DWORD dwStyle, DWORD dwExStyle,
-	int x, int y, int cx, int cy, HWND hParent, int nID, PCVOID pData)
+LRESULT CWndList::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	m_hWnd = CreateWindowExW(dwExStyle, WCN_LIST, pszText, dwStyle,
-		x, y, cx, cy, hParent, eck::i32ToP<HMENU>(nID), App->GetHInstance(), this);
-	return m_hWnd;
+	switch (uMsg)
+	{
+	case WM_NOTIFY:
+	{
+		if (((NMHDR*)lParam)->hwndFrom == m_LVList.GetHWND())
+			switch (((NMHDR*)lParam)->code)
+			{
+			case NM_CUSTOMDRAW:
+				return OnListLVNCustomDraw((NMLVCUSTOMDRAW*)lParam);
+			case NM_DBLCLK:
+				OnListLVNDbLClick((NMITEMACTIVATE*)lParam);
+				return 0;
+			case NM_RCLICK:
+				return OnListLVNRClick((NMITEMACTIVATE*)lParam);
+			case LVN_BEGINDRAG:
+				OnListLVNBeginDrag((NMLISTVIEW*)lParam);
+				return 0;
+			}
+		else if (((NMHDR*)lParam)->hwndFrom == m_LVSearch.GetHWND())
+			switch (((NMHDR*)lParam)->code)
+			{
+			case NM_CUSTOMDRAW:
+				return OnSearchLVNCustomDraw((NMLVCUSTOMDRAW*)lParam);
+			case NM_DBLCLK:
+				OnSearchLVNDbLClick((NMITEMACTIVATE*)lParam);
+				return 0;
+			case NM_RCLICK:
+				return OnSearchLVNRClick((NMITEMACTIVATE*)lParam);
+			case LVN_BEGINDRAG:
+				OnSearchLVNBeginDrag((NMLISTVIEW*)lParam);
+				return 0;
+			}
+	}
+	break;
+	case WM_SIZE:
+		return HANDLE_WM_SIZE(hWnd, wParam, lParam, OnSize);
+	case WM_COMMAND:
+	{
+		if (lParam)
+		{
+			if ((HWND)lParam == m_TBManage.GetHWND() || HIWORD(wParam) == BN_CLICKED)
+				switch (LOWORD(wParam))
+				{
+				case TBCID_LOCATE:
+					OnCmdLocate();
+					return 0;
+				case TBCID_ADD:
+				{
+					RECT rc;
+					m_TBManage.GetRect(TBCID_ADD, &rc);
+					eck::ClientToScreen(m_TBManage.GetHWND(), &rc);
+					const int iRet = TrackPopupMenu(m_hMenuAdd, TPM_NONOTIFY | TPM_RETURNCMD | TPM_VERNEGANIMATION | TPM_RIGHTBUTTON,
+						rc.left, rc.bottom, 0, hWnd, NULL);
+					switch (iRet)
+					{
+					case IDMI_ADDFILE:
+						OnMenuAddFile();
+						return 0;
+					case IDMI_ADDDIR:
+						OnMenuAddDir();
+						return 0;
+					}
+				}
+				return 0;
+				case TBCID_LOADLIST:
+					OnCmdLoadList();
+					return 0;
+				case TBCID_SAVELIST:
+					OnCmdSaveList();
+					return 0;
+				case TBCID_EMPTY:
+					OnCmdEmpty();
+					return 0;
+				case TBCID_MANAGE:
+					OnCmdManage();
+					return 0;
+				}
+			else if ((HWND)lParam == m_EDSearch.GetHWND() || HIWORD(wParam) == EN_CHANGE)
+			{
+				OnENChange();
+				return 0;
+			}
+		}
+		else
+		{
+
+		}
+	}
+	break;
+	case WM_CREATE:
+		return HANDLE_WM_CREATE(hWnd, wParam, lParam, OnCreate);
+	case WM_DESTROY:
+		return HANDLE_WM_DESTROY(hWnd, wParam, lParam, OnDestroy);
+	case WM_DPICHANGED:
+	{
+		auto prc = (RECT*)lParam;
+		UpdateDpi(LOWORD(wParam));
+		SetWindowPos(hWnd, NULL, prc->left, prc->top, prc->right - prc->left, prc->bottom - prc->top,
+			SWP_NOZORDER | SWP_NOACTIVATE);
+	}
+	return 0;
+	case WM_DPICHANGED_BEFOREPARENT:
+		UpdateDpi(eck::GetDpi(hWnd));
+		return 0;
+	}
+	return __super::OnMsg(hWnd, uMsg, wParam, lParam);
 }
 
 void CWndList::PlayListItem(int idx)

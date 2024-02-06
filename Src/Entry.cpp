@@ -2,11 +2,6 @@
 name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
 processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
-#pragma comment(lib,"Shlwapi.lib")
-#pragma comment(lib,"D2d1.lib")
-#pragma comment(lib,"dwrite.lib")
-#pragma comment(lib,"D3D11.lib")
-#pragma comment(lib,"dxguid.lib")
 #if defined _WIN64
 #pragma comment(lib,R"(.\BassLib\bass_x64.lib)")
 #pragma comment(lib,R"(.\BassLib\bass_fx_x64.lib)")
@@ -22,6 +17,7 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #include "CApp.h"
 #include "CWndMain.h"
 #include "CSimpleList.h"
+#include "CWndLrc.h"
 
 #include "eck\Env.h"
 
@@ -34,16 +30,56 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		return 0;
 	}
 
+	auto iEckRet = eck::Init(hInstance);
+	if (iEckRet != eck::InitStatus::Ok)
+	{
+		
+		CApp::ShowError(NULL, (DWORD)iEckRet, CApp::ErrSrc::None,
+			L"eck::Init调用失败", eck::InitStatusToString(iEckRet));
+		return 0;
+	}
+
 	App = new CApp;
 	App->Init(hInstance);
 
 	CWndMain::RegisterWndClass();
 	CWndBK::RegisterWndClass();
 	CWndList::RegisterWndClass();
-	CWndMain Wnd{};
-
-#ifdef _DEBUG
 	CSimpleList::RegisterWndClass();
+	CWndLrc::RegisterWndClass();
+
+	auto pWnd = new CWndMain{};
+	App->m_pWndMain = pWnd;
+
+	auto& opt = App->GetOptionsMgr();
+	opt.vListPath.push_back(L"D:\\test");
+	opt.vListPath.push_back(L"D:\\test - 副本");
+	opt.cyLrcPadding = 10.f;
+	opt.LrcFont.rsFontName = L"微软雅黑";
+	opt.LrcFont.iWeight = 400;
+	opt.LrcFont.fFontSize = 30;
+
+	opt.DtLrcFontMain = {L"微软雅黑", 400, 40.f };
+
+	opt.DtLrcFontMain.argbNormalGra[0] = eck::ColorrefToARGB(eck::Colorref::White);
+	opt.DtLrcFontMain.argbNormalGra[1] = eck::ColorrefToARGB(eck::Colorref::Gray);
+
+	opt.DtLrcFontMain.argbHiLightGra[0] = eck::ColorrefToARGB(eck::Colorref::White);
+	opt.DtLrcFontMain.argbHiLightGra[1] = eck::ColorrefToARGB(eck::Colorref::Red);
+
+	opt.DtLrcFontTranslation = { L"微软雅黑", 400, 30.f };
+
+	opt.DtLrcFontTranslation.argbNormalGra[0] = eck::ColorrefToARGB(eck::Colorref::White);
+	opt.DtLrcFontTranslation.argbNormalGra[1] = eck::ColorrefToARGB(eck::Colorref::Black);
+
+	opt.DtLrcFontTranslation.argbHiLightGra[0] = eck::ColorrefToARGB(eck::Colorref::White);
+	opt.DtLrcFontTranslation.argbHiLightGra[1] = eck::ColorrefToARGB(eck::Colorref::Green);
+
+	opt.DtLrcAlign[0] = DWRITE_TEXT_ALIGNMENT_LEADING;
+	opt.DtLrcAlign[1] = DWRITE_TEXT_ALIGNMENT_TRAILING;
+
+	opt.DtLrcMinSize = { 580,160 };
+#ifdef _DEBUG
 	if(Test())
 		return 0;
 #endif // _DEBUG
@@ -53,18 +89,22 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	const int iDpi = GetDpiForSystem();
 	RECT rc{ 0,0,1000 * iDpi / 96,640 * iDpi / 96 };
 	AdjustWindowRectEx(&rc, dwStyle, FALSE, dwExStyle);
-	Wnd.Create(L"", dwStyle, dwExStyle, 100, 100, rc.right, rc.bottom, NULL, 0);
-
-	
+	pWnd->Create(L"", dwStyle, dwExStyle, 100, 100, rc.right, rc.bottom, NULL, 0);
 
 	MSG msg;
 	while (GetMessageW(&msg, NULL, 0, 0))
 	{
-		TranslateMessage(&msg);
-		DispatchMessageW(&msg);
+		if (!eck::PreTranslateMessage(msg))
+		{
+			TranslateMessage(&msg);
+			DispatchMessageW(&msg);
+		}
 	}
 
+	delete pWnd;
 	delete App;
+	eck::ThreadUnInit();
+	eck::UnInit();
 	OleUninitialize();
 	return (int)msg.wParam;
 }
@@ -76,8 +116,7 @@ BOOL Test()
 	std::vector<Utils::LRCLABEL> v2{};
 	Utils::ParseLrc(LR"()", 0, v, v2);*/
 
-	COptionsMgr::GetInst().vListPath.push_back(L"D:\\test");
-	COptionsMgr::GetInst().vListPath.push_back(L"D:\\test - 副本");
+
 	return FALSE;
 }
 #endif

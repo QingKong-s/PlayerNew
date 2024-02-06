@@ -31,8 +31,8 @@ void CUIButton::Redraw()
 
 BOOL CUIButton::InitElem()
 {
-    SAFE_RELEASE(m_pBrHot);
-    SAFE_RELEASE(m_pBrPressed);
+    eck::SafeRelease(m_pBrHot);
+    eck::SafeRelease(m_pBrPressed);
     auto pDC = m_pBK->m_pDC;
     pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Gray, 0.6f), &m_pBrHot);
     pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Gray, 0.9f), &m_pBrPressed);
@@ -45,18 +45,18 @@ BOOL CUIButton::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
     case WM_MOUSEMOVE:
     {
-        if (PtInRect(&m_rc, GET_PT_LPARAM(lParam)))
+        if (PtInRect(&m_rc, ECK_GET_PT_LPARAM(lParam)))
         {
             if (!m_bHot)
             {
                 m_bHot = TRUE;
-                Redraw(TRUE);
+                CUIElem::Redraw(TRUE);
             }
         }
         else if (m_bHot)
         {
             m_bHot = FALSE;
-            Redraw(TRUE);
+            CUIElem::Redraw(TRUE);
         }
     }
     return FALSE;
@@ -65,17 +65,17 @@ BOOL CUIButton::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
         if (m_bHot)
         {
             m_bHot = FALSE;
-            Redraw(TRUE);
+            CUIElem::Redraw(TRUE);
         }
     }
     return FALSE;
     case WM_LBUTTONDOWN:
     {
-        if (PtInRect(&m_rc, GET_PT_LPARAM(lParam)))
+        if (PtInRect(&m_rc, ECK_GET_PT_LPARAM(lParam)))
         {
             m_bLBtnDown = TRUE;
             SetCapture(m_pBK->m_hWnd);
-            Redraw(TRUE);
+            CUIElem::Redraw(TRUE);
             return TRUE;
         }
     }
@@ -86,18 +86,18 @@ BOOL CUIButton::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
         {
             ReleaseCapture();
             m_bLBtnDown = FALSE;
-            Redraw(TRUE);
+            CUIElem::Redraw(TRUE);
             SendMessageW(m_pBK->GetHWND(), m_pBK->m_uMsgCUIButton, CUIBN_CLICK, (LPARAM)this);
         }
     }
     return FALSE;
     case WM_RBUTTONDOWN:
     {
-        if (PtInRect(&m_rc, GET_PT_LPARAM(lParam)))
+        if (PtInRect(&m_rc, ECK_GET_PT_LPARAM(lParam)))
         {
             m_bRBtnDown = TRUE;
             SetCapture(m_pBK->m_hWnd);
-            Redraw(TRUE);
+            CUIElem::Redraw(TRUE);
             return TRUE;
         }
     }
@@ -108,7 +108,7 @@ BOOL CUIButton::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
         {
             ReleaseCapture();
             m_bRBtnDown = FALSE;
-            Redraw(TRUE);
+            CUIElem::Redraw(TRUE);
             SendMessageW(m_pBK->GetHWND(), m_pBK->m_uMsgCUIButton, CUIBN_RCLICK, (LPARAM)this);
         }
     }
@@ -145,7 +145,7 @@ CUIRoundButton::CUIRoundButton(int iID) :CUIButton(iID)
 
 CUIRoundButton::~CUIRoundButton()
 {
-    SAFE_RELEASE(m_pBrNormal);
+    eck::SafeRelease(m_pBrNormal);
 }
 
 void CUIRoundButton::Redraw()
@@ -172,45 +172,45 @@ BOOL CUIRoundButton::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
     case WM_MOUSEMOVE:
     {
-        POINT pt GET_PT_LPARAM(lParam);
+        POINT pt ECK_GET_PT_LPARAM(lParam);
         if (PtInRect(&m_rc, pt) &&
             powf(m_Ellipse.point.x - pt.x, 2.f) + powf(m_Ellipse.point.y - pt.y, 2.f) <= powf(m_Ellipse.radiusX, 2.f))
         {
             if (!m_bHot)
             {
                 m_bHot = TRUE;
-                CUIButton::Redraw(TRUE);
+                CUIButton::CUIElem::Redraw(TRUE);
             }
         }
         else if (m_bHot)
         {
             m_bHot = FALSE;
-            CUIButton::Redraw(TRUE);
+            CUIButton::CUIElem::Redraw(TRUE);
         }
 	}
 	return FALSE;
 	case WM_LBUTTONDOWN:
 	{
-        POINT pt GET_PT_LPARAM(lParam);
+        POINT pt ECK_GET_PT_LPARAM(lParam);
 		if (PtInRect(&m_rc, pt) &&
 			powf(m_Ellipse.point.x - pt.x, 2.f) + powf(m_Ellipse.point.y - pt.y, 2.f) <= powf(m_Ellipse.radiusX, 2.f))
 		{
 			m_bLBtnDown = TRUE;
 			SetCapture(m_pBK->m_hWnd);
-			CUIButton::Redraw(TRUE);
+			CUIButton::CUIElem::Redraw(TRUE);
 			return TRUE;
 		}
 	}
     return FALSE;
     case WM_RBUTTONDOWN:
     {
-        POINT pt GET_PT_LPARAM(lParam);
+        POINT pt ECK_GET_PT_LPARAM(lParam);
         if (PtInRect(&m_rc, pt) &&
             powf(m_Ellipse.point.x - pt.x, 2.f) + powf(m_Ellipse.point.y - pt.y, 2.f) <= powf(m_Ellipse.radiusX, 2.f))
         {
             m_bRBtnDown = TRUE;
             SetCapture(m_pBK->m_hWnd);
-            CUIButton::Redraw(TRUE);
+            CUIButton::CUIElem::Redraw(TRUE);
             return TRUE;
         }
     }
@@ -241,7 +241,7 @@ LRESULT CUIRoundButton::OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lP
 BOOL CUIRoundButton::InitElem()
 {
     CUIButton::InitElem();
-    SAFE_RELEASE(m_pBrNormal);
+    eck::SafeRelease(m_pBrNormal);
     auto pDC = m_pBK->m_pDC;
     pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Gray, 0.4f), &m_pBrNormal);
     return TRUE;

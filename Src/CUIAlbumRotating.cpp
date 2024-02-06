@@ -133,7 +133,7 @@ LRESULT CUIAlbumRotating::OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM 
         {
             m_fAngle = 0.f;
             UpdateAlbumBrush();
-            Redraw(TRUE);
+            CUIElem::Redraw(TRUE);
         }
     }
     break;
@@ -143,8 +143,8 @@ LRESULT CUIAlbumRotating::OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM 
 
 BOOL CUIAlbumRotating::InitElem()
 {
-    SAFE_RELEASE(m_pBrUV);
-    SAFE_RELEASE(m_pBrUV2);
+    eck::SafeRelease(m_pBrUV);
+    eck::SafeRelease(m_pBrUV2);
     auto pDC = m_pBK->m_pDC;
     pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &m_pBrUV2);
     pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.6f), &m_pBrUV);

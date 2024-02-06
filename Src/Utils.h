@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include "eck\Utility.h"
 #include "eck\CFile.h"
+#include "eck\CRefStr.h"
+#include "eck\CMemWalker.h"
 
 #include <algorithm>
 
@@ -8,11 +10,10 @@
 #include <wincodec.h>
 
 using eck::PCVOID;
+using eck::PCBYTE;
 using eck::BITBOOL;
 
 #define PNInline __forceinline
-
-#define SAFE_RELEASE(p) if (p) { p->Release(); p = NULL; }
 
 #define UTILS_NAMESPACE_BEGIN namespace Utils {
 #define UTILS_NAMESPACE_END }
@@ -77,19 +78,20 @@ struct LRCINFO
 {
 	PWSTR pszLrc = NULL;// 歌词
     PWSTR pszTranslation = NULL;// 翻译，指向pszLrc的中间，可能为NULL
-    float fTime = 0.f;
     int cchTotal = 0;
-    int cchLrc = 0;
+	int cchLrc = 0;
+	float fTime = 0.f;
+	float fDuration = 0.f;
 
-	LRCINFO(PWSTR pszLrc, PWSTR pszTranslation, float fTime, int cchTotal, int cchLrc)
-		:pszLrc(pszLrc), pszTranslation(pszTranslation), fTime(fTime), cchTotal(cchTotal), cchLrc(cchLrc)
+	LRCINFO() = default;
+	LRCINFO(PWSTR pszLrc_, PWSTR pszTranslation_, int cchTotal_, int cchLrc_, float fTime_, float fDuration_)
+		:pszLrc(pszLrc_), pszTranslation(pszTranslation_), cchTotal(cchTotal_), cchLrc(cchLrc_)
+		, fTime(fTime_), fDuration(fDuration_) {}
+
+	LRCINFO(const LRCINFO& li)
 	{
-	}
-
-    LRCINFO(const LRCINFO& li)
-    {
-        memcpy(this, &li, sizeof(LRCINFO));
-        pszLrc = (PWSTR)malloc(eck::Cch2Cb(cchTotal));
+		memcpy(this, &li, sizeof(LRCINFO));
+		pszLrc = (PWSTR)malloc(eck::Cch2Cb(cchTotal));
         EckAssert(pszLrc);
         pszTranslation = pszLrc + cchLrc;
         wcscpy(pszLrc, li.pszLrc);
@@ -98,8 +100,7 @@ struct LRCINFO
     LRCINFO(LRCINFO&& li) noexcept
     {
         memcpy(this, &li, sizeof(LRCINFO));
-		li.pszLrc = NULL;
-		li.pszTranslation = NULL;
+        ZeroMemory(&li, sizeof(LRCINFO));
     }
 
     LRCINFO& operator=(const LRCINFO& li)
@@ -117,8 +118,7 @@ struct LRCINFO
     {
         free(pszLrc);
 		memcpy(this, &li, sizeof(LRCINFO));
-		li.pszLrc = NULL;
-		li.pszTranslation = NULL;
+        ZeroMemory(&li, sizeof(LRCINFO));
 		return *this;
 	}
 
@@ -150,7 +150,7 @@ struct LRCLABEL
 /// <param name="iDefTextEncoding">默认文本编码</param>
 /// <returns></returns>
 BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result,
-    std::vector<LRCLABEL>& Label, LrcEncoding uTextEncoding = LrcEncoding::Auto);
+    std::vector<LRCLABEL>& Label, LrcEncoding uTextEncoding = LrcEncoding::Auto, float fTotalTime = 0.f);
 #pragma endregion
 
 enum
