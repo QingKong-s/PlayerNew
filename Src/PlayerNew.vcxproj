@@ -261,6 +261,8 @@
     <ResourceCompile Include="PlayerNew.rc" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\Tools\CompileCount" />
+    <None Include="..\Tools\CompileTime" />
     <None Include=".\Tools\CompileCount" />
     <None Include=".\Tools\CompileTime" />
   </ItemGroup>

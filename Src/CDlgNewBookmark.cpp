@@ -65,90 +65,34 @@ void CDlgNewBookmark::UpdateDpi(int iDpi)
 	EndDeferWindowPos(hDwp);
 }
 
-LRESULT CDlgNewBookmark::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+BOOL CDlgNewBookmark::OnInitDialog(HWND hDlg, HWND hFocus, LPARAM lParam)
 {
-	auto p = (CDlgNewBookmark*)GetWindowLongPtrW(hWnd, eck::CDialogNew::OcbPtr1);
-	switch (uMsg)
-	{
-	case WM_INITDIALOG:
-	{
-		p = (CDlgNewBookmark*)lParam;
-		SetWindowLongPtrW(hWnd, eck::CDialogNew::OcbPtr1, (LONG_PTR)p);
-		p->OnInitDialog(hWnd);
-	}
-	return FALSE;
-
-	case WM_CLOSE:
-		PostQuitMessage(0);
-		return 0;
-
-	case WM_DESTROY:
-		return HANDLE_WM_DESTROY(hWnd, wParam, lParam, p->OnDestroy);
-
-	case WM_DPICHANGED:
-		return ECK_HANDLE_WM_DPICHANGED(hWnd, wParam, lParam, p->OnDpiChanged);
-
-	case WM_COMMAND:
-	{
-		if (lParam && HIWORD(wParam) == BN_CLICKED)
-			switch (LOWORD(wParam))
-			{
-			case IDOK:
-				p->OnCmdOk();
-				return 0;
-			case IDCANCEL:
-				p->OnCmdCancel();
-				return 0;
-			}
-	}
-	break;
-	}
-
-	return DefDlgProcW(hWnd, uMsg, wParam, lParam);
-}
-
-void CDlgNewBookmark::OnInitDialog(HWND hWnd)
-{
-	UpdateDpiInit(eck::GetDpi(hWnd));
+	UpdateDpiInit(eck::GetDpi(hDlg));
 	m_hFont = eck::EzFont(L"微软雅黑", 9);
 	RECT rc;
-	GetClientRect(hWnd, &rc);
+	GetClientRect(hDlg, &rc);
 
 	const int xInput = m_Ds.iMargin + m_Ds.iGap + m_Ds.cxLabel;
 	const int yLine2 = m_Ds.iMargin + m_Ds.iGap + m_Ds.cyComm;
 	const int yBT = yLine2 + m_Ds.iGap * 2 + m_Ds.cyComm;
-	m_LAName.Create(L"名称：", WS_VISIBLE, 0, m_Ds.iMargin, m_Ds.iMargin, m_Ds.cxLabel, m_Ds.cyComm, hWnd, IDC_LA_TIP1);
-	m_EDName.Create(L"新书签", WS_GROUP | WS_TABSTOP | WS_VISIBLE, WS_EX_CLIENTEDGE, xInput, m_Ds.iMargin, m_Ds.cxInput, m_Ds.cyComm, hWnd, IDC_ED_NAME);
+	m_LAName.Create(L"名称：", WS_VISIBLE, 0, m_Ds.iMargin, m_Ds.iMargin, m_Ds.cxLabel, m_Ds.cyComm, hDlg, IDC_LA_TIP1);
+	m_EDName.Create(L"新书签", WS_GROUP | WS_TABSTOP | WS_VISIBLE, WS_EX_CLIENTEDGE, xInput, m_Ds.iMargin, m_Ds.cxInput, m_Ds.cyComm, hDlg, IDC_ED_NAME);
 
-	m_LAColor.Create(L"颜色：", WS_VISIBLE, 0, m_Ds.iMargin, yLine2, m_Ds.cxLabel, m_Ds.cyComm, hWnd, IDC_LA_TIP2);
-	m_CLPColor.Create(L"新书签", WS_TABSTOP | WS_VISIBLE, 0, xInput, yLine2, m_Ds.cxInput, m_Ds.cyComm, hWnd, IDC_CLP_CLR);
+	m_LAColor.Create(L"颜色：", WS_VISIBLE, 0, m_Ds.iMargin, yLine2, m_Ds.cxLabel, m_Ds.cyComm, hDlg, IDC_LA_TIP2);
+	m_CLPColor.Create(L"新书签", WS_TABSTOP | WS_VISIBLE, 0, xInput, yLine2, m_Ds.cxInput, m_Ds.cyComm, hDlg, IDC_CLP_CLR);
 	m_CLPColor.SetItemHeight(m_Ds.cyComm);
 
 	const int xBTCancel = rc.right - m_Ds.iMargin - m_Ds.cxBT;
 	m_BTOk.Create(L"确定", WS_GROUP | WS_TABSTOP | WS_VISIBLE | BS_DEFPUSHBUTTON, 0,
-		xBTCancel - m_Ds.iGap - m_Ds.cxBT, yBT, m_Ds.cxBT, m_Ds.cyComm, hWnd, IDOK);
-	m_BTCancel.Create(L"取消", WS_TABSTOP | WS_VISIBLE, 0, xBTCancel, yBT, m_Ds.cxBT, m_Ds.cyComm, hWnd, IDCANCEL);
+		xBTCancel - m_Ds.iGap - m_Ds.cxBT, yBT, m_Ds.cxBT, m_Ds.cyComm, hDlg, IDOK);
+	m_BTCancel.Create(L"取消", WS_TABSTOP | WS_VISIBLE, 0, xBTCancel, yBT, m_Ds.cxBT, m_Ds.cyComm, hDlg, IDCANCEL);
 
-	eck::SetFontForWndAndCtrl(hWnd, m_hFont);
+	eck::SetFontForWndAndCtrl(hDlg, m_hFont);
+	SetFocus(m_BTOk.HWnd);
+	return FALSE;
 }
 
-void CDlgNewBookmark::OnDestroy(HWND hWnd)
-{
-	DeleteObject(m_hFont);
-}
-
-void CDlgNewBookmark::OnDpiChanged(HWND hWnd, int xDpi, int yDpi, RECT* pRect)
-{
-	UpdateDpi(xDpi);
-	SetWindowPos(hWnd, NULL,
-		pRect->left,
-		pRect->top,
-		pRect->right - pRect->left,
-		pRect->bottom - pRect->top,
-		SWP_NOZORDER | SWP_NOACTIVATE);
-}
-
-void CDlgNewBookmark::OnCmdOk()
+void CDlgNewBookmark::OnOk(HWND hCtrl)
 {
 	m_pParam->rsName = m_EDName.GetText();
 	if (!m_pParam->rsName.Size())
@@ -157,61 +101,41 @@ void CDlgNewBookmark::OnCmdOk()
 		return;
 	}
 	m_pParam->cr = m_CLPColor.GetColor();
-	m_bRet = TRUE;
-	PostQuitMessage(0);
+	EndDlg(TRUE);
 }
 
-void CDlgNewBookmark::OnCmdCancel()
+LRESULT CDlgNewBookmark::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	PostQuitMessage(0);
+	switch (uMsg)
+	{
+	case WM_DESTROY:
+		DeleteObject(m_hFont);
+		break;
+
+	case WM_DPICHANGED:
+	{
+		const auto prc = (RECT*)lParam;
+		UpdateDpi(LOWORD(wParam));
+		SetWindowPos(hWnd, NULL,
+			prc->left,
+			prc->top,
+			prc->right - prc->left,
+			prc->bottom - prc->top,
+			SWP_NOZORDER | SWP_NOACTIVATE);
+	}
+	return 0;
+	}
+
+	return __super::OnMsg(hWnd, uMsg, wParam, lParam);
 }
 
 INT_PTR CDlgNewBookmark::DlgBox(HWND hParent, void* pData)
 {
-	const HWND hOwner = PreModal(hParent);
-	BOOL bNeedEnableOwner;
-	if (hOwner && hOwner != GetDesktopWindow() && IsWindowEnabled(hOwner))
-	{
-		bNeedEnableOwner = TRUE;
-		EnableWindow(hOwner, FALSE);
-	}
-	else
-		bNeedEnableOwner = FALSE;
-
 	m_pParam = (PARAM*)pData;
-	constexpr PCWSTR c_szTile[]{ L"读入列表",L"保存列表" };
-	RECT rc;
-	if (hParent)
-		GetWindowRect(hParent, &rc);
-	else
-		GetWindowRect(GetDesktopWindow(), &rc);
-
 	const int iDpi = eck::GetDpi(hParent);
 	const int cx = eck::DpiScale(352, iDpi);
 	const int cy = eck::DpiScale(170, iDpi);
 
-	m_hWnd = CreateWindowExW(0, eck::WCN_DLG, L"添加书签", WS_CAPTION | WS_SYSMENU | WS_VISIBLE,
-		rc.left + (rc.right - rc.left - cx) / 2, rc.top + (rc.bottom - rc.top - cy) / 2, cx, cy,
-		hOwner, NULL, eck::g_hInstance, pData);
-	eck::SetWindowProc(m_hWnd, WndProc);
-	SendMsg(WM_INITDIALOG, 0, (LPARAM)this);
-
-	MSG msg;
-	while (GetMessageW(&msg, NULL, 0, 0))
-	{
-		if (!IsDialogMessageW(m_hWnd, &msg))
-		{
-			TranslateMessage(&msg);
-			DispatchMessageW(&msg);
-		}
-	}
-
-	if (bNeedEnableOwner)
-		EnableWindow(hOwner, TRUE);
-	if (hParent)
-		SetActiveWindow(hParent);
-	PostModal();
-	Destroy();
-
-	return m_bRet;
+	return IntCreateModalDlg(0, eck::WCN_DLG, L"添加书签", WS_CAPTION | WS_SYSMENU | WS_VISIBLE,
+		0, 0, cx, cy, hParent, NULL, eck::g_hInstance, NULL, eck::DLGNCF_CENTERPARENT);
 }

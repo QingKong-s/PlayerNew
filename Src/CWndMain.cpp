@@ -325,13 +325,13 @@ void CWndMain::InitBK()
 	plrc->Create(NULL, Dui::DES_VISIBLE, 0,
 		0, 0, 800, 730, NULL, &m_BK);
 
-	auto ppc = new CUIPlayingCtrl{};
-	ppc->Create(NULL, Dui::DES_VISIBLE, 0,
-		70, 800, 800, 80, NULL, &m_BK);
-
 	auto ppb = new CUIProgressBar{};
 	ppb->Create(NULL, Dui::DES_VISIBLE, 0,
 				70, 730, 800, 70, NULL, &m_BK);
+
+	auto ppc = new CUIPlayingCtrl{};
+	ppc->Create(NULL, Dui::DES_VISIBLE, 0,
+		70, 800, 800, 80, NULL, &m_BK);
 
 	//auto pw = new CUIWaves;
 	//m_BK.AddElem(pw);

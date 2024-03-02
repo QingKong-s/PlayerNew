@@ -32,7 +32,6 @@ private:
 	};
 
 	PARAM* m_pParam = NULL;
-	BOOL m_bRet = FALSE;
 
 	HFONT m_hFont = NULL;
 
@@ -51,17 +50,11 @@ private:
 
 	void UpdateDpi(int iDpi);
 
-	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	BOOL OnInitDialog(HWND hDlg, HWND hFocus, LPARAM lParam) override;
 
-	void OnInitDialog(HWND hWnd);
-
-	void OnDestroy(HWND hWnd);
-
-	void OnDpiChanged(HWND hWnd, int xDpi, int yDpi, RECT* pRect);
-
-	void OnCmdOk();
-
-	void OnCmdCancel();
+	void OnOk(HWND hCtrl) override;
 public:
+	LRESULT OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) override;
+
 	INT_PTR DlgBox(HWND hParent, void* pData = NULL) override;
 };

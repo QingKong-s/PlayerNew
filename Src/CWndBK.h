@@ -165,6 +165,9 @@ private:
 		ECK_DS_ENTRY(cxPCBTBig, 52)
 		ECK_DS_ENTRY(cyPCBTBig, 52)
 		ECK_DS_ENTRY(iPCBTGap, 8)
+		ECK_DS_ENTRY(cyVolTrack, 14)
+		ECK_DS_ENTRY(cyVolParent, 40)
+		ECK_DS_ENTRY(cxVolTrack, 170)
 		;
 	ECK_DS_END_VAR(m_Ds);
 
@@ -234,6 +237,8 @@ public:
 	{
 		return Size * (T)m_iDpi / (T)96;
 	}
+
+	PNInline const auto& GetDpiSize() const { return m_Ds; }
 };
 
 #ifndef NDEBUG
@@ -621,6 +626,23 @@ public:
 	LRESULT OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 };
 
+class CUIVolTrackBar final :public CUIElem
+{
+	friend class CUIPlayingCtrl;
+private:
+	Dui::CTrackBar m_TrackBar{};
+	ID2D1SolidColorBrush* m_pBrush = NULL;
+public:
+	BOOL Create(PCWSTR pszText, DWORD dwStyle, DWORD dwExStyle,
+		int x, int y, int cx, int cy, CElem* pParent, Dui::CDuiWnd* pWnd, int iId = 0, PCVOID pData = NULL) override
+	{
+		dwStyle |= Dui::DES_TRANSPARENT;
+		return IntCreate(pszText, dwStyle, dwExStyle, x, y, cx, cy, pParent, pWnd, iId, pData);
+	}
+
+	LRESULT OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
+};
+
 class CUIPlayingCtrl final :public CUIElem
 {
 private:
@@ -633,6 +655,7 @@ private:
 	Dui::CCircleButton m_BTStop{};
 	Dui::CCircleButton m_BTLrc{};
 	Dui::CCircleButton m_BTAbout{};
+	CUIVolTrackBar m_VolTB{};
 public:
 	BOOL Create(PCWSTR pszText, DWORD dwStyle, DWORD dwExStyle,
 		int x, int y, int cx, int cy, CElem* pParent, Dui::CDuiWnd* pWnd, int iId = 0, PCVOID pData = NULL) override
@@ -659,22 +682,6 @@ public:
 	LRESULT OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 
 	void OnTimer(UINT uTimerID) override;
-};
-
-class CUIVolTrackBar final :public CUIElem
-{
-private:
-	Dui::CTrackBar m_TrackBar{};
-	ID2D1SolidColorBrush* m_pBrush = NULL;
-public:
-	BOOL Create(PCWSTR pszText, DWORD dwStyle, DWORD dwExStyle,
-		int x, int y, int cx, int cy, CElem* pParent, Dui::CDuiWnd* pWnd, int iId = 0, PCVOID pData = NULL) override
-	{
-		dwStyle |= (Dui::DES_TRANSPARENT | Dui::DES_BLURBKG);
-		return IntCreate(pszText, dwStyle, dwExStyle, x, y, cx, cy, pParent, pWnd, iId, pData);
-	}
-
-	LRESULT OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 };
 
 //// 工具条按钮状态

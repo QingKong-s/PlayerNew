@@ -455,7 +455,6 @@ void ParseLrc_ProcTimeLabel(std::vector<LRCINFO>& Result, std::vector<LRCLABEL>&
 #pragma warning (push)
 #pragma warning (disable: 6387)// 可能是NULL
 #pragma warning (disable: 6053)// 可能未添加终止NULL
-	PWSTR pTemp;
 	int M, S, MS;
 	float fTime;
 	EckCounter(TimeLabel.size(), i)
@@ -479,12 +478,16 @@ void ParseLrc_ProcTimeLabel(std::vector<LRCINFO>& Result, std::vector<LRCLABEL>&
 		if (fTime < 0)
 			continue;
 
-		if (cchLrc)
+		// 删首尾空
+		const auto pos = eck::RLTrimStr(pszLrc, cchLrc);
+		const auto cchReal = pos.second - pos.first;
+		if (cchReal)
 		{
-			pTemp = (PWSTR)malloc(eck::Cch2Cb(cchLrc));
-			Result.emplace_back(pTemp, nullptr, cchLrc, cchLrc, fTime, 0.f);
-			wcsncpy(pTemp, pszLrc, cchLrc);
-			*(pTemp + cchLrc) = L'\0';
+			const auto pTemp = (PWSTR)malloc(eck::Cch2Cb(cchReal));
+			EckCheckMem(pTemp);
+			Result.emplace_back(pTemp, nullptr, cchReal, cchReal, fTime, 0.f);
+			wcsncpy(pTemp, pos.first, cchReal);
+			*(pTemp + cchReal) = L'\0';
 		}
 		else
 			Result.emplace_back(nullptr, nullptr, 0, 0, fTime, 0.f);

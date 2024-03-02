@@ -23,6 +23,10 @@ LRESULT CUIPlayingCtrl::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
         xLeft += (cxBT + iGap);
         m_BTPlayOpt.SetPos(xLeft, yTop);
 
+        POINT pt{ xLeft, yTop - GetBk()->GetDpiSize().cyVolParent };
+        ElemToClient(pt);
+        m_VolTB.SetPos(pt.x, pt.y);
+
         xLeft += (cxBT + iGap);
         m_BTRepeatMode.SetPos(xLeft, yTop);
 
@@ -65,6 +69,10 @@ LRESULT CUIPlayingCtrl::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
         constexpr auto uStyle = Dui::DES_VISIBLE | Dui::DES_TRANSPARENT;
         const int cxBT = pBk->m_Ds.cxPCBT;
         const int cyBT = pBk->m_Ds.cyPCBT;
+
+        m_VolTB.Create(NULL, 0, 0, 
+			0, 0, pBk->GetDpiSize().cxVolTrack, pBk->GetDpiSize().cyVolParent, NULL, GetWnd());
+
         m_BTOptions.Create(NULL, uStyle, 0,
 			0, 0, cxBT, cyBT, this, GetWnd(), IDE_BT_OPT);
         m_BTPlayOpt.Create(NULL, uStyle, 0,
@@ -119,6 +127,20 @@ LRESULT CUIPlayingCtrl::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
         pTheme->DeRef();
     }
 	break;
+
+    case WM_NOTIFY:
+    {
+        const auto pElem = (Dui::CElem*)wParam;
+		if (pElem == &m_BTPlayOpt && ((Dui::DUINMHDR*)lParam)->uCode == Dui::EE_COMMAND)
+        {
+            if (!m_VolTB.IsVisible())
+                m_VolTB.SetVisible(TRUE);
+            m_VolTB.m_TrackBar.SetFocus();
+            m_VolTB.m_TrackBar.SetPos(App->GetPlayer().GetBass().GetVolume() * 100.f);
+            return TRUE;
+        }
+    }
+    break;
 
     case UIEE_ONPLAYINGCTRL:
     {

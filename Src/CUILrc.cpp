@@ -53,6 +53,10 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 	return 0;
 
+    case WM_LBUTTONDOWN:
+        SetFocus();
+        return 0;
+
     case UIEE_ONPLAYINGCTRL:
     {
         if (wParam == PCT_PLAYNEW)

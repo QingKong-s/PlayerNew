@@ -9,7 +9,7 @@
 #include "eck\CBk.h"
 
 
-class CDlgListFile :public eck::CDialogNew
+class CDlgListFile final :public eck::CDialogNew
 {
 public:
 	enum class Type

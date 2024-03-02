@@ -3,6 +3,7 @@
 #include "eck\CFile.h"
 #include "eck\CRefStr.h"
 #include "eck\CMemWalker.h"
+#include "eck\CException.h"
 
 #include <algorithm>
 

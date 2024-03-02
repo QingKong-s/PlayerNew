@@ -7,13 +7,10 @@ LRESULT CUIVolTrackBar::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_PAINT:
 	{
 		Dui::ELEMPAINTSTRU ps;
-		BeginPaint(ps, wParam, lParam, Dui::EBPF_DO_NOT_FILLBK);
+		BeginPaint(ps, wParam, lParam);
 
 		m_pBrush->SetColor(D2D1::ColorF(D2D1::ColorF::White, 0.6f));
 		m_pDC->FillRectangle(GetViewRectF(), m_pBrush);
-		m_pDC->Flush();
-		eck::BlurD2dDC(m_pDC, m_pWnd->GetD2D().GetBitmap(), m_pWnd->m_pBmpBlurCache,
-			ps.rcfClip, {}, 10.f);
 
 		m_pBrush->SetColor(D2D1::ColorF(D2D1::ColorF::Gray, 0.9f));
 		m_pDC->DrawRectangle(GetViewRectF(), m_pBrush);
@@ -28,7 +25,7 @@ LRESULT CUIVolTrackBar::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			switch (((Dui::DUINMHDR*)lParam)->uCode)
 			{
-			case Dui::ENM_KILLFOCUS:
+			case Dui::EE_KILLFOCUS:
 				SetVisible(FALSE);
 			}
 		}
@@ -43,7 +40,7 @@ LRESULT CUIVolTrackBar::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			0, 0, GetViewWidth(), GetViewHeight(),
 			this, GetWnd(), IDE_TB_VOL);
 		m_TrackBar.SetRange(0.f, 200.f);
-		m_TrackBar.SetTrackSize(40);
+		m_TrackBar.SetTrackSize(GetBk()->GetDpiSize().cyVolTrack);
 		m_TrackBar.SetGenEventWhenDragging(TRUE);
 		m_TrackBar.SetFocus();
 
