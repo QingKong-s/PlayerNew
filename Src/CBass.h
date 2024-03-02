@@ -23,7 +23,7 @@ private:
 
 	MusicType m_eMusicType = MusicType::Invalid;
 	DWORD m_hStream = NULL;
-
+	float m_fDefSpeed = 0.f;
 public:
 	static int GetError(PCWSTR* ppszErr = NULL);
 
@@ -75,17 +75,41 @@ public:
 
 	PNInline BOOL SetVolume(float fVolume) const
 	{
-		return BASS_ChannelSetAttribute(m_hStream, BASS_ATTRIB_VOL, fVolume);
+		return SetAttr(BASS_ATTRIB_VOL, fVolume);
+	}
+
+	PNInline float GetVolume() const
+	{
+		return GetAttr(BASS_ATTRIB_VOL);
 	}
 
 	PNInline BOOL SetPan(float fPan) const
 	{
-		return BASS_ChannelSetAttribute(m_hStream, BASS_ATTRIB_PAN, fPan);
+		return SetAttr(BASS_ATTRIB_PAN, fPan);
+	}
+
+	PNInline BOOL SetSpeed(float fScale) const
+	{
+		return SetAttr(BASS_ATTRIB_FREQ, fScale * m_fDefSpeed);
 	}
 
 	PNInline BOOL SetPosition(double fTime) const
 	{
 		return BASS_ChannelSetPosition(m_hStream, BASS_ChannelSeconds2Bytes(m_hStream, fTime), BASS_POS_BYTE);
+	}
+
+	PNInline BOOL SetAttr(DWORD dwAttr, float f) const
+	{
+		return BASS_ChannelSetAttribute(m_hStream, dwAttr, f);
+	}
+
+	PNInline float GetAttr(DWORD dwAttr, BOOL* pb = NULL) const
+	{
+		float f;
+		const auto b = BASS_ChannelGetAttribute(m_hStream, dwAttr, &f);
+		if (pb)
+			*pb = b;
+		return f;
 	}
 
 	PNInline double GetPosition() const

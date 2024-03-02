@@ -1,17 +1,17 @@
 ﻿#include "CDlgListFile.h"
 
-void CDlgListFile::OnInitDialog(HWND hWnd)
+BOOL CDlgListFile::OnInitDialog(HWND hDlg, HWND hFocus, LPARAM lParam)
 {
-	UpdateDpiInit(eck::GetDpi(hWnd));
+	UpdateDpiInit(eck::GetDpi(hDlg));
 	m_hFont = eck::EzFont(L"微软雅黑", 9, 400, FALSE, FALSE, FALSE, m_hWnd);
 	m_EDFile.Create(NULL, WS_TABSTOP | WS_GROUP | WS_CHILD | WS_VISIBLE |
 		ES_AUTOHSCROLL | (m_pParam->uType == Type::Load ? ES_READONLY : 0), 0,
-		m_Ds.iMargin, m_Ds.iMargin, 0, 0, hWnd, IDC_ED_FILE);
+		m_Ds.iMargin, m_Ds.iMargin, 0, 0, hDlg, IDC_ED_FILE);
 	m_EDFile.SetFrameType(1);
 	m_EDFile.SetClr(2, GetSysColor(COLOR_WINDOW));
 
 	m_LVFile.Create(NULL, WS_TABSTOP | WS_CHILD | LVS_REPORT | LVS_SHOWSELALWAYS | LVS_SINGLESEL, 0,
-		m_Ds.iMargin, m_Ds.iMargin + m_Ds.cyEdit + m_Ds.iGap, 0, 0, hWnd, IDC_LV_FILE);
+		m_Ds.iMargin, m_Ds.iMargin + m_Ds.cyEdit + m_Ds.iGap, 0, 0, hDlg, IDC_LV_FILE);
 	constexpr DWORD dwExLVStyle = LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER;
 	eck::LVSetItemHeight(m_LVFile.HWnd, m_Ds.cyLVItem);
 	m_LVFile.SetLVExtendStyle(dwExLVStyle);
@@ -71,16 +71,22 @@ void CDlgListFile::OnInitDialog(HWND hWnd)
 	m_LVFile.Show(SW_SHOWNOACTIVATE);
 
 	m_BTOk.Create(L"确定", WS_TABSTOP | WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 0,
-		0, 0, m_Ds.cxBtn, m_Ds.cyBtn, hWnd, IDOK);
+		0, 0, m_Ds.cxBtn, m_Ds.cyBtn, hDlg, IDOK);
+	m_BTOk.SetTextImageShowing(TRUE);
+	m_BTOk.SetImage(m_hiTick, IMAGE_ICON);
 	m_BTCancel.Create(L"取消", WS_TABSTOP | WS_CHILD | WS_VISIBLE, 0,
-		0, 0, m_Ds.cxBtn, m_Ds.cyBtn, hWnd, IDCANCEL);
-	eck::SetFontForWndAndCtrl(hWnd, m_hFont);
+		0, 0, m_Ds.cxBtn, m_Ds.cyBtn, hDlg, IDCANCEL);
+	m_BTCancel.SetImage(m_hiCross, IMAGE_ICON);
+	m_BTCancel.SetTextImageShowing(TRUE);
+
+	eck::SetFontForWndAndCtrl(hDlg, m_hFont);
 
 	RECT rc;
-	GetClientRect(hWnd, &rc);
+	GetClientRect(hDlg, &rc);
 	SendMsg(WM_SIZE, 0, MAKELPARAM(rc.right, rc.bottom));
 
 	SetFocus(m_LVFile.GetHWND());
+	return FALSE;
 }
 
 void CDlgListFile::OnSize(HWND hWnd, UINT uState, int cx, int cy)
@@ -108,6 +114,8 @@ void CDlgListFile::OnSize(HWND hWnd, UINT uState, int cx, int cy)
 void CDlgListFile::OnDestroy(HWND hWnd)
 {
 	DeleteObject(m_hFont);
+	DestroyIcon(m_hiTick);
+	DestroyIcon(m_hiCross);
 }
 
 void CDlgListFile::OnDpiChanged(HWND hWnd, int xDpi, int yDpi, RECT* pRect)
@@ -121,7 +129,7 @@ void CDlgListFile::OnDpiChanged(HWND hWnd, int xDpi, int yDpi, RECT* pRect)
 		SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
-void CDlgListFile::OnCmdOk()
+void CDlgListFile::OnOk(HWND hCtrl)
 {
 	m_pParam->rsRetFile = m_EDFile.GetText();
 	if (!m_pParam->rsRetFile.Size())
@@ -129,14 +137,7 @@ void CDlgListFile::OnCmdOk()
 		Utils::MsgBox(L"未选定的文件", NULL, L"错误", 1, (HICON)TD_ERROR_ICON, m_hWnd);
 		return;
 	}
-	m_bRet = TRUE;
-	PostQuitMessage(0);
-}
-
-void CDlgListFile::OnCmdCancel()
-{
-	m_bRet = FALSE;
-	PostQuitMessage(0);
+	EndDlg(TRUE);
 }
 
 void CDlgListFile::OnLVNItemChanged(NMLISTVIEW* pnmlv)
@@ -173,6 +174,20 @@ void CDlgListFile::UpdateDpiInit(int iDpi)
 {
 	m_iDpi = iDpi;
 	eck::UpdateDpiSize(m_Ds, iDpi);
+
+	DestroyIcon(m_hiTick);
+	IWICBitmap* pBmp = App->ScaleImageForButton(IIDX_Tick, iDpi);
+	m_hiTick = eck::CreateHICON(pBmp);
+	pBmp->Release();
+	if (m_BTOk.IsValid())
+		m_BTOk.SetImage(m_hiTick, IMAGE_ICON);
+
+	DestroyIcon(m_hiCross);
+	pBmp = App->ScaleImageForButton(IIDX_Cross, iDpi);
+	m_hiCross = eck::CreateHICON(pBmp);
+	pBmp->Release();
+	if (m_BTCancel.IsValid())
+		m_BTCancel.SetImage(m_hiCross, IMAGE_ICON);
 }
 
 void CDlgListFile::UpdateDpi(int iDpi)
@@ -220,80 +235,24 @@ LRESULT CDlgListFile::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_SIZE:
 		return HANDLE_WM_SIZE(hWnd, wParam, lParam, OnSize);
 
-	case WM_INITDIALOG:
-		OnInitDialog(hWnd);
-		return FALSE;
-
 	case WM_DESTROY:
 		return HANDLE_WM_DESTROY(hWnd, wParam, lParam, OnDestroy);
 
 	case WM_DPICHANGED:
 		return ECK_HANDLE_WM_DPICHANGED(hWnd, wParam, lParam, OnDpiChanged);
-
-	case WM_COMMAND:
-	{
-		if (lParam && HIWORD(wParam) == BN_CLICKED)
-			switch (LOWORD(wParam))
-			{
-			case IDOK:
-				OnCmdOk();
-				return 0;
-			case IDCANCEL:
-				OnCmdCancel();
-				return 0;
-			}
-	}
-	break;
 	}
 
-	return DefDlgProcW(hWnd, uMsg, wParam, lParam);
+	return __super::OnMsg(hWnd, uMsg, wParam, lParam);
 }
 
 INT_PTR CDlgListFile::DlgBox(HWND hParent, void* pData)
 {
-	const HWND hOwner = PreModal(hParent);
-	BOOL bNeedEnableOwner;
-	if (hOwner && hOwner != GetDesktopWindow() && IsWindowEnabled(hOwner))
-	{
-		bNeedEnableOwner = TRUE;
-		EnableWindow(hOwner, FALSE);
-	}
-	else
-		bNeedEnableOwner = FALSE;
-
 	m_pParam = (PARAM*)pData;
 	constexpr PCWSTR c_szTile[]{ L"读入列表",L"保存列表" };
-	RECT rc;
-	if (hParent)
-		GetWindowRect(hParent, &rc);
-	else
-		GetWindowRect(GetDesktopWindow(), &rc);
-
 	const int iDpi = eck::GetDpi(hParent);
 	const int cx = eck::DpiScale(560, iDpi);
 	const int cy = eck::DpiScale(500, iDpi);
 
-	m_hWnd = IntCreate(0, eck::WCN_DLG, c_szTile[(UINT)m_pParam->uType], WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-		rc.left + (rc.right - rc.left - cx) / 2, rc.top + (rc.bottom - rc.top - cy) / 2, cx, cy,
-		hOwner, NULL, eck::g_hInstance, NULL);
-	SendMsg(WM_INITDIALOG, 0, (LPARAM)this);
-
-	MSG msg;
-	while (GetMessageW(&msg, NULL, 0, 0))
-	{
-		if (!IsDialogMessageW(m_hWnd, &msg))
-		{
-			TranslateMessage(&msg);
-			DispatchMessageW(&msg);
-		}
-	}
-
-	if (bNeedEnableOwner)
-		EnableWindow(hOwner, TRUE);
-	if (hParent)
-		SetActiveWindow(hParent);
-	PostModal();
-	Destroy();
-
-	return m_bRet && m_pParam->rsRetFile.Size();
+	return IntCreateModalDlg(0, eck::WCN_DLG, c_szTile[(UINT)m_pParam->uType], WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+		0, 0, cx, cy, hParent, NULL, eck::g_hInstance, NULL, eck::DLGNCF_CENTERPARENT);
 }

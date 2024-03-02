@@ -34,38 +34,91 @@ void CUIWaves::GetWavesData()
 	Thread.detach();
 }
 
-CUIWaves::CUIWaves()
+LRESULT CUIWaves::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	m_uType = UIET_WAVES;
-	m_uFlags = UIEF_NOEVENT | UIEF_WANTTIMEREVENT | UIEF_ONLYPAINTONTIMER;
-	m_hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
-}
-
-BOOL CUIWaves::InitElem()
-{
-	eck::SafeRelease(m_pBrLine);
-	eck::SafeRelease(m_pBrCenterMark);
-	auto pDC = m_pBK->m_pDC;
-	pDC->CreateSolidColorBrush(c_D2DClrCyanDeeper, &m_pBrLine);
-	pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Red), &m_pBrCenterMark);
-	App->m_pDwFactory->CreateTextFormat(L"微软雅黑", NULL,
-		DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-		m_pBK->Dpi(18.f), L"zh-cn", &m_pTfTip);
-	m_pTfTip->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-	m_pTfTip->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);// 水平垂直都居中
-	return TRUE;
-}
-
-LRESULT CUIWaves::OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam)
-{
-	auto lResult = DefElemEventProc(uEvent, wParam, lParam);
-	switch (uEvent)
+	switch (uMsg)
 	{
+	case WM_PAINT:
+	{
+		Dui::ELEMPAINTSTRU ps;
+		BeginPaint(ps, wParam, lParam);
+
+		PCWSTR pszText = NULL;
+
+		if (m_hThread && WaitForSingleObject(m_hThread, 0) != WAIT_OBJECT_0)// 正在加载
+			pszText = L"正在加载...";
+		else if (!App->GetPlayer().GetBass().GetHStream())// 已停止
+			pszText = L"未播放";
+		else if (m_ThreadState == ThreadState::Error)// 出错
+			pszText = L"错误！";
+
+		if (pszText)// 应当显示提示
+		{
+			m_pDC->DrawTextW(pszText, (int)wcslen(pszText), m_pTfTip, GetViewRectF(), m_pBrLine);
+			BkDbg_DrawElemFrame();
+			EndPaint(ps);
+			return 0;
+		}
+
+		const int idxCurr = (int)(App->GetPlayer().GetPos() / 20ull);// 算数组索引    20ms一单位
+		const int cBars = (int)m_vWavesData.size();
+		if (idxCurr > cBars - 1)
+		{
+			EndPaint(ps);
+			return 0;
+		}
+
+		const float cx = GetViewWidthF();
+		const float cy = GetViewHeightF();
+
+		int i = idxCurr;
+		float x = cx / 2.f,
+			y = cy / 2.f;
+		D2D1_POINT_2F PtF1, PtF2;
+
+		m_pDC->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
+		// 上面是右声道，下面是左声道
+		while (TRUE)// 向右画
+		{
+			PtF1 = { (float)x, (float)(y - HIWORD(m_vWavesData[i]) * (cy / 2.f) / 32768) };
+			PtF2 = { (float)x, (float)(y + LOWORD(m_vWavesData[i]) * (cy / 2.f) / 32768) };
+			m_pDC->DrawLine(PtF1, PtF2, m_pBrLine, (FLOAT)m_cxLine);
+			x += m_cxLine;
+			i++;
+			if (i > cBars - 1 || x >= m_rc.right)
+				break;
+		}
+		i = idxCurr;
+		x = m_rc.left + cx / 2.f;
+		while (TRUE)// 向左画
+		{
+			PtF1 = { (FLOAT)x, (FLOAT)(y - HIWORD(m_vWavesData[i]) * (cy / 2.f) / 32768) };
+			PtF2 = { (FLOAT)x, (FLOAT)(y + LOWORD(m_vWavesData[i]) * (cy / 2.f) / 32768) };
+			m_pDC->DrawLine(PtF1, PtF2, m_pBrLine, (FLOAT)m_cxLine);
+			x -= m_cxLine;
+			i--;
+			if (i < 0 || x < m_rc.left)
+				break;
+		}
+		x = m_rc.left + cx / 2.f;
+
+		PtF1 = { (FLOAT)x, 0.f };
+		PtF2 = { (FLOAT)x, cy };
+		m_pDC->DrawLine(PtF1, PtF2, m_pBrCenterMark, (FLOAT)GetBk()->m_DsF.cxWaveLine);
+
+		m_pDC->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+
+		BkDbg_DrawElemFrame();
+
+		EndPaint(ps);
+	}
+	return 0;
+
 	case UIEE_ONPLAYINGCTRL:
 	{
 		switch (wParam)
 		{
-		case PCT_PLAY:
+		case PCT_PLAYNEW:
 			m_ThreadState = ThreadState::Running;
 			CloseHandle(m_hThread);
 			ResetEvent(m_hEvent);
@@ -83,83 +136,31 @@ LRESULT CUIWaves::OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam)
 		}
 	}
 	break;
-	}
-	return lResult;
-}
 
-CUIWaves::~CUIWaves()
-{
-	m_pBrLine->Release();
-	m_pBrCenterMark->Release();
-	m_pTfTip->Release();
-	CloseHandle(m_hThread);
-	CloseHandle(m_hEvent);
-}
-
-void CUIWaves::Redraw()
-{
-	auto pDC = m_pBK->m_pDC;
-	pDC->DrawBitmap(m_pBK->m_pBmpBKStatic, &m_rcF, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &m_rcF);// 刷背景
-
-	PCWSTR pszText = NULL;
-
-	if (m_hThread && WaitForSingleObject(m_hThread, 0) != WAIT_OBJECT_0)// 正在加载
-		pszText = L"正在加载...";
-	else if (!App->GetPlayer().GetBass().GetHStream())// 已停止
-		pszText = L"未播放";
-	else if (m_ThreadState == ThreadState::Error)// 出错
-		pszText = L"错误！";
-
-	if (pszText)// 应当显示提示
+	case WM_CREATE:
 	{
-		pDC->DrawTextW(pszText, (int)wcslen(pszText), m_pTfTip, &m_rcF, m_pBrLine);
-		BkDbg_DrawElemFrame();
-		return;
+		m_hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
+		eck::SafeRelease(m_pBrLine);
+		eck::SafeRelease(m_pBrCenterMark);
+		m_pDC->CreateSolidColorBrush(c_D2DClrCyanDeeper, &m_pBrLine);
+		m_pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Red), &m_pBrCenterMark);
+		App->m_pDwFactory->CreateTextFormat(L"微软雅黑", NULL,
+			DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
+			GetBk()->Dpi(18.f), L"zh-cn", &m_pTfTip);
+		m_pTfTip->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+		m_pTfTip->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);// 水平垂直都居中
 	}
+	break;
 
-	const int idxCurr = (int)(App->GetPlayer().GetPos() / 20ull);// 算数组索引    20ms一单位
-	const int cBars = (int)m_vWavesData.size();
-	if (idxCurr > cBars - 1)
-		return;
-
-	int i = idxCurr;
-	int x = m_rc.left + m_cxHalf,
-		y = m_rc.top + m_cyHalf;
-	D2D1_POINT_2F PtF1, PtF2;
-
-	pDC->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
-	pDC->PushAxisAlignedClip(&m_rcF, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
-	// 上面是右声道，下面是左声道
-	while (TRUE)// 向右画
+	case WM_DESTROY:
 	{
-		PtF1 = { (float)x, (float)(y - HIWORD(m_vWavesData[i]) * m_cyHalf / 32768) };
-		PtF2 = { (float)x, (float)(y + LOWORD(m_vWavesData[i]) * m_cyHalf / 32768) };
-		pDC->DrawLine(PtF1, PtF2, m_pBrLine, (FLOAT)m_cxLine);
-		x += m_cxLine;
-		i++;
-		if (i > cBars - 1 || x >= m_rc.right)
-			break;
+		m_pBrLine->Release();
+		m_pBrCenterMark->Release();
+		m_pTfTip->Release();
+		CloseHandle(m_hThread);
+		CloseHandle(m_hEvent);
 	}
-	i = idxCurr;
-	x = m_rc.left + m_cxHalf;
-	while (TRUE)// 向左画
-	{
-		PtF1 = { (FLOAT)x, (FLOAT)(y - HIWORD(m_vWavesData[i]) * m_cyHalf / 32768) };
-		PtF2 = { (FLOAT)x, (FLOAT)(y + LOWORD(m_vWavesData[i]) * m_cyHalf / 32768) };
-		pDC->DrawLine(PtF1, PtF2, m_pBrLine, (FLOAT)m_cxLine);
-		x -= m_cxLine;
-		i--;
-		if (i < 0 || x < m_rc.left)
-			break;
+	break;
 	}
-	x = m_rc.left + m_cxHalf;
-
-	PtF1 = { (FLOAT)x, m_rcF.top };
-	PtF2 = { (FLOAT)x, m_rcF.bottom };
-	pDC->DrawLine(PtF1, PtF2, m_pBrCenterMark, (FLOAT)m_pBK->m_DsF.cxWaveLine);
-
-	pDC->PopAxisAlignedClip();
-	pDC->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
-
-	BkDbg_DrawElemFrame();
+	return __super::OnEvent(uMsg, wParam, lParam);
 }

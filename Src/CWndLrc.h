@@ -132,11 +132,19 @@ private:
 		TE_LOCK = 500,
 	};
 
+	enum
+	{
+		LRCIDX_APPNAME = c_InvalidCacheIdx + 1,
+		LRCIDX_FILENAME,
+	};
+
 	void ReSizeRenderStuff(int cx, int cy);
 
 	void UpdateSysColorBrush();
 
-	float DrawLrcLine(int idxLrc, float y, BOOL bFirstLine);
+	float DrawLrcLine(int idxLrc, float y, BOOL bSecondLine);
+
+	void DrawStaticLine(int idxFake, float y);
 
 	void UpdateTextFormat();
 
@@ -145,6 +153,10 @@ private:
 	void UpdateOptionRes();
 
 	void UpdateDpi(int iDpi);
+
+	PNInline float CalcMaxLrcWidth() { return (float)m_cxClient - m_DsF.Margin * 6.f; }
+
+	PNInline float CalcLrcMargin() { return m_DsF.Margin * 3.f; }
 public:
 	static ATOM RegisterWndClass() { return eck::EzRegisterWndClass(L"PlayerNew.WndClass.Lrc"); }
 
@@ -174,9 +186,14 @@ public:
 
 	void Lock(BOOL bLock);
 
-	BOOL IsCacheLayoutTooLong() const
+	EckInline BOOL IsCacheLayoutTooLong() const
 	{ 
-		return m_TextCache[0].bTooLong || m_TextCache[0].bTooLongTrans ||
-			m_TextCache[1].bTooLong || m_TextCache[1].bTooLongTrans;
+		return
+			(m_TextCache[0].idxLrc != c_InvalidCacheIdx &&
+				(m_TextCache[0].bTooLong || m_TextCache[0].bTooLongTrans)) ||
+			(m_TextCache[1].idxLrc != c_InvalidCacheIdx &&
+				(m_TextCache[1].bTooLong || m_TextCache[1].bTooLongTrans));
 	}
+
+	EckInline BOOL IsBkVisible() const { return m_bShowBk; }
 };

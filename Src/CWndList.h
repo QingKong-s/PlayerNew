@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "CApp.h"
 #include "CPlayList.h"
+#include "CTBList.h"
 
 #include "eck\CLabel.h"
 #include "eck\CEditExt.h"
@@ -32,7 +33,7 @@ private:
 	eck::CLabel m_LAListName{};
 	eck::CEditExt m_EDSearch{};
 	eck::CPushButton m_BTSearch{};
-	eck::CToolBar m_TBManage{};
+	CTBList m_TBManage{};
 	eck::CListView m_LVList{};
 	eck::CListView m_LVSearch{};
 
@@ -50,6 +51,8 @@ private:
 	HBRUSH m_hbrGray = NULL;
 	HBRUSH m_hbrCurrPlaying = NULL;
 
+	HICON m_hiSearch = NULL;
+
 	eck::CRefStrW m_rsCurrKeyword{};
 
 	CWndMain& m_WndMain;
@@ -64,17 +67,7 @@ private:
 		IDC_LV_SEARCHING,
 		IDC_TB_MANAGE
 	};
-	enum// 工具条按钮ID
-	{
-		TBCID_LOCATE = 200,
-		TBCID_ADD,
-		TBCID_LOADLIST,
-		TBCID_SAVELIST,
-		TBCID_EMPTY,
-		TBCID_MANAGE,
 
-		TBBTCOUNT = 6
-	};
 	enum// 菜单ID
 	{
 		IDMI_ADDFILE = 300,
@@ -198,4 +191,6 @@ public:
 	void PlayListItem(int idx);
 
 	void EnsureVisibleBookmark(int idx);
+
+	PNInline const auto& GetDs() const { return m_Ds; }
 };

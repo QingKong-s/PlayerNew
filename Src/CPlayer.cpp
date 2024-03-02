@@ -6,7 +6,9 @@
 HRESULT CPlayer::CreateWicBmpCover()
 {
 	eck::SafeRelease(m_pWicCoverBmp);
-	HRESULT hr = CApp::WICCreateBitmap(m_MusicInfo.pCoverData, &m_pWicCoverBmp);
+	auto pStream = new eck::CRefBinStream(m_MusicInfo.rbCover);
+	HRESULT hr = CApp::WICCreateBitmap(pStream, &m_pWicCoverBmp);
+	pStream->Release();
 	if (FAILED(hr))
 	{
 		hr = CApp::WICCreateBitmap((eck::GetRunningPath() + LR"(\Img\DefCover.png)").Data(), &m_pWicCoverBmp);
@@ -58,7 +60,7 @@ PlayOpErr CPlayer::Play(int idx)
 	if (!m_vLrc.size())
 		Utils::ParseLrc(m_MusicInfo.rsLrc.Data(), m_MusicInfo.rsLrc.ByteSize(), m_vLrc, m_vLrcLabel, 
 			Utils::LrcEncoding::UTF16LE, (float)m_Bass.GetLength());
-	m_fnPayingCtrl(PCT_PLAY, idxPrev, 0);
+	m_fnPayingCtrl(PCT_PLAYNEW, idxPrev, 0);
 	return PlayOpErr::Ok;
 }
 
@@ -174,6 +176,7 @@ PlayOpErr CPlayer::PlayOrPause()
 	default:
 		return PlayOpErr::NoCurrPlaying;
 	}
+	m_fnPayingCtrl(PCT_PLAY_OR_PAUSE, 0, 0);
 	if (b)
 		return PlayOpErr::Ok;
 	else

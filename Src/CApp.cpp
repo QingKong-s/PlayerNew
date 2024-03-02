@@ -1,4 +1,6 @@
 ﻿#include "CApp.h"
+#include "eck\ImageHelper.h"
+
 CApp* App;
 
 HRESULT CApp::WICCreateBitmap(IWICBitmapDecoder* pDecoder, IWICBitmap** ppBitmap)
@@ -52,6 +54,8 @@ void CApp::LoadRes()
 		wcscpy(rs.Data() + cchPath, c_szResFile[i]);
 		if (FAILED(hr = WICCreateBitmap(rs.Data(), &m_pWicRes[i])))
 			ShowError(NULL, hr, ErrSrc::HResult, L"加载资源时出错", std::format(LR"("{}"加载失败)", rs.Data()).c_str());
+		else
+			m_hIcon[i] = eck::CreateHICON(m_pWicRes[i]);
 	}
 }
 
@@ -131,6 +135,57 @@ void CApp::Init(HINSTANCE hInstance)
 	}
 
 	LoadRes();
+}
+
+void CApp::InvertIconColor()
+{
+	return;
+	IWICBitmap* pNewBmp;
+	constexpr D2D1_RENDER_TARGET_PROPERTIES Prop
+	{
+		D2D1_RENDER_TARGET_TYPE_DEFAULT,
+		{ DXGI_FORMAT_B8G8R8A8_UNORM,D2D1_ALPHA_MODE_PREMULTIPLIED },
+		96.f,96.f,
+		D2D1_RENDER_TARGET_USAGE_NONE,
+		D2D1_FEATURE_LEVEL_DEFAULT
+	};
+	ID2D1RenderTarget* pRT;
+	ID2D1Bitmap* pD2dBitmap;
+
+	ID2D1DeviceContext* pDC;
+	ID2D1Effect* pEffect;
+
+	for (auto pBmp : m_pWicRes)
+	{
+		//App->m_pWicFactory->CreateBitmapFromSource(pBmp, WICBitmapNoCache, &pNewBmp);
+		auto hr=App->m_pD2dFactory->CreateWicBitmapRenderTarget(pBmp, &Prop, &pRT);
+
+		hr = pRT->CreateBitmapFromWicBitmap(pBmp, &pD2dBitmap);
+		hr = pRT->QueryInterface(&pDC);
+
+		hr = pDC->CreateEffect(CLSID_D2D1Invert, &pEffect);
+		pEffect->SetInput(0, pD2dBitmap);
+
+
+		pDC->BeginDraw();
+		pDC->Clear({1.f,0.f,0.f,1.f});
+		pDC->DrawImage(pEffect);
+		hr = pDC->EndDraw();
+
+		//pRT->BeginDraw();
+
+		//pRT->DrawBitmap(pD2dBitmap, { 10,10,20,20 }, 1.f);
+		//pRT->Flush();
+		//pRT->EndDraw();
+
+		//std::swap(pBmp, pNewBmp);
+
+		pEffect->Release();
+		pD2dBitmap->Release();
+		pDC->Release();
+		pRT->Release();
+		//pNewBmp->Release();
+	}
 }
 
 HRESULT CApp::WICCreateBitmap(PCWSTR pszFile, IWICBitmap** ppWICBitmap)

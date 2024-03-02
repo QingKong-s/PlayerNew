@@ -321,17 +321,17 @@ void CWndMain::InitBK()
 	//prb->SetImg(m_BK.m_pBmpIcon[CWndBK::ICIDX_Options]);
 	//prb->SetImgSize(m_BK.m_Ds.cxIcon, m_BK.m_Ds.cyIcon);
 
-	auto plrc = new CUILrc;
-	m_BK.AddElem(plrc);
-	plrc->InitElem();
-	rc = { 0,0,800,730 };
-	plrc->SetElemRect(&rc);
+	auto plrc = new CUILrc{};
+	plrc->Create(NULL, Dui::DES_VISIBLE, 0,
+		0, 0, 800, 730, NULL, &m_BK);
 
-	auto ppc = new CUIPlayingCtrl;
-	m_BK.AddElem(ppc);
-	ppc->InitElem();
-	rc = { 70,800,800,900 };
-	ppc->SetElemRect(&rc);
+	auto ppc = new CUIPlayingCtrl{};
+	ppc->Create(NULL, Dui::DES_VISIBLE, 0,
+		70, 800, 800, 80, NULL, &m_BK);
+
+	auto ppb = new CUIProgressBar{};
+	ppb->Create(NULL, Dui::DES_VISIBLE, 0,
+				70, 730, 800, 70, NULL, &m_BK);
 
 	//auto pw = new CUIWaves;
 	//m_BK.AddElem(pw);
@@ -361,28 +361,17 @@ void CWndMain::InitBK()
 	//rc = { 100,120,600,800 };
 	//pra->SetElemRect(&rc);
 
-	auto p2 = new CUIProgBar;
-	m_BK.AddElem(p2);
-	p2->InitElem();
-	rc = { 90,780,800,800 };
-	p2->SetElemRect(&rc);
-	p2->SetMax(10000ull);
+	//auto p2 = new Dui::c;
+	//m_BK.AddElem(p2);
+	//p2->InitElem();
+	//rc = { 90,780,800,800 };
+	//p2->SetElemRect(&rc);
+	//p2->SetMax(10000ull);
 
 	//auto p3 = new CUIToolBar;
 	//m_BK.AddElem(p3);
 	//p3->InitElem();
 	//p3->SetElemRect({ 70,650,800,700 });
-
-
-	//eck::CRTCreateThread([](void* pParam)->UINT
-	//	{
-	//		while (TRUE)
-	//		{
-	//			PostMessageW((HWND)pParam, 114514, 101, 0);
-	//			Sleep(20);
-	//		}
-	//		return 0;
-	//	}, m_BK);
 
 	m_BK.Redraw();
 }
@@ -410,33 +399,63 @@ void CWndMain::OnSize(HWND hWnd, UINT uState, int cx, int cy)
 
 BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 {
+	BOOL bOpaqueBlend;
+	DwmGetColorizationColor(&m_argbDwm, &bOpaqueBlend);
+	m_crDwm = eck::ARGBToD2dColorF(m_argbDwm);
+	m_bDarkColor = !eck::IsColorLightArgb(m_argbDwm);
+	if (m_bDarkColor)
+		App->InvertIconColor();
+
 	App->GetPlayer().SetPlayingCtrlCallBack([this](PLAYINGCTRLTYPE uType, INT_PTR i1, INT_PTR i2)
 		{
 			switch (uType)
 			{
-			case PCT_PLAY:
+			case PCT_PLAYNEW:
+			{
+				if (m_Lrc.IsBkVisible())
+					m_Lrc.Draw();
+				DwmInvalidateIconicBitmaps(m_TbGhost.HWnd);
+				m_Lrc.InvalidateCache();
 				if (i1 >= 0)
 					m_List.m_LVList.RedrawItem((int)i1);
 				m_List.m_LVList.RedrawItem(App->GetPlayer().GetCurrFile());
-				break;
+			}
+			break;
 			case PCT_STOP:
 				m_List.m_LVList.RedrawItem((int)i1);
 				break;
 			case PCT_REMOVE_LATER_PLAY:
 				m_List.m_LVList.RedrawItem((int)i1);
 				break;
+			case PCT_PLAY_OR_PAUSE:
+			{
+				if (m_Lrc.IsBkVisible())
+					m_Lrc.Draw();
+				const auto pBmp = App->ScaleImageForButton(
+					App->GetPlayer().IsPlaying() ? IIDX_PauseSolid : IIDX_TriangleSolid,
+					m_iDpi);
+				const auto hi = eck::CreateHICON(pBmp);
+				pBmp->Release();
+
+				THUMBBUTTON tb;
+				tb.dwMask = THB_ICON;
+				tb.iId = IDTBB_PLAY;
+				tb.hIcon = hi;
+				m_pTbList->ThumbBarUpdateButtons(m_TbGhost.HWnd, 1, &tb);
+			}
+			break;
 			}
 			m_BK.OnPlayingControl(uType);
 		});
 	UpdateDpi(eck::GetDpi(hWnd));
-	m_BK.Create(NULL, WS_CHILD, WS_EX_NOREDIRECTIONBITMAP, 0, 0, 0, 0, hWnd, IDC_BK);
+	m_BK.Create(NULL, WS_CHILD, 0, 0, 0, 0, 0, hWnd, IDC_BK);
 	m_List.Create(L"列表", WS_CHILD | WS_CLIPCHILDREN, 0, 0, 0, 0, 0, hWnd, IDC_LIST);
 	m_SPB.Create(NULL, WS_CHILD, 0, 0, 0, 0, 0, hWnd, IDC_SPB);
 
 	RECT rc;
 	GetClientRect(hWnd, &rc);
 
-	m_xSeparateBar = rc.right * 2 / 3;
+	m_xSeparateBar = rc.right * 62 / 100;
 	OnSize(hWnd, 0, rc.right, rc.bottom);
 
 	m_BK.Show(SW_SHOWNOACTIVATE);
@@ -444,11 +463,13 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	m_SPB.Show(SW_SHOWNOACTIVATE);
 
 	m_pDropTarget = new CDropTargetList(*this);
-	HRESULT hr = RegisterDragDrop(hWnd, m_pDropTarget);
+	const HRESULT hr = RegisterDragDrop(hWnd, m_pDropTarget);
 	if (FAILED(hr))
 		CApp::ShowError(hWnd, hr, CApp::ErrSrc::HResult, L"注册拖放目标失败");
 	
 	InitBK();
+	m_BK.SendMsg(PWM_DWMCOLORCHANGED, 0, 0);
+
 	ShowLrc(1);
 	EckDbgPrint(m_Lrc.HWnd);
 	return TRUE;
@@ -509,7 +530,9 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 				else
 				{
 					IWICBitmap* pWicBmp;
-					CApp::WICCreateBitmap(m_vGroup[p->Group.idxItem].Items[0]->pCoverData, &pWicBmp);
+					auto pStream = new eck::CRefBinStream(m_vGroup[p->Group.idxItem].Items[0]->rbCover);
+					CApp::WICCreateBitmap(pStream, &pWicBmp);
+					pStream->LeaveRelease();
 					if (!pWicBmp)
 						pWicBmp = App->GetWicRes()[IIDX_DefCover];
 					p->Group.pDC->CreateBitmapFromWicBitmap(pWicBmp, &p->Group.pBmp);
@@ -556,23 +579,121 @@ ATOM CWndMain::RegisterWndClass()
 
 LRESULT CWndMain::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	if (uMsg == s_uMsgTaskbarButtonCreated)
+	{
+		SafeRelease(m_pTbList);
+		const auto hr = CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER, 
+			IID_PPV_ARGS(&m_pTbList));
+		if (FAILED(hr))
+		{
+			CApp::ShowError(hWnd, hr, CApp::ErrSrc::HResult, L"ITaskbarList4创建失败");
+			return 0;
+		}
+		m_pTbList->HrInit();
+
+		m_pTbList->UnregisterTab(m_TbGhost.HWnd);
+		m_pTbList->RegisterTab(m_TbGhost.HWnd, hWnd);
+#pragma warning(suppress: 6387)// 可能为NULL
+		m_pTbList->SetTabOrder(m_TbGhost.HWnd, NULL);
+
+		HICON hi[3];
+		auto pBmp = App->ScaleImageForButton(IIDX_PrevSolid, m_iDpi);
+		hi[0] = eck::CreateHICON(pBmp);
+		pBmp->Release();
+
+		pBmp = App->ScaleImageForButton(IIDX_PauseSolid, m_iDpi);
+		hi[1] = eck::CreateHICON(pBmp);
+		pBmp->Release();
+
+		pBmp = App->ScaleImageForButton(IIDX_NextSolid, m_iDpi);
+		hi[2] = eck::CreateHICON(pBmp);
+		pBmp->Release();
+
+		THUMBBUTTON tb[3]{};
+		constexpr auto dwMask = THB_ICON | THB_TOOLTIP;
+		tb[0].dwMask = dwMask;
+		tb[0].hIcon = hi[0];
+		tb[0].iId = IDTBB_PREV;
+		wcscpy(tb[0].szTip, L"上一曲");
+
+		tb[1].dwMask = dwMask;
+		tb[1].hIcon = hi[1];
+		tb[1].iId = IDTBB_PLAY;
+		wcscpy(tb[1].szTip, L"播放");
+
+		tb[2].dwMask = dwMask;
+		tb[2].hIcon = hi[2];
+		tb[2].iId = IDTBB_NEXT;
+		wcscpy(tb[2].szTip, L"下一曲");
+
+		m_pTbList->ThumbBarAddButtons(m_TbGhost.HWnd, ARRAYSIZE(tb), tb);
+		DestroyIcon(hi[0]);
+		DestroyIcon(hi[1]);
+		DestroyIcon(hi[2]);
+		return 0;
+	}
+
 	switch (uMsg)
 	{
 	case WM_SIZE:
 		return HANDLE_WM_SIZE(hWnd, wParam, lParam, OnSize);
-	case SPBM_POSCHANGE:
+
+	case WM_NOTIFY:
 	{
-		m_xSeparateBar = (int)lParam;
-		RECT rc;
-		GetClientRect(hWnd, &rc);
-		OnSize(hWnd, 0, rc.right, rc.bottom);
+		const auto pnmhdr = (NMHDR*)lParam;
+		if (pnmhdr->hwndFrom == m_SPB.HWnd && pnmhdr->code == eck::NM_SPB_DRAGGED)
+		{
+			const auto p = (eck::NMSPBDRAGGED*)lParam;
+			m_xSeparateBar = p->xyPos;
+			RECT rc;
+			GetClientRect(hWnd, &rc);
+			OnSize(hWnd, 0, rc.right, rc.bottom);
+		}
 	}
 	return 0;
+
+	case WM_COMMAND:
+	{
+		switch (LOWORD(wParam))
+		{
+		case IDTBB_PREV:
+			App->GetPlayer().Prev();
+			return 0;
+		case IDTBB_PLAY:
+			App->GetPlayer().PlayOrPause();
+			return 0;
+		case IDTBB_NEXT:
+			App->GetPlayer().Next();
+			return 0;
+		}
+	}
+	break;
+
+	case WM_SETTEXT:
+		m_TbGhost.SetText((PCWSTR)lParam);
+		break;
+
 	case WM_DPICHANGED:
 		return ECK_HANDLE_WM_DPICHANGED(hWnd, wParam, lParam, OnDpiChanged);
+
 	case WM_CREATE:
 		return HANDLE_WM_CREATE(hWnd, wParam, lParam, OnCreate);
+		
+	case WM_DWMCOLORIZATIONCOLORCHANGED:
+	{
+		m_argbDwm = wParam;
+		m_crDwm = eck::ARGBToD2dColorF(wParam);
+		const BOOL bDark = eck::IsColorLightArgb(m_argbDwm);
+		if (m_bDarkColor != bDark)
+			App->InvertIconColor();
+		m_bDarkColor = bDark;
+		m_BK.SendMsg(PWM_DWMCOLORCHANGED, 0, 0);
+	}
+	return 0;
+
 	case WM_DESTROY:
+		m_TbGhost.Destroy();
+		SafeRelease(m_pTbList);
 		PostQuitMessage(0);
 		return 0;
 	}

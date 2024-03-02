@@ -1,73 +1,98 @@
 ﻿#include "CWndBK.h"
 
-BOOL CUISpe::InitElem()
+LRESULT CUISpe::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    eck::SafeRelease(m_pBrBar);
-    auto pDC = m_pBK->m_pDC;
-    pDC->CreateSolidColorBrush(c_D2DClrCyanDeeper, &m_pBrBar);
-    return TRUE;
-}
-
-void CUISpe::Redraw()
-{
-    auto pDC = m_pBK->m_pDC;
-
-    float fData[128];
-    if (App->GetPlayer().GetBass().GetData(fData, BASS_DATA_FFT256) == -1)
+    switch (uMsg)
     {
-        ZeroMemory(m_piOldHeight, m_cbPerUnit);
-        ZeroMemory(m_piHeight, m_cbPerUnit);
-        ZeroMemory(fData, sizeof(fData));
-    }
-
-    pDC->DrawBitmap(m_pBK->m_pBmpBKStatic, &m_rcF, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &m_rcF);// 刷背景
-    for (int i = 0; i < m_iCount; i++)
+    case WM_PAINT:
     {
-        ++m_piTime[i];
-        m_piHeight[i] = abs((int)(fData[i] * m_cy * 2.f));
-        //////////////////频谱条
-        if (m_piHeight[i] > m_cy)// 超高
-            m_piHeight[i] = m_cy;// 回来
-#define SPESTEP_BAR					7
-#define SPESTEP_MAX					11
-        if (m_piHeight[i] > m_piOldHeight[i])// 当前的大于先前的
-            m_piOldHeight[i] = m_piHeight[i];// 顶上去
-        else
-            m_piOldHeight[i] -= SPESTEP_BAR;// 如果不大于就继续落
+        Dui::ELEMPAINTSTRU ps;
+        BeginPaint(ps, wParam, lParam);
 
-        if (m_piOldHeight[i] < 3)// 太低了
-            m_piOldHeight[i] = 3;// 回来
-
-        //////////////////峰值
-        if (m_piTime[i] > 10)// 时间已到
-            m_piOldMaxPos[i] -= SPESTEP_MAX;// 下落
-
-        if (m_piOldHeight[i] > m_piOldMaxPos[i])// 频谱条大于峰值
+        float fData[128];
+        if (App->GetPlayer().GetBass().GetData(fData, BASS_DATA_FFT256) == -1)
         {
-            m_piOldMaxPos[i] = m_piOldHeight[i];// 峰值顶上去，重置时间
-            m_piTime[i] = 0;
+            ZeroMemory(m_piOldHeight, m_cbPerUnit);
+            ZeroMemory(m_piHeight, m_cbPerUnit);
+            ZeroMemory(fData, sizeof(fData));
         }
 
-        if (m_piOldMaxPos[i] < 3)// 太低了
-            m_piOldMaxPos[i] = 3;// 回来
-        //////////////////绘制
-        //////////频谱条
-        D2D_RECT_F D2DRectF;
-        D2DRectF.left = (FLOAT)(m_rcF.left + (m_cxBar + m_cxGap) * i);
-        D2DRectF.top = (FLOAT)(m_rcF.top + m_cy - m_piOldHeight[i]);
-        D2DRectF.right = D2DRectF.left + m_cxBar;
-        D2DRectF.bottom = (FLOAT)(m_rcF.top + m_cy);
-        if (D2DRectF.right > m_rcF.right)
-            break;
-        pDC->FillRectangle(&D2DRectF, m_pBrBar);
+        const float cx = GetViewWidthF();
+        const float cy = GetViewHeightF();
 
-        //////////峰值指示
-        D2DRectF.top = (FLOAT)(m_rcF.top + m_cy - m_piOldMaxPos[i]);
-        D2DRectF.bottom = D2DRectF.top + 3;
-        pDC->FillRectangle(&D2DRectF, m_pBrBar);
+        for (int i = 0; i < m_iCount; i++)
+        {
+            ++m_piTime[i];
+            m_piHeight[i] = abs((int)(fData[i] * cy * 2.f));
+            //////////////////频谱条
+            if (m_piHeight[i] > cy)// 超高
+                m_piHeight[i] = cy;// 回来
+#define SPESTEP_BAR					7
+#define SPESTEP_MAX					11
+            if (m_piHeight[i] > m_piOldHeight[i])// 当前的大于先前的
+                m_piOldHeight[i] = m_piHeight[i];// 顶上去
+            else
+                m_piOldHeight[i] -= SPESTEP_BAR;// 如果不大于就继续落
+
+            if (m_piOldHeight[i] < 3)// 太低了
+                m_piOldHeight[i] = 3;// 回来
+
+            //////////////////峰值
+            if (m_piTime[i] > 10)// 时间已到
+                m_piOldMaxPos[i] -= SPESTEP_MAX;// 下落
+
+            if (m_piOldHeight[i] > m_piOldMaxPos[i])// 频谱条大于峰值
+            {
+                m_piOldMaxPos[i] = m_piOldHeight[i];// 峰值顶上去，重置时间
+                m_piTime[i] = 0;
+            }
+
+            if (m_piOldMaxPos[i] < 3)// 太低了
+                m_piOldMaxPos[i] = 3;// 回来
+            //////////////////绘制
+            //////////频谱条
+            D2D_RECT_F D2DRectF;
+            D2DRectF.left = (FLOAT)((m_cxBar + m_cxGap) * i);
+            D2DRectF.top = (FLOAT)(cy - m_piOldHeight[i]);
+            D2DRectF.right = D2DRectF.left + m_cxBar;
+            D2DRectF.bottom = (FLOAT)(cy);
+            if (D2DRectF.right > cx)
+                break;
+            m_pDC->FillRectangle(&D2DRectF, m_pBrBar);
+
+            //////////峰值指示
+            D2DRectF.top = (FLOAT)(cy - m_piOldMaxPos[i]);
+            D2DRectF.bottom = D2DRectF.top + 3;
+            m_pDC->FillRectangle(&D2DRectF, m_pBrBar);
+        }
+
+        BkDbg_DrawElemFrame();
+
+        EndPaint(ps);
     }
+    return 0;
 
-    BkDbg_DrawElemFrame();
+	case WM_SIZE:
+    {
+		if (m_iCount)
+			m_cxBar = (GetViewWidthF() - (m_iCount - 1) * m_cxGap) / m_iCount;
+	}
+	break;
+
+    case WM_CREATE:
+    {
+        eck::SafeRelease(m_pBrBar);
+        m_pDC->CreateSolidColorBrush(c_D2DClrCyanDeeper, &m_pBrBar);
+    }
+    break;
+
+    case WM_DESTROY:
+    {
+		eck::SafeRelease(m_pBrBar);
+	}
+    break;
+	}
+	return __super::OnEvent(uMsg, wParam, lParam);
 }
 
 void CUISpe::SetCount(int i)
@@ -77,7 +102,7 @@ void CUISpe::SetCount(int i)
         // c * cxBar + (c - 1) * cxDiv = cx
         // 解得：cxBar = (cx - (c - 1) * cxDiv) / c
         m_iCount = i;
-        m_cxBar = (m_cx - (i - 1) * m_cxGap) / i;
+        m_cxBar = (GetViewWidthF() - (i - 1) * m_cxGap) / i;
         if (m_cxBar <= 0)
             goto Fail;
         m_cbPerUnit = sizeof(int) * i;
@@ -94,32 +119,4 @@ Fail:
     m_cbPerUnit = 0;
     m_vBuf.clear();
     m_piOldHeight = m_piHeight = m_piOldMaxPos = m_piTime = NULL;
-}
-
-CUISpe::CUISpe()
-{
-    m_uType = UIET_SPE;
-    m_uFlags = UIEF_NOEVENT | UIEF_WANTTIMEREVENT | UIEF_ONLYPAINTONTIMER;
-}
-
-CUISpe::~CUISpe()
-{
-    eck::SafeRelease(m_pBrBar);
-}
-
-LRESULT CUISpe::OnElemEvent(UIELEMEVENT uEvent, WPARAM wParam, LPARAM lParam)
-{
-    switch (uEvent)
-    {
-    case UIEE_SETRECT:
-    {
-        auto lResult = DefElemEventProc(uEvent, wParam, lParam);
-        if (m_iCount)
-            m_cxBar = (m_cx - (m_iCount - 1) * m_cxGap) / m_iCount;
-        return lResult;
-    }
-    break;
-    }
-
-    return DefElemEventProc(uEvent, wParam, lParam);
 }

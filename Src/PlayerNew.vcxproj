@@ -71,16 +71,16 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../WinEzCtrlKit</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ECK_INCLUDE)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../WinEzCtrlKit</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ECK_INCLUDE)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../WinEzCtrlKit</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ECK_INCLUDE)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../WinEzCtrlKit</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ECK_INCLUDE)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -90,7 +90,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
@@ -99,7 +99,7 @@
     </Link>
     <Manifest>
       <EnableDpiAwareness>false</EnableDpiAwareness>
-      <AdditionalManifestFiles>..\WinEzCtrlKit\eck\Others\DpiAwarePreMonV2.manifest</AdditionalManifestFiles>
+      <AdditionalManifestFiles>$(ECK_INCLUDE)\eck\Others\DpiAwarePreMonV2.manifest</AdditionalManifestFiles>
     </Manifest>
     <PreBuildEvent>
       <Command>$(SolutionDir)\Tools\Before-Build-Process-Prog.exe</Command>
@@ -116,12 +116,13 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <FloatingPointModel>Precise</FloatingPointModel>
       <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -131,7 +132,7 @@
     </Link>
     <Manifest>
       <EnableDpiAwareness>false</EnableDpiAwareness>
-      <AdditionalManifestFiles>..\WinEzCtrlKit\eck\Others\DpiAwarePreMonV2.manifest</AdditionalManifestFiles>
+      <AdditionalManifestFiles>$(ECK_INCLUDE)\eck\Others\DpiAwarePreMonV2.manifest</AdditionalManifestFiles>
     </Manifest>
     <PreBuildEvent>
       <Command>$(SolutionDir)\Tools\Before-Build-Process-Prog.exe</Command>
@@ -146,7 +147,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
@@ -155,7 +156,7 @@
     </Link>
     <Manifest>
       <EnableDpiAwareness>false</EnableDpiAwareness>
-      <AdditionalManifestFiles>..\WinEzCtrlKit\eck\Others\DpiAwarePreMonV2.manifest</AdditionalManifestFiles>
+      <AdditionalManifestFiles>$(ECK_INCLUDE)\eck\Others\DpiAwarePreMonV2.manifest</AdditionalManifestFiles>
     </Manifest>
     <PreBuildEvent>
       <Command>$(SolutionDir)\Tools\Before-Build-Process-Prog.exe</Command>
@@ -172,12 +173,13 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <FloatingPointModel>Precise</FloatingPointModel>
       <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -187,7 +189,7 @@
     </Link>
     <Manifest>
       <EnableDpiAwareness>false</EnableDpiAwareness>
-      <AdditionalManifestFiles>..\WinEzCtrlKit\eck\Others\DpiAwarePreMonV2.manifest</AdditionalManifestFiles>
+      <AdditionalManifestFiles>$(ECK_INCLUDE)\eck\Others\DpiAwarePreMonV2.manifest</AdditionalManifestFiles>
     </Manifest>
     <PreBuildEvent>
       <Command>$(SolutionDir)\Tools\Before-Build-Process-Prog.exe</Command>
@@ -195,68 +197,72 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Src\bass.h" />
-    <ClInclude Include="Src\bassmidi.h" />
-    <ClInclude Include="Src\bass_fx.h" />
-    <ClInclude Include="Src\CApp.h" />
-    <ClInclude Include="Src\CBass.h" />
-    <ClInclude Include="Src\CDlgAbout.h" />
-    <ClInclude Include="Src\CDlgBookmark.h" />
-    <ClInclude Include="Src\CDlgListFile.h" />
-    <ClInclude Include="Src\CDlgNewBookmark.h" />
-    <ClInclude Include="Src\COptionsMgr.h" />
-    <ClInclude Include="Src\CPlayer.h" />
-    <ClInclude Include="Src\CPlayList.h" />
-    <ClInclude Include="Src\CPlayListFile.h" />
-    <ClInclude Include="Src\CSimpleList.h" />
-    <ClInclude Include="Src\CWndBK.h" />
-    <ClInclude Include="Src\CWndList.h" />
-    <ClInclude Include="Src\CWndLrc.h" />
-    <ClInclude Include="Src\CWndMain.h" />
-    <ClInclude Include="Src\DragDrop.h" />
-    <ClInclude Include="Src\Entry.h" />
-    <ClInclude Include="Src\Resource.h" />
-    <ClInclude Include="Src\targetver.h" />
-    <ClInclude Include="Src\Utils.h" />
+    <ClInclude Include="bass.h" />
+    <ClInclude Include="bassmidi.h" />
+    <ClInclude Include="bass_fx.h" />
+    <ClInclude Include="CApp.h" />
+    <ClInclude Include="CBass.h" />
+    <ClInclude Include="CDlgAbout.h" />
+    <ClInclude Include="CDlgBookmark.h" />
+    <ClInclude Include="CDlgListFile.h" />
+    <ClInclude Include="CDlgNewBookmark.h" />
+    <ClInclude Include="COptionsMgr.h" />
+    <ClInclude Include="CPlayer.h" />
+    <ClInclude Include="CPlayList.h" />
+    <ClInclude Include="CPlayListFile.h" />
+    <ClInclude Include="CSimpleList.h" />
+    <ClInclude Include="CTbGhost.h" />
+    <ClInclude Include="CTBList.h" />
+    <ClInclude Include="CWndBK.h" />
+    <ClInclude Include="CWndList.h" />
+    <ClInclude Include="CWndLrc.h" />
+    <ClInclude Include="CWndMain.h" />
+    <ClInclude Include="DragDrop.h" />
+    <ClInclude Include="Entry.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="Utils.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\WinEzCtrlKit\eck\ECK.cpp" />
-    <ClCompile Include="Src\CApp.cpp" />
-    <ClCompile Include="Src\CBass.cpp" />
-    <ClCompile Include="Src\CDlgAbout.cpp" />
-    <ClCompile Include="Src\CDlgBookmark.cpp" />
-    <ClCompile Include="Src\CDlgListFile.cpp" />
-    <ClCompile Include="Src\CDlgNewBookmark.cpp" />
-    <ClCompile Include="Src\COptionsMgr.cpp" />
-    <ClCompile Include="Src\CPlayer.cpp" />
-    <ClCompile Include="Src\CPlayList.cpp" />
-    <ClCompile Include="Src\CPlayListFile.cpp" />
-    <ClCompile Include="Src\CSimpleList.cpp" />
-    <ClCompile Include="Src\CUIAlbum.cpp" />
-    <ClCompile Include="Src\CUIAlbumRotating.cpp" />
-    <ClCompile Include="Src\CUIButton.cpp" />
-    <ClCompile Include="Src\CUIElem.cpp" />
-    <ClCompile Include="Src\CUIInfo.cpp" />
-    <ClCompile Include="Src\CUILrc.cpp" />
-    <ClCompile Include="Src\CUIPlayingCtrl.cpp" />
-    <ClCompile Include="Src\CUIProgBar.cpp" />
-    <ClCompile Include="Src\CUISpe.cpp" />
-    <ClCompile Include="Src\CUISpe2.cpp" />
-    <ClCompile Include="Src\CUIWaves.cpp" />
-    <ClCompile Include="Src\CWndBK.cpp" />
-    <ClCompile Include="Src\CWndList.cpp" />
-    <ClCompile Include="Src\CWndLrc.cpp" />
-    <ClCompile Include="Src\CWndMain.cpp" />
-    <ClCompile Include="Src\DragDrop.cpp" />
-    <ClCompile Include="Src\Entry.cpp" />
-    <ClCompile Include="Src\Utils.cpp" />
+    <ClCompile Include="$(ECK_INCLUDE)\eck\ECK.cpp" />
+    <ClCompile Include="CApp.cpp" />
+    <ClCompile Include="CBass.cpp" />
+    <ClCompile Include="CDlgAbout.cpp" />
+    <ClCompile Include="CDlgBookmark.cpp" />
+    <ClCompile Include="CDlgListFile.cpp" />
+    <ClCompile Include="CDlgNewBookmark.cpp" />
+    <ClCompile Include="COptionsMgr.cpp" />
+    <ClCompile Include="CPlayer.cpp" />
+    <ClCompile Include="CPlayList.cpp" />
+    <ClCompile Include="CPlayListFile.cpp" />
+    <ClCompile Include="CTbGhost.cpp" />
+    <ClCompile Include="CTBList.cpp" />
+    <ClCompile Include="CUIProgressBar.cpp" />
+    <ClCompile Include="CSimpleList.cpp" />
+    <ClCompile Include="CUIAlbum.cpp" />
+    <ClCompile Include="CUIAlbumRotating.cpp" />
+    <ClCompile Include="CUIElem.cpp" />
+    <ClCompile Include="CUIInfo.cpp" />
+    <ClCompile Include="CUILrc.cpp" />
+    <ClCompile Include="CUIPlayingCtrl.cpp" />
+    <ClCompile Include="CUISpe.cpp" />
+    <ClCompile Include="CUISpe2.cpp" />
+    <ClCompile Include="CUIVolTrackBar.cpp" />
+    <ClCompile Include="CUIWaves.cpp" />
+    <ClCompile Include="CWndBK.cpp" />
+    <ClCompile Include="CWndList.cpp" />
+    <ClCompile Include="CWndLrc.cpp" />
+    <ClCompile Include="CWndMain.cpp" />
+    <ClCompile Include="DragDrop.cpp" />
+    <ClCompile Include="Entry.cpp" />
+    <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="Src\PlayerNew.rc" />
+    <ResourceCompile Include="PlayerNew.rc" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Tools\CompileCount" />
-    <None Include="Tools\CompileTime" />
+    <None Include=".\Tools\CompileCount" />
+    <None Include=".\Tools\CompileTime" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

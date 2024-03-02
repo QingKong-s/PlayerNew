@@ -3,13 +3,13 @@ name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
 processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 #if defined _WIN64
-#pragma comment(lib,R"(.\BassLib\bass_x64.lib)")
-#pragma comment(lib,R"(.\BassLib\bass_fx_x64.lib)")
-#pragma comment(lib,R"(.\BassLib\bassmidi_x64.lib)")
+#pragma comment(lib,R"(..\BassLib\bass_x64.lib)")
+#pragma comment(lib,R"(..\BassLib\bass_fx_x64.lib)")
+#pragma comment(lib,R"(..\BassLib\bassmidi_x64.lib)")
 #elif defined _WIN32
-#pragma comment(lib,R"(.\BassLib\bass.lib)")
-#pragma comment(lib,R"(.\BassLib\bass_fx.lib)")
-#pragma comment(lib,R"(.\BassLib\bassmidi.lib)")
+#pragma comment(lib,R"(..\BassLib\bass.lib)")
+#pragma comment(lib,R"(..\BassLib\bass_fx.lib)")
+#pragma comment(lib,R"(..\BassLib\bassmidi.lib)")
 #endif
 
 #include "Entry.h"
@@ -18,6 +18,7 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #include "CWndMain.h"
 #include "CSimpleList.h"
 #include "CWndLrc.h"
+#include "CTbGhost.h"
 
 #include "eck\Env.h"
 
@@ -39,7 +40,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		return 0;
 	}
 
-	App = new CApp;
+	App = new CApp{};
 	App->Init(hInstance);
 
 	CWndMain::RegisterWndClass();
@@ -47,6 +48,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	CWndList::RegisterWndClass();
 	CSimpleList::RegisterWndClass();
 	CWndLrc::RegisterWndClass();
+	CTbGhost::RegisterWndClass();
+
+	ChangeWindowMessageFilter(CWndMain::s_uMsgTaskbarButtonCreated, MSGFLT_ADD);
+	ChangeWindowMessageFilter(WM_COMMAND, MSGFLT_ADD);
+	ChangeWindowMessageFilter(WM_DWMSENDICONICTHUMBNAIL, MSGFLT_ADD);
+	ChangeWindowMessageFilter(WM_DWMSENDICONICLIVEPREVIEWBITMAP, MSGFLT_ADD);
 
 	auto pWnd = new CWndMain{};
 	App->m_pWndMain = pWnd;
@@ -83,7 +90,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	if(Test())
 		return 0;
 #endif // _DEBUG
-	constexpr DWORD dwStyle = WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX | WS_VISIBLE | WS_OVERLAPPEDWINDOW;
+	constexpr DWORD dwStyle = WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX | 
+		WS_VISIBLE | WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN;
 	constexpr DWORD dwExStyle = 0u;
 
 	const int iDpi = GetDpiForSystem();

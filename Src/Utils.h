@@ -12,6 +12,7 @@
 using eck::PCVOID;
 using eck::PCBYTE;
 using eck::BITBOOL;
+using eck::SafeRelease;
 
 #define PNInline __forceinline
 
@@ -27,11 +28,10 @@ struct MUSICINFO
 	eck::CRefStrW rsAlbum{};
 	eck::CRefStrW rsComment{};
 	eck::CRefStrW rsLrc{};
-	IStream* pCoverData = NULL;
+    eck::CRefBin rbCover{};
 };
 
-#pragma pack (push)
-#pragma pack (1)
+
 struct ID3v2_Header		// ID3v2标签头
 {
     CHAR Header[3];		// "ID3"
@@ -60,7 +60,48 @@ struct FLAC_Header      // Flac头
     BYTE by;
     BYTE bySize[3];
 };
-#pragma pack (pop)
+
+static_assert(alignof(ID3v2_Header) == 1);
+static_assert(alignof(ID3v2_ExtHeader) == 1);
+static_assert(alignof(ID3v2_FrameHeader) == 1);
+static_assert(alignof(FLAC_Header) == 1);
+
+
+// ID3v2头标志
+enum :UINT
+{
+    ID3V2HF_UNSYNCHRONIZATION = 1u << 7,            // 不同步
+    ID3V2HF_EXTENDED_HEADER = 1u << 6,              // 含扩展头
+    ID3V2HF_EXPERIMENTAL = 1u << 5,                 // 实验性标签
+    // ----Only ID3v2.4----
+    ID3V2HF_FOOTER = 1u << 4,                       // 含页脚
+};
+
+// ID3v2扩展头标志
+enum :UINT
+{
+    // ----Only ID3v2.3----
+    ID3V23EH_CRC_DATA_PRESENT = 1u << 7,            // 含CRC数据
+    // ----Only ID3v2.4----
+    ID3V24EH_UPDATE = 1u << 6,                      // 更新标志
+	ID3V24EH_CRC_DATA_PRESENT = 1u << 5,            // 含CRC数据
+	ID3V24EH_RESTRICTIONS = 1u << 4,                // 限制标签尺寸
+};
+
+// ID3v2帧标志
+enum :UINT
+{
+    // ----状态----
+	ID3V2FF_TAG_ALTER_PRESERVATION = 1u << 15,      // 标签修改后应丢弃
+	ID3V2FF_FILE_ALTER_PRESERVATION = 1u << 14,     // 文件修改后应丢弃
+	ID3V2FF_READ_ONLY = 1u << 13,                   // 只读
+    // ----格式----
+	ID3V2FF_HAS_GROUP_IDENTITY = 1u << 6,           // 含组标志（1B）
+	ID3V2FF_COMPRESSION = 1u << 3,                  // 已压缩（zlib）
+	ID3V2FF_ENCRYPTION = 1u << 2,                   // 已加密（1B，指示加密方式）
+	ID3V2FF_UNSYNCHRONIZATION = 1u << 1,            // 不同步
+	ID3V2FF_HAS_DATA_LENGTH_INDICATOR = 1u << 0,    // 含长度指示（4B，同步安全整数）
+};
 
 BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi);
 #pragma endregion

@@ -45,6 +45,8 @@ public:
 };
 
 
+
+
 LRESULT CWndList::SubclassProc_LVList(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
 	auto p = (CWndList*)dwRefData;
@@ -146,6 +148,12 @@ void CWndList::UpdateUISize()
 		SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
 	EndDeferWindowPos(hDwp);
 
+	const auto pBmp = App->ScaleImageForButton(IIDX_Magnifier, m_iDpi);
+	DestroyIcon(m_hiSearch);
+	m_hiSearch = eck::CreateHICON(pBmp);
+	m_BTSearch.SetImage(m_hiSearch, IMAGE_ICON);
+	pBmp->Release();
+
 	eck::LVSetItemHeight(m_LVList.HWnd, m_Ds.cyLVItem);
 	m_TBManage.SetButtonSize(m_Ds.cxToolBtn, m_Ds.cyTool);
 }
@@ -214,12 +222,12 @@ BOOL CWndList::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	m_TBManage.SetButtonStructSize();
 	TBBUTTON TBBtns[]
 	{
-		{0,TBCID_LOCATE,TBSTATE_ENABLED,0,{},0,(INT_PTR)L"定位"},
-		{0,TBCID_ADD,TBSTATE_ENABLED,0,{},0,(INT_PTR)L"添加"},
-		{0,TBCID_LOADLIST,TBSTATE_ENABLED,0,{},0,(INT_PTR)L"读取"},
-		{0,TBCID_SAVELIST,TBSTATE_ENABLED,0,{},0,(INT_PTR)L"保存"},
-		{0,TBCID_EMPTY,TBSTATE_ENABLED,0,{},0,(INT_PTR)L"清空"},
-		{0,TBCID_MANAGE,TBSTATE_ENABLED,0,{},0,(INT_PTR)L"管理"},
+		{I_IMAGENONE,TBCID_LOCATE,TBSTATE_ENABLED,0,{},0,0},
+		{I_IMAGENONE,TBCID_ADD,TBSTATE_ENABLED,0,{},0,0},
+		{I_IMAGENONE,TBCID_LOADLIST,TBSTATE_ENABLED,0,{},0,0},
+		{I_IMAGENONE,TBCID_SAVELIST,TBSTATE_ENABLED,0,{},0,0},
+		{I_IMAGENONE,TBCID_EMPTY,TBSTATE_ENABLED,0,{},0,0},
+		{I_IMAGENONE,TBCID_MANAGE,TBSTATE_ENABLED,0,{},0,0},
 	};
 	m_TBManage.AddButtons(ARRAYSIZE(TBBtns), TBBtns);
 	m_TBManage.Show(SW_SHOWNOACTIVATE);
@@ -587,9 +595,21 @@ LRESULT CWndList::OnListLVNCustomDraw(NMLVCUSTOMDRAW* pnmlvcd)
 		const int idx = (int)pnmlvcd->nmcd.dwItemSpec;
 
 		if (idx == App->GetPlayer().GetCurrFile())// 标记现行播放项
-			FillRect(hDC, &pnmlvcd->nmcd.rc, m_hbrCurrPlaying);
+		{
+			eck::CEzCDC cdc(pnmlvcd->nmcd.hdr.hwndFrom, 1, 1);
+			SetDCBrushColor(cdc.GetDC(), eck::ARGBToColorref(m_WndMain.GetDwmColorArgb()));
+			constexpr RECT rcTemp{ 0,0,1,1 };
+			FillRect(cdc.GetDC(), &rcTemp, GetStockBrush(DC_BRUSH));
+
+			AlphaBlend(hDC, pnmlvcd->nmcd.rc.left, pnmlvcd->nmcd.rc.top,
+				pnmlvcd->nmcd.rc.right - pnmlvcd->nmcd.rc.left,
+				pnmlvcd->nmcd.rc.bottom - pnmlvcd->nmcd.rc.top,
+				cdc.GetDC(), 0, 0, 1, 1, { AC_SRC_OVER,0,110,0 });
+		}
 		else if (idx % 2)// 交替行色
+		{
 			FillRect(hDC, &pnmlvcd->nmcd.rc, m_hbrGray);
+		}
 
 		int iState;
 		if (m_LVList.GetItemState(idx, LVIS_SELECTED) == LVIS_SELECTED)// 选中
@@ -609,7 +629,7 @@ LRESULT CWndList::OnListLVNCustomDraw(NMLVCUSTOMDRAW* pnmlvcd)
 		if (Item.bIgnore)
 			SetTextColor(hDC, eck::Colorref::Gray);
 		else
-			SetTextColor(hDC, eck::Colorref::Black);
+			SetTextColor(hDC, GetSysColor(COLOR_WINDOWTEXT));
 
 		RECT rc = pnmlvcd->nmcd.rc;
 		rc.left += m_Ds.cxLVTextSpace;
@@ -624,7 +644,7 @@ LRESULT CWndList::OnListLVNCustomDraw(NMLVCUSTOMDRAW* pnmlvcd)
 
 		if (Item.bBookmark)
 		{
-			auto& bm = App->GetPlayer().GetList().AtBookmark(idx);
+			const auto& bm = App->GetPlayer().GetList().AtBookmark(idx);
 			HGDIOBJ hOldPen = SelectObject(hDC, CreatePen(PS_SOLID, 1, bm.crColor));
 			MoveToEx(hDC, pnmlvcd->nmcd.rc.left, pnmlvcd->nmcd.rc.top, NULL);
 			LineTo(hDC, pnmlvcd->nmcd.rc.right, pnmlvcd->nmcd.rc.top);

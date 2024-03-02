@@ -1,5 +1,7 @@
 ﻿#include "Utils.h"
 
+#include "eck\CRefBinStream.h"
+
 UTILS_NAMESPACE_BEGIN
 /// <summary>
 /// 同步安全整数到32位小端整数
@@ -70,17 +72,15 @@ BOOL IsTextUTF8(char* str, ULONGLONG length)
 /// <param name="iLength">长度；未指定iTextEncoding时表示整个文本帧长度（包括1B的编码标记，不含结尾NULL），指定iTextEncoding时表示字符串长度（不含结尾NULL）</param>
 /// <param name="iTextEncoding">自定义文本编码；-1（缺省）指示处理的是文本帧</param>
 /// <returns>返回处理完毕的文本</returns>
-eck::CRefStrW GetMP3ID3v2_ProcString(PCBYTE pStream, int cb, int iTextEncoding = -1)
+static eck::CRefStrW GetID3v2_ProcString(PCBYTE pStream, int cb, int iTextEncoding = -1)
 {
-	int iType = 0, cchBuf;
+	int iType = iTextEncoding, cchBuf;
 	if (iTextEncoding == -1)
 	{
-		memcpy(&iType, pStream, 1);
+		iType = *pStream;
 		++pStream;// 跳过文本编码标志
 		--cb;
 	}
-	else
-		iType = iTextEncoding;
 
 	eck::CRefStrW rsResult{};
 
@@ -94,7 +94,7 @@ eck::CRefStrW GetMP3ID3v2_ProcString(PCBYTE pStream, int cb, int iTextEncoding =
 		MultiByteToWideChar(CP_ACP, 0, (PCCH)pStream, cb, rsResult.Data(), cchBuf);
 		break;
 	case 1:// UTF-16LE
-		if (*(PWSTR)pStream == L'\xFEFF')// 跳BOM（要不是算出来哈希值不一样我可能还真发现不了这个BOM的问题.....）
+		if (*(PWSTR)pStream == L'\xFEFF')// 跳BOM
 		{
 			pStream += sizeof(WCHAR);
 			cb -= sizeof(WCHAR);
@@ -129,6 +129,40 @@ eck::CRefStrW GetMP3ID3v2_ProcString(PCBYTE pStream, int cb, int iTextEncoding =
 	return rsResult;
 }
 
+class CID3v2Frame
+{
+private:
+	eck::CMemReader& m_r;
+	const ID3v2_FrameHeader* m_pHeader{};
+	eck::CRefBin m_rbUnsyncRestore{};
+	DWORD m_cbFrame{};
+	BOOL m_bUnsync = FALSE;
+public:
+	CID3v2Frame(eck::CMemReader& r, const ID3v2_FrameHeader* pHeader, DWORD cbFrame, BOOL bUnsync)
+		:m_r(r), m_pHeader(pHeader), m_cbFrame(cbFrame), m_bUnsync(bUnsync) {}
+
+	std::pair<eck::CMemReader, DWORD> Begin()
+	{
+		if ((m_pHeader->Flags[1] & ID3V2FF_UNSYNCHRONIZATION) || m_bUnsync)
+		{
+			m_rbUnsyncRestore.DupStream(m_r, m_cbFrame);
+			m_rbUnsyncRestore.ReplaceSubBin({ 0xFF, 0x00 }, { 0xFF });// 恢复不同步处理
+			return
+			{ 
+				eck::CMemReader(m_rbUnsyncRestore.Data(), m_rbUnsyncRestore.Size()),
+				(DWORD)m_rbUnsyncRestore.Size()
+			};
+		}
+		else
+			return { m_r,m_cbFrame };
+	}
+
+	PNInline void End()
+	{
+		m_r += m_cbFrame;
+	}
+};
+
 BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 {
 	eck::CFile File;
@@ -138,6 +172,8 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 		return FALSE;
 	}
 	DWORD cbFile = File.GetSize32();
+	if (cbFile < 4)
+		return FALSE;
 
 	BYTE by[4];
 	File >> by;// 读文件头
@@ -155,9 +191,9 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 		if (cbTotal > cbFile)
 			return FALSE;
 
-		PCVOID pEnd = r.Data() + cbTotal;
-
-		auto pExtHeader = (const ID3v2_ExtHeader*)r.Data();
+		const BOOL bUnsync = (pHeader->Flags & ID3V2HF_UNSYNCHRONIZATION);
+		const PCVOID pEnd = r.Data() + cbTotal;
+		const auto pExtHeader = (const ID3v2_ExtHeader*)r.Data();
 
 		if (pHeader->Ver == 3)// 2.3
 		{
@@ -170,32 +206,66 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 				r += SynchSafeIntToDWORD(pExtHeader->ExtHeaderSize);
 			// 2.4里变成了同步安全整数，而且这个尺寸包含了记录尺寸的四个字节
 		}
+		else
+		{
+			EckDbgPrintWithPos(L"未识别的ID3版本");
+			EckDbgBreak();
+			return FALSE;
+		}
 
 		DWORD cbUnit;
 		ID3v2_FrameHeader* pFrame;
+		DWORD cbExtra;
+
 		while (r < pEnd)
 		{
 			r.SkipPointer(pFrame);
 
+			cbExtra = 0;
+			if (pFrame->Flags[1] & ID3V2FF_HAS_GROUP_IDENTITY)
+				cbExtra += 1;// 跳过组标识符
+			if (pFrame->Flags[1] & ID3V2FF_ENCRYPTION)
+				cbExtra += 1;// 跳过加密类型标识符
+			if (pFrame->Flags[1] & ID3V2FF_HAS_DATA_LENGTH_INDICATOR)
+				cbExtra += 4;// 跳过数据长度指示器
+
 			if (pHeader->Ver == 3)
 				cbUnit = eck::ReverseInteger(*(DWORD*)pFrame->Size);// 2.3：32位数据，不包括帧头（偏4字节）
-			else if (pHeader->Ver == 4)
+			else/* if (pHeader->Ver == 4)*/
 				cbUnit = SynchSafeIntToDWORD(pFrame->Size);// 2.4：28位数据（同步安全整数）
+			cbUnit -= cbExtra;
+			r += cbExtra;
+
+			if (pFrame->Flags[1] & (ID3V2FF_COMPRESSION | ID3V2FF_ENCRYPTION))
+			{
+#ifdef _DEBUG
+				eck::CRefStrA rs(pFrame->ID, 4);
+				EckDbgPrintWithPos((eck::StrX2W(rs.Data(), rs.Size()) + L"：暂不支持压缩和加密帧").Data());
+#endif
+				r += cbUnit;
+				continue;
+			}
 
 			if (memcmp(pFrame->ID, "TIT2", 4) == 0)// 标题
 			{
-				mi.rsTitle = GetMP3ID3v2_ProcString(r, cbUnit);
-				r += cbUnit;
+				CID3v2Frame f(r, pFrame, cbUnit, bUnsync);
+				auto [r2, cb] = f.Begin();
+				mi.rsTitle = GetID3v2_ProcString(r2, cb);
+				f.End();
 			}
 			else if (memcmp(pFrame->ID, "TPE1", 4) == 0)// 作者
 			{
-				mi.rsArtist = GetMP3ID3v2_ProcString(r, cbUnit);
-				r += cbUnit;
+				CID3v2Frame f(r, pFrame, cbUnit, bUnsync);
+				auto [r2, cb] = f.Begin();
+				mi.rsArtist = GetID3v2_ProcString(r2, cb);
+				f.End();
 			}
 			else if (memcmp(pFrame->ID, "TALB", 4) == 0)// 专辑
 			{
-				mi.rsAlbum = GetMP3ID3v2_ProcString(r, cbUnit);
-				r += cbUnit;
+				CID3v2Frame f(r, pFrame, cbUnit, bUnsync);
+				auto [r2, cb] = f.Begin();
+				mi.rsAlbum = GetID3v2_ProcString(r2, cb);
+				f.End();
 			}
 			else if (memcmp(pFrame->ID, "USLT", 4) == 0)// 不同步歌词
 			{
@@ -206,25 +276,27 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 				内容描述						<字符串> $00 (00)
 				歌词							<字符串>
 				*/
-				DWORD cb = cbUnit;
+				CID3v2Frame f(r, pFrame, cbUnit, bUnsync);
+				auto [r2, cb] = f.Begin();
 
-				BYTE byEncodeingType;
-				r >> byEncodeingType;// 读文本编码
+				BYTE byEncodeType;
+				r2 >> byEncodeType;// 读文本编码
 
 				CHAR byLangCode[3];
-				r >> byLangCode;// 读自然语言代码
+				r2 >> byLangCode;// 读自然语言代码
 
 				int t;
-				if (byEncodeingType == 0 || byEncodeingType == 3)// ISO-8859-1或UTF-8
-					t = (int)strlen((PCSTR)r.m_pMem) + 1;
+				if (byEncodeType == 0 || byEncodeType == 3)// ISO-8859-1或UTF-8
+					t = (int)strlen((PCSTR)r2.Data()) + 1;
 				else// UTF-16LE或UTF-16BE
-					t = ((int)wcslen((PCWSTR)r.m_pMem) + 1) * sizeof(WCHAR);
-				r += t;// 跳过内容描述
+					t = ((int)wcslen((PCWSTR)r2.Data()) + 1) * sizeof(WCHAR);
+				r2 += t;// 跳过内容描述
 
 				cb -= (t + 4);
 
-				mi.rsLrc = GetMP3ID3v2_ProcString(r, cb, byEncodeingType);
-				r += cb;
+				mi.rsLrc = GetID3v2_ProcString(r2, cb, byEncodeType);
+
+				f.End();
 			}
 			else if (memcmp(pFrame->ID, "COMM", 4) == 0)// 备注
 			{
@@ -235,25 +307,27 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 				备注摘要						<字符串> $00 (00)
 				备注							<字符串>
 				*/
-				DWORD cb = cbUnit;
+				CID3v2Frame f(r, pFrame, cbUnit, bUnsync);
+				auto [r2, cb] = f.Begin();
 
-				BYTE byEncodeingType;
-				r >> byEncodeingType;// 读文本编码
+				BYTE byEncodeType;
+				r2 >> byEncodeType;// 读文本编码
 
 				CHAR byLangCode[3];
-				r >> byLangCode;// 读自然语言代码
+				r2 >> byLangCode;// 读自然语言代码
 
 				int t;
-				if (byEncodeingType == 0 || byEncodeingType == 3)// ISO-8859-1或UTF-8
-					t = (int)strlen((PCSTR)pFrame) + 1;
+				if (byEncodeType == 0 || byEncodeType == 3)// ISO-8859-1或UTF-8
+					t = (int)strlen((PCSTR)r2.Data()) + 1;
 				else// UTF-16LE或UTF-16BE
-					t = ((int)wcslen((PCWSTR)pFrame) + 1) * sizeof(WCHAR);
-				r += t;// 跳过备注摘要
+					t = ((int)wcslen((PCWSTR)r2.Data()) + 1) * sizeof(WCHAR);
+				r2 += t;// 跳过备注摘要
 
 				cb -= (t + 4);
 				// 此时pFrame指向备注字符串
-				mi.rsComment = GetMP3ID3v2_ProcString(r, cb, byEncodeingType);
-				r += cb;
+				mi.rsComment = GetID3v2_ProcString(r2, cb, byEncodeType);
+				
+				f.End();
 			}
 			else if (memcmp(pFrame->ID, "APIC", 4) == 0)// 图片
 			{
@@ -265,27 +339,29 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 				描述                            <字符串>$00(00)
 				<图片数据>
 				*/
-				DWORD cb = cbUnit;
+				CID3v2Frame f(r, pFrame, cbUnit, bUnsync);
+				auto [r2, cb] = f.Begin();
 
-				BYTE byEncodeingType;
-				r >> byEncodeingType;// 读文本编码
+				BYTE byEncodeType;
+				r2 >> byEncodeType;// 读文本编码
 
 				int t;
-				t = (int)strlen((PCSTR)r.m_pMem);
-				r += (t + 2);// 跳过MIME类型字符串和图片类型
+				t = (int)strlen((PCSTR)r2.Data());
+				r2 += (t + 2);// 跳过MIME类型字符串和图片类型
 
 				cb -= (t + 3);
 
-				if (byEncodeingType == 0 || byEncodeingType == 3)// ISO-8859-1或UTF-8
-					t = (int)strlen((PCSTR)r.m_pMem) + 1;
+				if (byEncodeType == 0 || byEncodeType == 3)// ISO-8859-1或UTF-8
+					t = (int)strlen((PCSTR)r2.Data()) + 1;
 				else// UTF-16LE或UTF-16BE
-					t = ((int)wcslen((PCWSTR)r.m_pMem) + 1) * sizeof(WCHAR);
+					t = ((int)wcslen((PCWSTR)r2.Data()) + 1) * sizeof(WCHAR);
 
-				r += t;
+				r2 += t;
 				cb -= t;// 跳过描述字符串和结尾NULL
 
-				mi.pCoverData = SHCreateMemStream(r, cb);// 创建流对象
-				r += cb;
+				mi.rbCover.DupStream(r2, cb);
+
+				f.End();
 			}
 			else
 				r += cbUnit;
@@ -296,7 +372,6 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 		FLAC_Header Header;
 		DWORD cbBlock;
 		UINT t;
-		char* pBuffer;
 		do
 		{
 			File >> Header;
@@ -315,47 +390,25 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 				{
 					File >> t;// 标签大小
 
-					pBuffer = new char[t + 1];
-					File.Read(pBuffer, t);// 读标签
-					*(pBuffer + t) = '\0';
+					eck::CRefStrA u8Label(t);
+					File.Read(u8Label.Data(), t);// 读标签
+					const auto rsLabel = eck::StrX2W(u8Label.Data(), t);
 
-					t = MultiByteToWideChar(CP_UTF8, 0, pBuffer, -1, NULL, 0);
-					PWSTR pszLabel = new WCHAR[t];
-					MultiByteToWideChar(CP_UTF8, 0, pBuffer, -1, pszLabel, t);// 转换编码，UTF-8到UTF-16LE
-					delete[] pBuffer;
-
-					int iPos = eck::FindStr(pszLabel, L"=");// 找等号
+					const int iPos = rsLabel.Find(L"=");// 找等号
 					if (iPos != eck::INVALID_STR_POS)
 					{
-						int cch = t - iPos;
-						if (eck::FindStr(pszLabel, L"TITLE"))
-						{
-							mi.rsTitle.ReSize(cch);
-							wcscpy(mi.rsTitle.Data(), pszLabel + iPos);
-						}
-						else if (eck::FindStr(pszLabel, L"ALBUM"))
-						{
-							mi.rsAlbum.ReSize(cch);
-							wcscpy(mi.rsAlbum.Data(), pszLabel + iPos);
-						}
-						else if (eck::FindStr(pszLabel, L"ARTIST"))
-						{
-							mi.rsArtist.ReSize(cch);
-							wcscpy(mi.rsArtist.Data(), pszLabel + iPos);
-						}
-						else if (eck::FindStr(pszLabel, L"DESCRIPTION"))
-						{
-							mi.rsComment.ReSize(cch);
-							wcscpy(mi.rsComment.Data(), pszLabel + iPos);
-						}
-						else if (eck::FindStr(pszLabel, L"LYRICS"))
-						{
-							mi.rsLrc.ReSize(cch);
-							wcscpy(mi.rsLrc.Data(), pszLabel + iPos);
-						}
+						const int cch = t - iPos;
+						if (rsLabel.Find(L"TITLE") > 0)
+							mi.rsTitle.DupString(rsLabel.Data() + iPos, cch);
+						else if (rsLabel.Find(L"ALBUM") > 0)
+							mi.rsAlbum.DupString(rsLabel.Data() + iPos, cch);
+						else if (rsLabel.Find(L"ARTIST") > 0)
+							mi.rsArtist.DupString(rsLabel.Data() + iPos, cch);
+						else if (rsLabel.Find(L"DESCRIPTION") > 0)
+							mi.rsComment.DupString(rsLabel.Data() + iPos, cch);
+						else if (rsLabel.Find(L"LYRICS") > 0)
+							mi.rsLrc.DupString(rsLabel.Data() + iPos, cch);
 					}
-
-					delete[] pszLabel;
 				}
 			}
 			break;
@@ -374,10 +427,7 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 				File >> t;// 图片数据长度
 				t = eck::ReverseInteger(t);// 图片数据长度
 
-				pBuffer = new char[t];
-				File.Read(pBuffer, t);
-				mi.pCoverData = SHCreateMemStream((const BYTE*)pBuffer, t);// 创建流对象
-				delete[] pBuffer;
+				mi.rbCover = File.ReadBin(t);
 			}
 			break;
 			default:
@@ -422,7 +472,8 @@ void ParseLrc_ProcTimeLabel(std::vector<LRCINFO>& Result, std::vector<LRCLABEL>&
 		if (Label.pos2 > 0)
 		{
 			StrToIntExW(Label.pszLabel + Label.pos2 + 1, STIF_DEFAULT, &MS);
-			fTime += ((float)MS / 1000.f);
+			const float fScale = (MS < 100 ? 100.f : 1000.f);
+			fTime += ((float)MS / fScale);
 		}
 
 		if (fTime < 0)
@@ -540,16 +591,12 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 	PWSTR pszOrg = (PWSTR)pFileData;
 	int cchFile = (int)(cbMem / sizeof(WCHAR));
 
-	constexpr BYTE
-		c_chBomU16LE[]{ 0xFF, 0xFE },
-		c_chBomU16BE[]{ 0xFE, 0xFF },
-		c_chBomU8[]{ 0xEF, 0xBB, 0xBF };
-	if (memcmp(pFileData, c_chBomU16LE, 2) == 0)
+	if (memcmp(pFileData, eck::BOM_UTF16LE, 2) == 0)
 	{
 		--cchFile;
 		pszOrg = (PWSTR)(pFileData + 2);
 	}
-	else if (memcmp(pFileData, c_chBomU16BE, 2) == 0)
+	else if (memcmp(pFileData, eck::BOM_UTF16BE, 2) == 0)
 	{
 		--cchFile;
 		pszOrg = (PWSTR)VirtualAlloc(NULL, eck::Cch2Cb(cchFile), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
@@ -558,7 +605,7 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 		VirtualFree(pFileData, 0, MEM_RELEASE);
 		pFileData = (BYTE*)pszOrg;
 	}
-	else if (memcmp(pFileData, c_chBomU8, 3) == 0)
+	else if (memcmp(pFileData, eck::BOM_UTF8, 3) == 0)
 	{
 		int cchBuf = MultiByteToWideChar(CP_UTF8, 0, (CHAR*)pFileData + 3, -1, NULL, 0);
 		pszOrg = (PWSTR)VirtualAlloc(NULL, eck::Cch2Cb(cchBuf), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
@@ -906,7 +953,7 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 		auto& x = Result[i];
 		if (vLastTime.size() != 0 && i != 0)
 		{
-			if (vLastTime[0] == x.fTime)
+			if (eck::FloatEqual(vLastTime[0], x.fTime))
 			{
 				auto& TopItem = Result[i - vLastTime.size()];
 
@@ -930,10 +977,8 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 				}
 				else// 两个都有
 				{
-#pragma warning (push)
-#pragma warning (disable: 6308)// realloc为NULL
+#pragma warning (suppress: 6308)// realloc为NULL
 					TopItem.pszLrc = (PWSTR)realloc(TopItem.pszLrc, eck::Cch2Cb(cch1 + cch2 + 1));
-#pragma warning (pop)
 					* (TopItem.pszLrc + cch1) = L'\n';
 					wcscpy(TopItem.pszLrc + cch1 + 1, x.pszLrc);
 

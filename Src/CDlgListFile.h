@@ -32,6 +32,9 @@ private:
 	PARAM* m_pParam = NULL;
 	HFONT m_hFont = NULL;
 
+	HICON m_hiTick = NULL;
+	HICON m_hiCross = NULL;
+
 	BOOL m_bRet = FALSE;
 
 	enum
@@ -55,7 +58,7 @@ private:
 	ECK_DS_END_VAR(m_Ds);
 
 
-	void OnInitDialog(HWND hWnd);
+	BOOL OnInitDialog(HWND hDlg, HWND hFocus, LPARAM lParam) override;
 
 	void OnSize(HWND hWnd, UINT uState, int cx, int cy);
 
@@ -63,9 +66,7 @@ private:
 
 	void OnDpiChanged(HWND hWnd, int xDpi, int yDpi, RECT* pRect);
 
-	void OnCmdOk();
-
-	void OnCmdCancel();
+	void OnOk(HWND hCtrl) override;
 
 	void OnLVNItemChanged(NMLISTVIEW* pnmlv);
 

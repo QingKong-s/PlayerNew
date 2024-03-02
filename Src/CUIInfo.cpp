@@ -6,10 +6,10 @@ void CUIInfo::UpdateTextFormat()
     eck::SafeRelease(m_pTfTip);
     App->m_pDwFactory->CreateTextFormat(L"微软雅黑", NULL,
         DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-        m_pBK->Dpi(18.f), L"zh-cn", &m_pTfTitle);
+        GetBk()->Dpi(18.f), L"zh-cn", &m_pTfTitle);
     App->m_pDwFactory->CreateTextFormat(L"微软雅黑", NULL,
         DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-        m_pBK->Dpi(12.f), L"zh-cn", &m_pTfTip);
+        GetBk()->Dpi(12.f), L"zh-cn", &m_pTfTip);
 
     DWRITE_TRIMMING DWTrimming
     {
@@ -31,91 +31,98 @@ void CUIInfo::UpdateTextFormat()
     pDWInlineObj->Release();
 }
 
-CUIInfo::CUIInfo()
+LRESULT CUIInfo::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    m_uType = UIET_INFO;
-    m_uFlags = UIEF_STATIC;
-}
-
-void CUIInfo::Redraw()
-{
-    auto pDC = m_pBK->m_pDC;
-    ////////////////////画顶部提示信息
-    PCWSTR psz;
-    if (App->GetPlayer().IsFileActive())
-    {
-        const auto& Item = App->GetPlayer().GetList().At(App->GetPlayer().GetCurrFile());
-        psz = Item.rsName.Data();
-    }
-    else
-        psz = L"未播放";
-    ///////////画大标题
-    D2D1_RECT_F rcF{ m_rcF.left,m_rcF.top,m_rcF.right,m_rcF.top + m_pBK->m_DsF.cyTopTitle };
-    pDC->DrawTextW(psz, lstrlenW(psz), m_pTfTitle, &rcF, m_pBrBigTip);
-    ///////////画其他信息
-    constexpr PCWSTR pszTip[]
-    {
-        L"标题：",
-        L"艺术家：",
-        L"专辑：",
-        L"备注："
-    };
-
-    const auto& MusicInfo = App->GetPlayer().GetMusicInfo();
-    const PCWSTR pszTip2[]
-    {
-        MusicInfo.rsTitle.Data(),
-        MusicInfo.rsArtist.Data(),
-        MusicInfo.rsAlbum.Data(),
-        MusicInfo.rsComment.Data()
-    };
-    const UINT32 cchTip2[]
-    {
-        (UINT32)MusicInfo.rsTitle.Size(),
-        (UINT32)MusicInfo.rsArtist.Size(),
-        (UINT32)MusicInfo.rsAlbum.Size(),
-        (UINT32)MusicInfo.rsComment.Size()
-    };
-
-    const auto cxTopTip = m_pBK->m_DsF.cxTopTip;
-    const auto cyTopTip = m_pBK->m_DsF.cyTopTip;
-    rcF.right = rcF.left + cxTopTip;
-    rcF.top += (cyTopTip + m_pBK->m_DsF.sizeTopTipGap);
-    rcF.bottom = rcF.top + cyTopTip;
-
-    int cxElem = m_rc.right - m_rc.left;
-    for (int i = 0; i < ARRAYSIZE(pszTip); ++i)
-    {
-        pDC->DrawTextW(pszTip[i], (UINT32)wcslen(pszTip[i]), m_pTfTip, &rcF, m_pBrSmallTip);
-        if (pszTip2[i])
+	switch (uMsg)
+	{
+	case WM_PAINT:
+	{
+        Dui::ELEMPAINTSTRU ps;
+        BeginPaint(ps, wParam, lParam);
+        const auto pBk = GetBk();
+        ////////////////////画顶部提示信息
+        PCWSTR psz;
+        if (App->GetPlayer().IsFileActive())
         {
-            rcF.left += cxTopTip;
-            rcF.right = m_rcF.right;
-            pDC->DrawTextW(pszTip2[i], cchTip2[i], m_pTfTip, &rcF, m_pBrSmallTip);
-            rcF.left = m_rcF.left;
-            rcF.right = rcF.left + cxTopTip;
+            const auto& Item = App->GetPlayer().GetList().At(App->GetPlayer().GetCurrFile());
+            psz = Item.rsName.Data();
         }
-        rcF.top += cyTopTip;
+        else
+            psz = L"未播放";
+        ///////////画大标题
+        D2D1_RECT_F rcF{ 0.f,0.f,GetViewWidthF(),pBk->m_DsF.cyTopTitle};
+        m_pDC->DrawTextW(psz, lstrlenW(psz), m_pTfTitle, &rcF, m_pBrBigTip);
+        ///////////画其他信息
+        constexpr PCWSTR pszTip[]
+        {
+            L"标题：",
+            L"艺术家：",
+            L"专辑：",
+            L"备注："
+        };
+
+        const auto& MusicInfo = App->GetPlayer().GetMusicInfo();
+        const PCWSTR pszTip2[]
+        {
+            MusicInfo.rsTitle.Data(),
+            MusicInfo.rsArtist.Data(),
+            MusicInfo.rsAlbum.Data(),
+            MusicInfo.rsComment.Data()
+        };
+        const UINT32 cchTip2[]
+        {
+            (UINT32)MusicInfo.rsTitle.Size(),
+            (UINT32)MusicInfo.rsArtist.Size(),
+            (UINT32)MusicInfo.rsAlbum.Size(),
+            (UINT32)MusicInfo.rsComment.Size()
+        };
+
+        const auto cxTopTip = pBk->m_DsF.cxTopTip;
+        const auto cyTopTip = pBk->m_DsF.cyTopTip;
+        rcF.right = rcF.left + cxTopTip;
+        rcF.top += (cyTopTip + pBk->m_DsF.sizeTopTipGap);
         rcF.bottom = rcF.top + cyTopTip;
-    }
-    BkDbg_DrawElemFrame();
-}
 
-BOOL CUIInfo::InitElem()
-{
-    eck::SafeRelease(m_pBrBigTip);
-    eck::SafeRelease(m_pBrSmallTip);
-    auto pDC = m_pBK->m_pDC;
-    pDC->CreateSolidColorBrush(c_D2DClrCyanDeeper, &m_pBrBigTip);
-    pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_pBrSmallTip);
-    UpdateTextFormat();
-    return TRUE;
-}
+        int cxElem = m_rc.right - m_rc.left;
+        for (int i = 0; i < ARRAYSIZE(pszTip); ++i)
+        {
+            m_pDC->DrawTextW(pszTip[i], (UINT32)wcslen(pszTip[i]), m_pTfTip, &rcF, m_pBrSmallTip);
+            if (pszTip2[i])
+            {
+                rcF.left += cxTopTip;
+                rcF.right = GetViewWidthF();
+                m_pDC->DrawTextW(pszTip2[i], cchTip2[i], m_pTfTip, &rcF, m_pBrSmallTip);
+                rcF.left = 0.f;
+                rcF.right = rcF.left + cxTopTip;
+            }
+            rcF.top += cyTopTip;
+            rcF.bottom = rcF.top + cyTopTip;
+        }
+        BkDbg_DrawElemFrame();
 
-CUIInfo::~CUIInfo()
-{
-    eck::SafeRelease(m_pBrBigTip);
-    eck::SafeRelease(m_pBrSmallTip);
-    eck::SafeRelease(m_pTfTitle);
-    eck::SafeRelease(m_pTfTip);
+        EndPaint(ps);
+	}
+	break;
+
+	case WM_CREATE:
+	{
+		eck::SafeRelease(m_pBrBigTip);
+		eck::SafeRelease(m_pBrSmallTip);
+		m_pDC->CreateSolidColorBrush(c_D2DClrCyanDeeper, &m_pBrBigTip);
+		m_pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_pBrSmallTip);
+		UpdateTextFormat();
+	}
+	return 0;
+
+	case WM_DESTROY:
+	{
+		eck::SafeRelease(m_pBrBigTip);
+		eck::SafeRelease(m_pBrSmallTip);
+		eck::SafeRelease(m_pTfTitle);
+		eck::SafeRelease(m_pTfTip);
+	}
+	break;
+	}
+	return 0;
+
 }

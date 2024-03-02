@@ -22,7 +22,7 @@ enum TICKCHANGING
 	TKC_LRCPOSUPDATED = (1u << 1),
 };
 
-PNInline TICKCHANGING operator|=(TICKCHANGING& x1, TICKCHANGING x2)
+PNInline constexpr TICKCHANGING operator|=(TICKCHANGING& x1, TICKCHANGING x2)
 {
 	return x1 = (TICKCHANGING)(x1 | x2);
 }
@@ -30,8 +30,8 @@ PNInline TICKCHANGING operator|=(TICKCHANGING& x1, TICKCHANGING x2)
 // 播放控制类型
 enum PLAYINGCTRLTYPE
 {
-	PCT_PLAY,				// (idxOld, 0)
-	PCT_PAUSE,
+	PCT_PLAYNEW,			// (idxOld, 0)
+	PCT_PLAY_OR_PAUSE,
 	PCT_STOP,				// (idxOld, 0)
 	PCT_REMOVE_LATER_PLAY	// (idxLaterPlay, 0)
 };
@@ -274,7 +274,7 @@ public:
 	/// <returns>LV索引</returns>
 	PNInline int GetCurrFile() const { return m_idxCurrFile; }
 
-	PNInline const eck::CRefStrW GetCurrFileName() const { return m_rsCurrFile; }
+	PNInline const eck::CRefStrW& GetCurrFileName() const { return m_rsCurrFile; }
 
 	PNInline int GetCurrLrc() const { return m_idxCurrLrc; }
 

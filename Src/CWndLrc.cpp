@@ -24,9 +24,11 @@ public:
 		DWRITE_GLYPH_RUN_DESCRIPTION const* pGlyphRunDesc,
 		IUnknown* pClientDrawingEffect)
 	{
-		ID2D1PathGeometry* pPathGeometry;// 路径图形
-		ID2D1TransformedGeometry* pTransformedGeometry;// 变换图形
-		ID2D1GeometrySink* pSink;// 几何接收器
+		const auto& om = App->GetOptionsMgr();
+
+		ID2D1PathGeometry* pPathGeometry;
+		ID2D1TransformedGeometry* pTransformedGeometry;
+		ID2D1GeometrySink* pSink;
 		HRESULT hr;
 		hr = App->m_pD2dFactory->CreatePathGeometry(&pPathGeometry);
 		if (!pPathGeometry)
@@ -35,18 +37,21 @@ public:
 		pPathGeometry->Open(&pSink);
 		pGlyphRun->fontFace->GetGlyphRunOutline(pGlyphRun->fontEmSize, pGlyphRun->glyphIndices,
 			pGlyphRun->glyphAdvances, pGlyphRun->glyphOffsets, pGlyphRun->glyphCount,
-			pGlyphRun->isSideways, pGlyphRun->bidiLevel, pSink);// 取字形轮廓
+			pGlyphRun->isSideways, pGlyphRun->bidiLevel, pSink);
 		pSink->Close();
 
-		//if (GS.bDTLrcShandow)
-		//{
-		//	float fShandowOffest = 3;// 阴影偏移
+		if (om.DtLrcEnableShadow != 0.f)
+		{
+			const float oxy = eck::DpiScaleF(om.DtLrcShadowOffset, (float)m_Wnd.GetDpiValue());
 
-		//	g_pD2DFactory->CreateTransformedGeometry(pD2DPathGeometry,
-		//		D2D1::Matrix3x2F::Translation(baselineOriginX + fShandowOffest, baselineOriginY + fShandowOffest), &pD2DTransformedGeometry);// 平移
-		//	m_pD2DRenderTarget_Outline->FillGeometry(pD2DTransformedGeometry, m_pD2DSolidBrush2);// 画阴影
-		//	pD2DTransformedGeometry->Release();
-		//}
+			App->m_pD2dFactory->CreateTransformedGeometry(
+				pPathGeometry,
+				D2D1::Matrix3x2F::Translation(xOrgBaseline + oxy, yOrgBaseline + oxy),
+				&pTransformedGeometry);
+			EckAssert(pTransformedGeometry);
+			m_pRT->FillGeometry(pTransformedGeometry, m_pBrOutLine);
+			pTransformedGeometry->Release();
+		}
 
 		hr = App->m_pD2dFactory->CreateTransformedGeometry(pPathGeometry,
 			D2D1::Matrix3x2F::Translation(xOrgBaseline, yOrgBaseline), &pTransformedGeometry);
@@ -117,7 +122,7 @@ public:
 
 	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void** ppvObj)
 	{
-		const QITAB qit[]
+		const static QITAB qit[]
 		{
 			QITABENT(CTextRenderer, IDWriteTextRenderer),
 			QITABENT(CTextRenderer, IDWritePixelSnapping),
@@ -207,7 +212,10 @@ void CWndLrc::Draw()
 
 	const float m = m_DsF.Margin * 3;
 	m_pRT->PushAxisAlignedClip({ m,m,m_cxClient - m,m_cyClient - m }, D2D1_ANTIALIAS_MODE_ALIASED);
-	if (idxCurr >= 0)
+
+	if (!App->GetPlayer().IsFileActive())
+		DrawStaticLine(LRCIDX_APPNAME, y);
+	else if (idxCurr >= 0)
 	{
 		float cy;
 		if (idxCurr % 2)
@@ -229,6 +237,8 @@ void CWndLrc::Draw()
 			DrawLrcLine(idxCurr, y + cy + m_DsF.TextPadding, TRUE);
 		}
 	}
+	else
+		DrawStaticLine(LRCIDX_FILENAME, y);
 	m_pRT->PopAxisAlignedClip();
 	m_pRT->EndDraw();
 
@@ -249,8 +259,8 @@ float CWndLrc::DrawLrcLine(int idxLrc, float y, BOOL bSecondLine)
 	auto& Cache = m_TextCache[bSecondLine];
 	const BOOL bHiLight = (idxLrc == App->GetPlayer().GetCurrLrc());
 
-	const float cxMax = (float)m_cxClient - m_DsF.Margin * 6.f;
-	const float xStart = m_DsF.Margin * 3.f;
+	const float cxMax = CalcMaxLrcWidth();
+	const float xStart = CalcLrcMargin();
 
 	if (Cache.idxLrc != idxLrc)// 更新缓存
 	{
@@ -333,7 +343,7 @@ float CWndLrc::DrawLrcLine(int idxLrc, float y, BOOL bSecondLine)
 	{
 		dx = dTime * Cache.size.width / Lrc.fDuration;
 		if (dx < cxMaxHalf)
-			dx = 0;
+			dx = 0.f;
 		else if (dx > Cache.size.width - cxMaxHalf)
 			dx = cxMax - Cache.size.width;
 		else
@@ -390,6 +400,83 @@ float CWndLrc::DrawLrcLine(int idxLrc, float y, BOOL bSecondLine)
 #endif // _DEBUG
 
 	return cy;
+}
+
+void CWndLrc::DrawStaticLine(int idxFake, float y)
+{
+	EckAssert(idxFake == LRCIDX_APPNAME || idxFake == LRCIDX_FILENAME);
+	auto& Cache = m_TextCache[0];
+	if (Cache.idxLrc != idxFake)
+	{
+		Cache.idxLrc = idxFake;
+		SafeRelease(Cache.pLayout);
+		SafeRelease(Cache.pLayoutTrans);
+		Cache.bScrolling = FALSE;
+		Cache.bTooLong = Cache.bTooLongTrans = FALSE;
+
+		constexpr static WCHAR c_szAppName[]{ L"PlayerNew - VC++/Win32" };
+		PCWSTR pszText;
+		int cchText;
+		switch (idxFake)
+		{
+		case LRCIDX_APPNAME:
+			pszText = c_szAppName;
+			cchText = ARRAYSIZE(c_szAppName) - 1;
+			break;
+		case LRCIDX_FILENAME:
+		{
+			const auto& v = App->GetPlayer().GetList().GetList();
+			pszText = v[App->GetPlayer().GetCurrFile()].rsName.Data();
+			cchText = v[App->GetPlayer().GetCurrFile()].rsName.Size();
+		}
+		break;
+		default:
+			return;
+		}
+
+		const float cxMax = CalcMaxLrcWidth();
+
+		m_pTfMain->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+		m_pTfMain->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);
+		App->m_pDwFactory->CreateTextLayout(pszText, cchText, m_pTfMain,
+			cxMax, (float)m_cyClient, &Cache.pLayout);
+		DWRITE_TEXT_METRICS tm;
+		Cache.pLayout->GetMetrics(&tm);
+		Cache.size = { tm.width,tm.height };
+		m_pTfMain->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
+	}
+
+	const auto& Font = App->GetOptionsMgr().DtLrcFontMain;
+
+	D2D1_GRADIENT_STOP Stops[]
+	{
+		{ 0.f, eck::ARGBToD2dColorF(Font.argbNormalGra[0]) },
+		{ 1.f, eck::ARGBToD2dColorF(Font.argbNormalGra[1]) },
+	};
+	ID2D1GradientStopCollection* pStopCollection;
+	m_pRT->CreateGradientStopCollection(Stops, 2, &pStopCollection);
+	EckAssert(pStopCollection);
+
+	D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES Prop
+	{
+		D2D1::Point2F(0, y),
+		D2D1::Point2F(0, y + Cache.size.height),
+	};
+
+	ID2D1LinearGradientBrush* pBrush;
+	m_pRT->CreateLinearGradientBrush(&Prop, NULL, pStopCollection, &pBrush);
+	pStopCollection->Release();
+	EckAssert(pBrush);
+
+	auto pRenderer = new CTextRenderer(*this, m_pRT, pBrush, m_pBrTextBorder);
+	Cache.pLayout->Draw(NULL, pRenderer, CalcLrcMargin(), y);
+	pBrush->Release();
+
+#ifdef _DEBUG
+	EckAssert(pRenderer->Release() == 0);
+#else
+	pRenderer->Release();
+#endif // _DEBUG
 }
 
 void CWndLrc::UpdateTextFormat()
@@ -469,7 +556,6 @@ LRESULT CWndLrc::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				{
 					m_bHoverLockBtn = b;
 					ModifyStyle(b ? 0u : WS_EX_TRANSPARENT, WS_EX_TRANSPARENT, GWL_EXSTYLE);
-					EckDbgPrint(b);
 				}
 			}
 		}
@@ -658,7 +744,10 @@ void CWndLrc::Lock(BOOL bLock)
 	if (bLock)
 		SetTimer(m_hWnd, IDT_LOCK, TE_LOCK, NULL);
 	else
+	{
 		KillTimer(m_hWnd, IDT_LOCK);
+		SetTimer(m_hWnd, IDT_MOUSELEAVE, TE_MOUSELEAVE, NULL);
+	}
 }
 
 

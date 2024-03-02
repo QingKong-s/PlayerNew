@@ -72,6 +72,10 @@ DWORD CBass::Open(PCWSTR pszFile, DWORD dwFlagsHS, DWORD dwFlagsHM, DWORD dwFlag
 		m_eMusicType = MusicType::Normal;
 
 	m_hStream = h;
+	if (h)
+		m_fDefSpeed = GetAttr(BASS_ATTRIB_FREQ);
+	else
+		m_fDefSpeed = 0.f;
 	return h;
 }
 

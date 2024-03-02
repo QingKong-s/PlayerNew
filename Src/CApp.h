@@ -8,6 +8,7 @@
 #include <wincodec.h>
 #include <CommCtrl.h>
 #include <Shlwapi.h>
+#include <d2d1effects_2.h>
 
 #include <vector>
 #include <string>
@@ -21,13 +22,17 @@
 
 #include "eck\CWnd.h"
 #include "eck\SystemHelper.h"
+#include "eck\ImageHelper.h"
 
 using namespace eck::Literals;
 
-constexpr inline int c_cyLVItem = 24;
+constexpr inline int c_cyLVItem = 26;
 
 constexpr inline PCWSTR c_szDefMainWndText = L"PlayerNew - 未播放";
 constexpr inline PCWSTR c_szVer = L"0.1";
+
+constexpr inline int c_cxBtnIcon = 20;
+constexpr inline int c_cyBtnIcon = 20;
 
 class CApp;
 extern CApp* App;
@@ -176,6 +181,19 @@ public:
 	PNInline CWndMain* GetMainWnd() { return m_pWndMain; }
 
 	PNInline COptionsMgr& GetOptionsMgr() { return m_OptionsMgr; }
+
+	PNInline IWICBitmap* ScaleImageForButton(int idxImg, int iDpi, HRESULT* phr = NULL)
+	{
+		IWICBitmap* pBmp;
+		const auto hr = eck::ScaleWicBitmap(GetWicRes()[idxImg], pBmp,
+			eck::DpiScale(c_cxBtnIcon, iDpi), eck::DpiScale(c_cxBtnIcon, iDpi),
+			WICBitmapInterpolationModeHighQualityCubic);
+		if (phr)
+			*phr = hr;
+		return pBmp;
+	}
+
+	void InvertIconColor();
 
 	static HRESULT WICCreateBitmap(PCWSTR pszFile, IWICBitmap** ppWICBitmap);
 

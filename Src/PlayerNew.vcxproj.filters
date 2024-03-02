@@ -26,177 +26,190 @@
     <Filter Include="浮动窗口">
       <UniqueIdentifier>{420a4adf-6df4-451f-a9dc-619af83574fd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="控件">
+      <UniqueIdentifier>{ebd24187-ce72-41a2-a47d-7039b4772248}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Src\CDlgBookmark.h">
+    <ClInclude Include="CDlgBookmark.h">
       <Filter>对话框</Filter>
     </ClInclude>
-    <ClInclude Include="Src\CDlgListFile.h">
+    <ClInclude Include="CDlgListFile.h">
       <Filter>对话框</Filter>
     </ClInclude>
-    <ClInclude Include="Src\CDlgNewBookmark.h">
+    <ClInclude Include="CDlgNewBookmark.h">
       <Filter>对话框</Filter>
     </ClInclude>
-    <ClInclude Include="Src\CWndBK.h">
+    <ClInclude Include="CWndBK.h">
       <Filter>窗体</Filter>
     </ClInclude>
-    <ClInclude Include="Src\CWndList.h">
+    <ClInclude Include="CWndList.h">
       <Filter>窗体</Filter>
     </ClInclude>
-    <ClInclude Include="Src\CWndMain.h">
+    <ClInclude Include="CWndMain.h">
       <Filter>窗体</Filter>
     </ClInclude>
-    <ClInclude Include="Src\CApp.h">
+    <ClInclude Include="CApp.h">
       <Filter>程序</Filter>
     </ClInclude>
-    <ClInclude Include="Src\COptionsMgr.h">
+    <ClInclude Include="COptionsMgr.h">
       <Filter>程序</Filter>
     </ClInclude>
-    <ClInclude Include="Src\CPlayer.h">
+    <ClInclude Include="CPlayer.h">
       <Filter>程序</Filter>
     </ClInclude>
-    <ClInclude Include="Src\CPlayList.h">
+    <ClInclude Include="CPlayList.h">
       <Filter>程序</Filter>
     </ClInclude>
-    <ClInclude Include="Src\CPlayListFile.h">
+    <ClInclude Include="CPlayListFile.h">
       <Filter>程序</Filter>
     </ClInclude>
-    <ClInclude Include="Src\Entry.h">
+    <ClInclude Include="Entry.h">
       <Filter>程序</Filter>
     </ClInclude>
-    <ClInclude Include="Src\Resource.h">
+    <ClInclude Include="Resource.h">
       <Filter>程序</Filter>
     </ClInclude>
-    <ClInclude Include="Src\targetver.h">
+    <ClInclude Include="targetver.h">
       <Filter>程序</Filter>
     </ClInclude>
-    <ClInclude Include="Src\Utils.h">
+    <ClInclude Include="Utils.h">
       <Filter>程序</Filter>
     </ClInclude>
-    <ClInclude Include="Src\bass.h">
+    <ClInclude Include="bass.h">
       <Filter>Bass</Filter>
     </ClInclude>
-    <ClInclude Include="Src\bass_fx.h">
+    <ClInclude Include="bass_fx.h">
       <Filter>Bass</Filter>
     </ClInclude>
-    <ClInclude Include="Src\bassmidi.h">
+    <ClInclude Include="bassmidi.h">
       <Filter>Bass</Filter>
     </ClInclude>
-    <ClInclude Include="Src\CBass.h">
+    <ClInclude Include="CBass.h">
       <Filter>Bass</Filter>
     </ClInclude>
-    <ClInclude Include="Src\DragDrop.h">
+    <ClInclude Include="DragDrop.h">
       <Filter>程序</Filter>
     </ClInclude>
-    <ClInclude Include="Src\CSimpleList.h">
+    <ClInclude Include="CSimpleList.h">
       <Filter>视觉对象</Filter>
     </ClInclude>
-    <ClInclude Include="Src\CDlgAbout.h">
+    <ClInclude Include="CDlgAbout.h">
       <Filter>对话框</Filter>
     </ClInclude>
-    <ClInclude Include="Src\CWndLrc.h">
+    <ClInclude Include="CWndLrc.h">
+      <Filter>窗体</Filter>
+    </ClInclude>
+    <ClInclude Include="CTBList.h">
+      <Filter>控件</Filter>
+    </ClInclude>
+    <ClInclude Include="CTbGhost.h">
       <Filter>窗体</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\WinEzCtrlKit\eck\ECK.cpp">
-      <Filter>eck</Filter>
-    </ClCompile>
-    <ClCompile Include="Src\CDlgBookmark.cpp">
+    <ClCompile Include="CDlgBookmark.cpp">
       <Filter>对话框</Filter>
     </ClCompile>
-    <ClCompile Include="Src\CDlgListFile.cpp">
+    <ClCompile Include="CDlgListFile.cpp">
       <Filter>对话框</Filter>
     </ClCompile>
-    <ClCompile Include="Src\CDlgNewBookmark.cpp">
+    <ClCompile Include="CDlgNewBookmark.cpp">
       <Filter>对话框</Filter>
     </ClCompile>
-    <ClCompile Include="Src\CWndBK.cpp">
+    <ClCompile Include="CWndBK.cpp">
       <Filter>窗体</Filter>
     </ClCompile>
-    <ClCompile Include="Src\CWndList.cpp">
+    <ClCompile Include="CWndList.cpp">
       <Filter>窗体</Filter>
     </ClCompile>
-    <ClCompile Include="Src\CWndMain.cpp">
+    <ClCompile Include="CWndMain.cpp">
       <Filter>窗体</Filter>
     </ClCompile>
-    <ClCompile Include="Src\CApp.cpp">
+    <ClCompile Include="CApp.cpp">
       <Filter>程序</Filter>
     </ClCompile>
-    <ClCompile Include="Src\COptionsMgr.cpp">
+    <ClCompile Include="COptionsMgr.cpp">
       <Filter>程序</Filter>
     </ClCompile>
-    <ClCompile Include="Src\CPlayer.cpp">
+    <ClCompile Include="CPlayer.cpp">
       <Filter>程序</Filter>
     </ClCompile>
-    <ClCompile Include="Src\CPlayListFile.cpp">
+    <ClCompile Include="CPlayListFile.cpp">
       <Filter>程序</Filter>
     </ClCompile>
-    <ClCompile Include="Src\CPlayList.cpp">
+    <ClCompile Include="CPlayList.cpp">
       <Filter>程序</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Entry.cpp">
+    <ClCompile Include="Entry.cpp">
       <Filter>程序</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Utils.cpp">
+    <ClCompile Include="Utils.cpp">
       <Filter>程序</Filter>
     </ClCompile>
-    <ClCompile Include="Src\CBass.cpp">
+    <ClCompile Include="CBass.cpp">
       <Filter>Bass</Filter>
     </ClCompile>
-    <ClCompile Include="Src\DragDrop.cpp">
+    <ClCompile Include="DragDrop.cpp">
       <Filter>程序</Filter>
     </ClCompile>
-    <ClCompile Include="Src\CUILrc.cpp">
+    <ClCompile Include="CUILrc.cpp">
       <Filter>视觉对象</Filter>
     </ClCompile>
-    <ClCompile Include="Src\CSimpleList.cpp">
+    <ClCompile Include="CSimpleList.cpp">
       <Filter>视觉对象</Filter>
     </ClCompile>
-    <ClCompile Include="Src\CUIElem.cpp">
+    <ClCompile Include="CUIElem.cpp">
       <Filter>视觉对象</Filter>
     </ClCompile>
-    <ClCompile Include="Src\CUIAlbum.cpp">
+    <ClCompile Include="CUIAlbum.cpp">
       <Filter>视觉对象</Filter>
     </ClCompile>
-    <ClCompile Include="Src\CUIAlbumRotating.cpp">
+    <ClCompile Include="CUIAlbumRotating.cpp">
       <Filter>视觉对象</Filter>
     </ClCompile>
-    <ClCompile Include="Src\CUIWaves.cpp">
+    <ClCompile Include="CUIWaves.cpp">
       <Filter>视觉对象</Filter>
     </ClCompile>
-    <ClCompile Include="Src\CUISpe.cpp">
+    <ClCompile Include="CUISpe.cpp">
       <Filter>视觉对象</Filter>
     </ClCompile>
-    <ClCompile Include="Src\CUISpe2.cpp">
+    <ClCompile Include="CUISpe2.cpp">
       <Filter>视觉对象</Filter>
     </ClCompile>
-    <ClCompile Include="Src\CUIProgBar.cpp">
+    <ClCompile Include="CUIInfo.cpp">
       <Filter>视觉对象</Filter>
     </ClCompile>
-    <ClCompile Include="Src\CUIInfo.cpp">
+    <ClCompile Include="CUIPlayingCtrl.cpp">
       <Filter>视觉对象</Filter>
     </ClCompile>
-    <ClCompile Include="Src\CUIButton.cpp">
-      <Filter>视觉对象</Filter>
-    </ClCompile>
-    <ClCompile Include="Src\CUIPlayingCtrl.cpp">
-      <Filter>视觉对象</Filter>
-    </ClCompile>
-    <ClCompile Include="Src\CDlgAbout.cpp">
+    <ClCompile Include="CDlgAbout.cpp">
       <Filter>对话框</Filter>
     </ClCompile>
-    <ClCompile Include="Src\CWndLrc.cpp">
+    <ClCompile Include="CWndLrc.cpp">
       <Filter>窗体</Filter>
+    </ClCompile>
+    <ClCompile Include="$(ECK_INCLUDE)\eck\ECK.cpp" />
+    <ClCompile Include="CUIProgressBar.cpp">
+      <Filter>视觉对象</Filter>
+    </ClCompile>
+    <ClCompile Include="CUIVolTrackBar.cpp">
+      <Filter>视觉对象</Filter>
+    </ClCompile>
+    <ClCompile Include="CTbGhost.cpp">
+      <Filter>窗体</Filter>
+    </ClCompile>
+    <ClCompile Include="CTBList.cpp">
+      <Filter>控件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="Src\PlayerNew.rc">
+    <ResourceCompile Include="PlayerNew.rc">
       <Filter>资源文件</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Tools\CompileTime" />
-    <None Include="Tools\CompileCount" />
+    <None Include=".\Tools\CompileTime" />
+    <None Include=".\Tools\CompileCount" />
   </ItemGroup>
 </Project>
