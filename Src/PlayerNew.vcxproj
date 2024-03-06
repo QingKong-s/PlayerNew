@@ -206,6 +206,7 @@
     <ClInclude Include="CDlgBookmark.h" />
     <ClInclude Include="CDlgListFile.h" />
     <ClInclude Include="CDlgNewBookmark.h" />
+    <ClInclude Include="CLVPlay.h" />
     <ClInclude Include="COptionsMgr.h" />
     <ClInclude Include="CPlayer.h" />
     <ClInclude Include="CPlayList.h" />
@@ -231,6 +232,7 @@
     <ClCompile Include="CDlgBookmark.cpp" />
     <ClCompile Include="CDlgListFile.cpp" />
     <ClCompile Include="CDlgNewBookmark.cpp" />
+    <ClCompile Include="CLVPlay.cpp" />
     <ClCompile Include="COptionsMgr.cpp" />
     <ClCompile Include="CPlayer.cpp" />
     <ClCompile Include="CPlayList.cpp" />
@@ -265,6 +267,10 @@
     <None Include="..\Tools\CompileTime" />
     <None Include=".\Tools\CompileCount" />
     <None Include=".\Tools\CompileTime" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\Res\Tone.ico" />
+    <Image Include="..\Res\Tone.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

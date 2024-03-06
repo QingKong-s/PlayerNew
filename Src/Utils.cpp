@@ -285,7 +285,7 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 				CHAR byLangCode[3];
 				r2 >> byLangCode;// 读自然语言代码
 
-				int t;
+				UINT t;
 				if (byEncodeType == 0 || byEncodeType == 3)// ISO-8859-1或UTF-8
 					t = (int)strlen((PCSTR)r2.Data()) + 1;
 				else// UTF-16LE或UTF-16BE
@@ -316,7 +316,7 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 				CHAR byLangCode[3];
 				r2 >> byLangCode;// 读自然语言代码
 
-				int t;
+				UINT t;
 				if (byEncodeType == 0 || byEncodeType == 3)// ISO-8859-1或UTF-8
 					t = (int)strlen((PCSTR)r2.Data()) + 1;
 				else// UTF-16LE或UTF-16BE
@@ -345,7 +345,7 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 				BYTE byEncodeType;
 				r2 >> byEncodeType;// 读文本编码
 
-				int t;
+				UINT t;
 				t = (int)strlen((PCSTR)r2.Data());
 				r2 += (t + 2);// 跳过MIME类型字符串和图片类型
 
@@ -953,49 +953,39 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 
 	EckCounter(Result.size(), i)
 	{
-		auto& x = Result[i];
+		auto& e = Result[i];
 		if (vLastTime.size() != 0 && i != 0)
 		{
-			if (eck::FloatEqual(vLastTime[0], x.fTime))
+			if (eck::FloatEqual(vLastTime[0], e.fTime))
 			{
 				auto& TopItem = Result[i - vLastTime.size()];
+				const int cch1 = TopItem.cchTotal, cch2 = e.cchTotal;
 
-				int cch1 = TopItem.cchTotal,
-					cch2 = x.cchTotal;
-
-				if (cch1 && !cch2)// 只有第一个
-				{
-				}// 什么都不做
-				else if (!cch1 && cch2)// 只有第二个
-				{
-					TopItem.pszLrc = x.pszLrc;
-					TopItem.pszTranslation = NULL;
-					x.pszLrc = NULL;
-
-					TopItem.cchLrc = x.cchLrc;
-					TopItem.cchTotal = x.cchTotal;
-				}
-				else if (!cch1 && !cch2)// 两个都没有
-				{
-				}
-				else// 两个都有
-				{
+				if (cch2)// 有第二个
+					if (cch1)
+					{
 #pragma warning (suppress: 6308)// realloc为NULL
-					TopItem.pszLrc = (PWSTR)realloc(TopItem.pszLrc, eck::Cch2Cb(cch1 + cch2 + 1));
-					* (TopItem.pszLrc + cch1) = L'\n';
-					wcscpy(TopItem.pszLrc + cch1 + 1, x.pszLrc);
-
-					TopItem.pszTranslation = TopItem.pszLrc + cch1 + 1;
-
-					TopItem.cchLrc = cch1;
-					TopItem.cchTotal = cch1 + cch2 + 1;
-				}
+						TopItem.pszLrc = (PWSTR)realloc(TopItem.pszLrc, eck::Cch2Cb(cch1 + cch2 + 1));
+						EckCheckMem(TopItem.pszLrc);
+						*(TopItem.pszLrc + cch1) = L'\n';
+						wmemcpy(TopItem.pszLrc + cch1 + 1, e.pszLrc, e.cchTotal + 1);
+						TopItem.pszTranslation = TopItem.pszLrc + TopItem.cchLrc + 1;
+						TopItem.cchTotal = cch1 + cch2 + 1;
+					}
+					else
+					{
+						TopItem.pszLrc = e.pszLrc;
+						TopItem.pszTranslation = NULL;
+						e.pszLrc = NULL;
+						TopItem.cchLrc = e.cchLrc;
+						TopItem.cchTotal = e.cchTotal;
+					}
 				vNeedDelIndex.push_back(i);
 			}
 			else
 				vLastTime.clear();
 		}
-		vLastTime.push_back(x.fTime);
+		vLastTime.push_back(e.fTime);
 	}
 
 	for (auto it = vNeedDelIndex.rbegin(); it < vNeedDelIndex.rend(); ++it)

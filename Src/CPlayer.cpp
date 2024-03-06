@@ -2,6 +2,7 @@
 #include "CApp.h"
 #include "COptionsMgr.h"
 #include "CWndBK.h"
+#include "CWndMain.h"
 
 HRESULT CPlayer::CreateWicBmpCover()
 {
@@ -43,6 +44,10 @@ PlayOpErr CPlayer::Play(int idx)
 	m_Bass.Open(Item.rsFile.Data());
 	if (!m_Bass.GetHStream())
 		return PlayOpErr::BassError;
+	m_Bass.SetSync(BASS_SYNC_END | BASS_SYNC_ONETIME, 0, [](DWORD, DWORD, DWORD, PVOID)
+		{
+			App->GetMainWnd()->PostMsg(PNWM_CHANNELENDED, 0, 0);
+		});
 	m_bHasActiveFile = TRUE;
 	m_rsCurrFile = Item.rsFile;
 	const auto idxPrev = m_idxCurrFile;

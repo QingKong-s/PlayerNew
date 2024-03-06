@@ -68,7 +68,6 @@ private:
 
 	FOnPlayingControl m_fnPayingCtrl{};
 
-
 	void ApplyPrevEffect()
 	{
 

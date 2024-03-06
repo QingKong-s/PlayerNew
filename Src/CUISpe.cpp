@@ -26,7 +26,7 @@ LRESULT CUISpe::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
             m_piHeight[i] = abs((int)(fData[i] * cy * 2.f));
             //////////////////频谱条
             if (m_piHeight[i] > cy)// 超高
-                m_piHeight[i] = cy;// 回来
+                m_piHeight[i] = (int)cy;// 回来
 #define SPESTEP_BAR					7
 #define SPESTEP_MAX					11
             if (m_piHeight[i] > m_piOldHeight[i])// 当前的大于先前的

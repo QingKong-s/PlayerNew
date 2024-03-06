@@ -39,6 +39,14 @@ extern CApp* App;
 
 enum
 {
+	PNWM_BEGIN  =eck::WM_USER_SAFE,
+	PNWM_PLAYINGCTRL,
+	PNWM_CHANNELENDED,
+
+};
+
+enum
+{
 	IIDX_ArrowCross,
 	IIDX_ArrowRight,
 	IIDX_ArrowRight3,
@@ -139,7 +147,6 @@ public:
 	};
 
 	ID2D1Factory1* m_pD2dFactory = NULL;
-	ID2D1Multithread* m_pD2dMultiThread = NULL;
 	IDWriteFactory* m_pDwFactory = NULL;
 	IWICImagingFactory* m_pWicFactory = NULL;
 

@@ -211,7 +211,7 @@ void CSimpleList::OnSize(HWND hWnd, UINT uState, int cx, int cy)
 {
 	m_cxClient = cx;
 	m_cyClient = cy;
-	m_cxView = m_cxClient - m_DsF.cxScrollBar;
+	m_cxView = m_cxClient - (int)m_DsF.cxScrollBar;
 
 	m_pDC->SetTarget(NULL);// 移除引用
 	m_pBmpBK->Release();
@@ -608,7 +608,7 @@ int CSimpleList::HitTest(POINT pt, SLHITTEST* pslht)
 		else
 			--it;
 		auto it1 = m_Group.rbegin();
-		const int idxGroup = std::distance(m_Group.begin(), it);
+		const int idxGroup = (int)std::distance(m_Group.begin(), it);
 		pslht->idxGroup = idxGroup;
 		if (pt.y > it->y && pt.y < it->y + m_cyGroupHeader)
 			return -1;

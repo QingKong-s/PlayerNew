@@ -81,14 +81,13 @@ void CApp::Init(HINSTANCE hInstance)
 #ifndef NDEBUG
 	D2D1_FACTORY_OPTIONS D2DFactoryOptions;
 	D2DFactoryOptions.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
-	hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, __uuidof(ID2D1Factory1), &D2DFactoryOptions, (void**)&m_pD2dFactory);
+	hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory1), &D2DFactoryOptions, (void**)&m_pD2dFactory);
 #else
-	hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, IID_PPV_ARGS(&m_pD2dFactory));
+	hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, IID_PPV_ARGS(&m_pD2dFactory));
 #endif // !NDEBUG
 	if (FAILED(hr))
 	{
 	}
-	m_pD2dFactory->QueryInterface(IID_PPV_ARGS(&m_pD2dMultiThread));
 	//////////////创建DWrite工厂
 	hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown**)&m_pDwFactory);
 	if (FAILED(hr))
@@ -140,7 +139,6 @@ void CApp::Init(HINSTANCE hInstance)
 void CApp::InvertIconColor()
 {
 	return;
-	IWICBitmap* pNewBmp;
 	constexpr D2D1_RENDER_TARGET_PROPERTIES Prop
 	{
 		D2D1_RENDER_TARGET_TYPE_DEFAULT,

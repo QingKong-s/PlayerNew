@@ -521,7 +521,7 @@ private:
 			[this](decltype(m_vItem)::iterator it, int iPos)
 			{
 				const auto& e = *it;
-				int y = e.y;
+				float y = e.y;
 				const int idx = (int)std::distance(m_vItem.begin(), it);
 				if (idx > m_idxPrevAnItem && m_idxPrevAnItem >= 0)
 					y += (m_vItem[m_idxPrevAnItem].cy * (1.4f - m_fAnValue));

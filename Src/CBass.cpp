@@ -79,7 +79,7 @@ DWORD CBass::Open(PCWSTR pszFile, DWORD dwFlagsHS, DWORD dwFlagsHM, DWORD dwFlag
 	return h;
 }
 
-PNInline void CBass::Close()
+void CBass::Close()
 {
 	if (!m_hStream)
 		return;

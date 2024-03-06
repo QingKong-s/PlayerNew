@@ -2,11 +2,11 @@
 #include "CApp.h"
 #include "CPlayList.h"
 #include "CTBList.h"
+#include "CLVPlay.h"
 
 #include "eck\CLabel.h"
 #include "eck\CEditExt.h"
 #include "eck\CButton.h"
-#include "eck\CListView.h"
 #include "eck\CToolBar.h"
 
 #include <shlobj_core.h>
@@ -34,8 +34,8 @@ private:
 	eck::CEditExt m_EDSearch{};
 	eck::CPushButton m_BTSearch{};
 	CTBList m_TBManage{};
-	eck::CListView m_LVList{};
-	eck::CListView m_LVSearch{};
+	CLVSearch m_LVSearch{*this};
+	CLVPlay m_LVList{ *this,m_LVSearch };
 
 	HFONT m_hFont = NULL;
 	HFONT m_hFontListName = NULL;
@@ -113,13 +113,6 @@ private:
 		;
 	ECK_DS_END_VAR(m_Ds);
 
-
-	static LRESULT CALLBACK SubclassProc_LVList(HWND hWnd, UINT uMsg, WPARAM wParam,
-		LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
-
-	static LRESULT CALLBACK SubclassProc_LVSearch(HWND hWnd, UINT uMsg, WPARAM wParam,
-		LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
-
 	PNInline void UpdateDpiInit(int iDpi)
 	{
 		m_iDpi = iDpi;
@@ -152,8 +145,6 @@ private:
 
 	void OnListLVNDbLClick(NMITEMACTIVATE* pnmia);
 
-	LRESULT OnListLVNCustomDraw(NMLVCUSTOMDRAW* pnmlvcd);
-
 	BOOL OnListLVNRClick(NMITEMACTIVATE* pnmia);
 
 	void OnMenuOpenInExplorer();
@@ -163,8 +154,6 @@ private:
 	void OnMenuAddDelBookmark(int idx);
 
 	void OnListLVNBeginDrag(NMLISTVIEW* pnmlv);
-
-	LRESULT OnSearchLVNCustomDraw(NMLVCUSTOMDRAW* pnmlvcd);
 
 	void OnSearchLVNDbLClick(NMITEMACTIVATE* pnmia);
 
@@ -193,4 +182,6 @@ public:
 	void EnsureVisibleBookmark(int idx);
 
 	PNInline const auto& GetDs() const { return m_Ds; }
+
+	PNInline const auto& GetCurrSearchKeyword() const { return m_rsCurrKeyword; }
 };

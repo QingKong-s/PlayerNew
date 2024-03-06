@@ -113,9 +113,9 @@ public:
 	HWND Create(PCWSTR pszText, DWORD dwStyle, DWORD dwExStyle,
 		int x, int y, int cx, int cy, HWND hParent, HMENU hMenu, PCVOID pData = NULL) override
 	{
-		m_TbGhost.Create(NULL, WS_POPUP | WS_BORDER | WS_SYSMENU | WS_CAPTION, 
+		m_TbGhost.Create(NULL, WS_OVERLAPPEDWINDOW,
 			WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE,
-			-32000, -32000, 0, 0, NULL, NULL);
+			-32000, -32000, 0, 0, HWnd, NULL);
 		return IntCreate(dwExStyle, c_pszWndClassMain, pszText, dwStyle,
 			x, y, cx, cy, NULL, NULL, App->GetHInstance(), NULL);
 	}
@@ -132,5 +132,7 @@ public:
 	PNInline ARGB GetDwmColorArgb() const { return m_argbDwm; }
 
 	PNInline const auto& GetDwmColor() const { return m_crDwm; }
+
+	void SetupTaskbarStuff();
 };
 inline UINT CWndMain::s_uMsgTaskbarButtonCreated = RegisterWindowMessageW(L"TaskbarButtonCreated");

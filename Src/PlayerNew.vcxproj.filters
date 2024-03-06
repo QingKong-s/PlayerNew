@@ -23,9 +23,6 @@
     <Filter Include="视觉对象">
       <UniqueIdentifier>{1291a46f-fdb7-4fe5-ac6b-9c71210f4e33}</UniqueIdentifier>
     </Filter>
-    <Filter Include="浮动窗口">
-      <UniqueIdentifier>{420a4adf-6df4-451f-a9dc-619af83574fd}</UniqueIdentifier>
-    </Filter>
     <Filter Include="控件">
       <UniqueIdentifier>{ebd24187-ce72-41a2-a47d-7039b4772248}</UniqueIdentifier>
     </Filter>
@@ -105,6 +102,9 @@
     </ClInclude>
     <ClInclude Include="CTbGhost.h">
       <Filter>窗体</Filter>
+    </ClInclude>
+    <ClInclude Include="CLVPlay.h">
+      <Filter>控件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -202,6 +202,9 @@
     <ClCompile Include="CTBList.cpp">
       <Filter>控件</Filter>
     </ClCompile>
+    <ClCompile Include="CLVPlay.cpp">
+      <Filter>控件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PlayerNew.rc">
@@ -213,5 +216,13 @@
     <None Include=".\Tools\CompileCount" />
     <None Include="..\Tools\CompileCount" />
     <None Include="..\Tools\CompileTime" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\Res\Tone.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="..\Res\Tone.ico">
+      <Filter>资源文件</Filter>
+    </Image>
   </ItemGroup>
 </Project>

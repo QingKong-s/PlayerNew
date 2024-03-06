@@ -46,71 +46,6 @@ public:
 
 
 
-
-LRESULT CWndList::SubclassProc_LVList(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
-{
-	auto p = (CWndList*)dwRefData;
-	switch (uMsg)
-	{
-	case LVM_DELETECOLUMN:
-	case LVM_INSERTCOLUMNW:
-	case LVM_SETBKCOLOR:
-	case LVM_SETBKIMAGEW:
-	case LVM_SETCOLUMNW:
-	case LVM_SETCOLUMNORDERARRAY:
-	case LVM_SETCOLUMNWIDTH:
-	case LVM_SETEXTENDEDLISTVIEWSTYLE:
-	case LVM_SETOUTLINECOLOR:
-	case LVM_SETTEXTBKCOLOR:
-	case LVM_SETTEXTCOLOR:
-	case LVM_SETVIEW:
-		SendMessageW(p->m_LVSearch.GetHWND(), uMsg, wParam, lParam);
-		break;
-	case LVM_SETIMAGELIST:
-	{
-		HIMAGELIST hIml = ImageList_Duplicate((HIMAGELIST)lParam);
-		SendMessageW(p->m_LVSearch.GetHWND(), uMsg, wParam, (LPARAM)hIml);
-	}
-	break;
-	case WM_KEYDOWN:
-		if (wParam == VK_RETURN)// 按回车键播放曲目
-		{
-			const int idx = p->m_LVList.GetCurrSel();
-			if (idx < 0)
-				break;
-			p->PlayListItem(idx);
-		}
-		else if (wParam == 0x41)// A键按下
-			if (GetKeyState(VK_CONTROL) & 0x80000000)// Ctrl + A 全选
-				p->m_LVList.SetItemState(-1, LVIS_SELECTED, LVIS_SELECTED);
-		break;
-	}
-
-	return DefSubclassProc(hWnd, uMsg, wParam, lParam);
-}
-
-LRESULT CWndList::SubclassProc_LVSearch(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
-{
-	auto p = (CWndList*)dwRefData;
-	switch (uMsg)
-	{
-	case WM_KEYDOWN:
-		if (wParam == VK_RETURN)// 按回车键播放曲目
-		{
-			const int idx = p->m_LVSearch.GetCurrSel();
-			if (idx < 0)
-				break;
-			p->PlayListItem(App->GetPlayer().AtSearchingIndex(idx));
-		}
-		else if (wParam == 0x41)// A键按下
-			if (GetKeyState(VK_CONTROL) & 0x80000000)// Ctrl + A 全选
-				p->m_LVSearch.SetItemState(-1, LVIS_SELECTED, LVIS_SELECTED);
-		break;
-	}
-
-	return DefSubclassProc(hWnd, uMsg, wParam, lParam);
-}
-
 void CWndList::UpdateDpi(int iDpi)
 {
 	const int iDpiOld = m_iDpi;
@@ -207,7 +142,7 @@ BOOL CWndList::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 
 	m_LAListName.Create(c_szDefListName, WS_VISIBLE, 0, 0, 0, 0, 0, hWnd, IDC_LA_LIST_NAME);
 	m_LAListName.SetTransparent(TRUE);
-	m_LAListName.SetClr(0, eck::Colorref::CyanBlue);
+	m_LAListName.SetClr(0, GetSysColor(COLOR_HIGHLIGHT));
 
 	m_EDSearch.SetMultiLine(FALSE);
 	m_EDSearch.Create(NULL, WS_VISIBLE | ES_AUTOHSCROLL, 0, 0, 0, 0, 0, hWnd, IDC_ED_SEARCH);
@@ -234,11 +169,9 @@ BOOL CWndList::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 
 	constexpr DWORD dwLVStyle = LVS_REPORT | LVS_SHOWSELALWAYS | LVS_OWNERDATA;
 	m_LVSearch.Create(NULL, dwLVStyle, 0, 0, 0, 0, 0, hWnd, IDC_LV_LIST);
-	SetWindowSubclass(m_LVSearch.GetHWND(), SubclassProc_LVSearch, c_uScidLVSearch, (DWORD_PTR)this);
 	m_LVSearch.SetExplorerTheme();
 
 	m_LVList.Create(NULL, WS_VISIBLE | dwLVStyle, 0, 0, 0, 0, 0, hWnd, IDC_LV_LIST);
-	SetWindowSubclass(m_LVList.GetHWND(), SubclassProc_LVList, c_uScidLVList, (DWORD_PTR)this);
 	constexpr DWORD dwLVExStyle = LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER;
 	m_LVList.SetLVExtendStyle(dwLVExStyle);
 	m_LVList.InsertColumn(L"名称", 0, m_Ds.cxColumn1);
@@ -582,80 +515,6 @@ void CWndList::OnListLVNDbLClick(NMITEMACTIVATE* pnmia)
 	PlayListItem(pnmia->iItem);
 }
 
-LRESULT CWndList::OnListLVNCustomDraw(NMLVCUSTOMDRAW* pnmlvcd)
-{
-	switch (pnmlvcd->nmcd.dwDrawStage)
-	{
-	case CDDS_PREPAINT:
-		return CDRF_NOTIFYITEMDRAW;
-	case CDDS_ITEMPREPAINT:
-	{
-		auto& Item = App->GetPlayer().GetList().At((int)pnmlvcd->nmcd.dwItemSpec);
-		const HDC hDC = pnmlvcd->nmcd.hdc;
-		const int idx = (int)pnmlvcd->nmcd.dwItemSpec;
-
-		if (idx == App->GetPlayer().GetCurrFile())// 标记现行播放项
-		{
-			eck::CEzCDC cdc(pnmlvcd->nmcd.hdr.hwndFrom, 1, 1);
-			SetDCBrushColor(cdc.GetDC(), eck::ARGBToColorref(m_WndMain.GetDwmColorArgb()));
-			constexpr RECT rcTemp{ 0,0,1,1 };
-			FillRect(cdc.GetDC(), &rcTemp, GetStockBrush(DC_BRUSH));
-
-			AlphaBlend(hDC, pnmlvcd->nmcd.rc.left, pnmlvcd->nmcd.rc.top,
-				pnmlvcd->nmcd.rc.right - pnmlvcd->nmcd.rc.left,
-				pnmlvcd->nmcd.rc.bottom - pnmlvcd->nmcd.rc.top,
-				cdc.GetDC(), 0, 0, 1, 1, { AC_SRC_OVER,0,110,0 });
-		}
-		else if (idx % 2)// 交替行色
-		{
-			FillRect(hDC, &pnmlvcd->nmcd.rc, m_hbrGray);
-		}
-
-		int iState;
-		if (m_LVList.GetItemState(idx, LVIS_SELECTED) == LVIS_SELECTED)// 选中
-		{
-			if (pnmlvcd->nmcd.uItemState & CDIS_HOT)
-				iState = LISS_HOTSELECTED;
-			else
-				iState = LISS_SELECTED;
-		}
-		else if (pnmlvcd->nmcd.uItemState & CDIS_HOT)
-			iState = LISS_HOT;
-		else
-			iState = 0;
-		if (iState)// 画表项框
-			DrawThemeBackground(m_hThemeLV, hDC, LVP_LISTITEM, iState, &pnmlvcd->nmcd.rc, NULL);
-
-		if (Item.bIgnore)
-			SetTextColor(hDC, eck::Colorref::Gray);
-		else
-			SetTextColor(hDC, GetSysColor(COLOR_WINDOWTEXT));
-
-		RECT rc = pnmlvcd->nmcd.rc;
-		rc.left += m_Ds.cxLVTextSpace;
-		rc.right = rc.left + m_LVList.GetColumnWidth(0) - m_Ds.cxLVTextSpace;
-		DrawTextW(hDC, Item.rsName.Data(), Item.rsName.Size(), &rc, DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
-		rc.left = rc.right;
-		rc.right = pnmlvcd->nmcd.rc.right;
-		DrawTextW(hDC, Item.rsTime.Data(), Item.rsTime.Size(), &rc, DT_SINGLELINE | DT_VCENTER | DT_CENTER | DT_END_ELLIPSIS);
-
-		if (idx == App->GetPlayer().GetLaterPlaying())// 稍后播放
-			FrameRect(hDC, &pnmlvcd->nmcd.rc, m_hbrLaterPlaying);
-
-		if (Item.bBookmark)
-		{
-			const auto& bm = App->GetPlayer().GetList().AtBookmark(idx);
-			HGDIOBJ hOldPen = SelectObject(hDC, CreatePen(PS_SOLID, 1, bm.crColor));
-			MoveToEx(hDC, pnmlvcd->nmcd.rc.left, pnmlvcd->nmcd.rc.top, NULL);
-			LineTo(hDC, pnmlvcd->nmcd.rc.right, pnmlvcd->nmcd.rc.top);
-			DeleteObject(SelectObject(hDC, hOldPen));
-		}
-	}
-	return CDRF_SKIPDEFAULT;
-	}
-	return CDRF_SKIPDEFAULT;
-}
-
 BOOL CWndList::OnListLVNRClick(NMITEMACTIVATE* pnmia)
 {
 	POINT pt;
@@ -984,92 +843,6 @@ void CWndList::OnListLVNBeginDrag(NMLISTVIEW* pnmlv)
 	pDataObject->Release();
 }
 
-LRESULT CWndList::OnSearchLVNCustomDraw(NMLVCUSTOMDRAW* pnmlvcd)
-{
-	switch (pnmlvcd->nmcd.dwDrawStage)
-	{
-	case CDDS_PREPAINT:
-		return CDRF_NOTIFYITEMDRAW;
-	case CDDS_ITEMPREPAINT:
-	{
-		const HDC hDC = pnmlvcd->nmcd.hdc;
-		const int idx = (int)pnmlvcd->nmcd.dwItemSpec;
-		const int idxReal = App->GetPlayer().AtSearchingIndex(idx);
-		auto& Item = App->GetPlayer().AtSearching(idx);
-
-		if (idxReal == App->GetPlayer().GetCurrFile())// 标记现行播放项
-			FillRect(hDC, &pnmlvcd->nmcd.rc, m_hbrCurrPlaying);
-		else if (idx % 2)// 交替行色
-			FillRect(hDC, &pnmlvcd->nmcd.rc, m_hbrGray);
-
-		int iState;
-		if (m_LVSearch.GetItemState(idx, LVIS_SELECTED) == LVIS_SELECTED)// 选中
-		{
-			if (pnmlvcd->nmcd.uItemState & CDIS_HOT)
-				iState = LISS_HOTSELECTED;
-			else
-				iState = LISS_SELECTED;
-		}
-		else if (pnmlvcd->nmcd.uItemState & CDIS_HOT)
-			iState = LISS_HOT;
-		else
-			iState = 0;
-		if (iState)// 画表项框
-			DrawThemeBackground(m_hThemeLV, hDC, LVP_LISTITEM, iState, &pnmlvcd->nmcd.rc, NULL);
-
-		if (Item.bIgnore)
-			SetTextColor(hDC, eck::Colorref::Gray);
-		else
-			SetTextColor(hDC, eck::Colorref::Black);
-
-		const int xColumn2 = pnmlvcd->nmcd.rc.left + m_LVSearch.GetColumnWidth(0);
-		RECT rc = pnmlvcd->nmcd.rc;
-		rc.left += m_Ds.cxLVTextSpace;
-		rc.right = xColumn2;
-		const RECT rcColumn1{ rc };
-		DrawTextW(hDC, Item.rsName.Data(), Item.rsName.Size(), &rc, DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
-		rc.left = rc.right;
-		rc.right = pnmlvcd->nmcd.rc.right;
-		DrawTextW(hDC, Item.rsTime.Data(), Item.rsTime.Size(), &rc, DT_SINGLELINE | DT_VCENTER | DT_CENTER | DT_END_ELLIPSIS);
-
-		if (idxReal == App->GetPlayer().GetLaterPlaying())// 稍后播放
-			FrameRect(hDC, &pnmlvcd->nmcd.rc, m_hbrLaterPlaying);
-
-		int pos = 0;
-		SIZE sizeKeyword;
-		GetTextExtentPoint32W(hDC, m_rsCurrKeyword.Data(), m_rsCurrKeyword.Size(), &sizeKeyword);
-		RECT rcBK{ 0,pnmlvcd->nmcd.rc.top,m_LVSearch.GetColumnWidth(0),pnmlvcd->nmcd.rc.bottom };
-
-		IntersectClipRect(hDC, rcColumn1.left, rcColumn1.top, rcColumn1.right, rcColumn1.bottom);
-		while ((pos = eck::FindStr(Item.rsName.Data(), m_rsCurrKeyword.Data(), pos)) != eck::INVALID_STR_POS)
-		{
-			if (pos)
-			{
-				rc = pnmlvcd->nmcd.rc;
-				DrawTextW(hDC, Item.rsName.Data(), pos, &rc,
-					DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX | DT_CALCRECT);
-				rcBK.left = rc.right + m_Ds.cxLVTextSpace;
-			}
-			else
-				rcBK.left = m_Ds.cxLVTextSpace;
-			rcBK.right = rcBK.left + sizeKeyword.cx;
-			if (rcBK.left < xColumn2)
-			{
-				const int iOldMode = SetBkMode(hDC, OPAQUE);
-				const COLORREF crOld = SetBkColor(hDC, eck::Colorref::Yellow);
-				DrawTextW(hDC, m_rsCurrKeyword.Data(), m_rsCurrKeyword.Size(), &rcBK, DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX);
-				SetBkMode(hDC, iOldMode);
-				SetBkColor(hDC, crOld);
-			}
-			++pos;
-		}
-		SelectClipRgn(hDC, NULL);
-	}
-	return CDRF_SKIPDEFAULT;
-	}
-	return CDRF_SKIPDEFAULT;
-}
-
 void CWndList::OnSearchLVNDbLClick(NMITEMACTIVATE* pnmia)
 {
 	if (pnmia->iItem < 0)
@@ -1159,8 +932,6 @@ LRESULT CWndList::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (((NMHDR*)lParam)->hwndFrom == m_LVList.GetHWND())
 			switch (((NMHDR*)lParam)->code)
 			{
-			case NM_CUSTOMDRAW:
-				return OnListLVNCustomDraw((NMLVCUSTOMDRAW*)lParam);
 			case NM_DBLCLK:
 				OnListLVNDbLClick((NMITEMACTIVATE*)lParam);
 				return 0;
@@ -1173,8 +944,6 @@ LRESULT CWndList::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		else if (((NMHDR*)lParam)->hwndFrom == m_LVSearch.GetHWND())
 			switch (((NMHDR*)lParam)->code)
 			{
-			case NM_CUSTOMDRAW:
-				return OnSearchLVNCustomDraw((NMLVCUSTOMDRAW*)lParam);
 			case NM_DBLCLK:
 				OnSearchLVNDbLClick((NMITEMACTIVATE*)lParam);
 				return 0;
@@ -1241,6 +1010,9 @@ LRESULT CWndList::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 	}
 	break;
+	case WM_SYSCOLORCHANGE:
+		m_LAListName.SetClr(0, GetSysColor(COLOR_HIGHLIGHT));
+		break;
 	case WM_CREATE:
 		return HANDLE_WM_CREATE(hWnd, wParam, lParam, OnCreate);
 	case WM_DESTROY:

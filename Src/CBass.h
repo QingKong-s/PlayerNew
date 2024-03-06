@@ -122,7 +122,7 @@ public:
 		return BASS_ChannelBytes2Seconds(m_hStream, BASS_ChannelGetLength(m_hStream, BASS_POS_BYTE));
 	}
 
-	PNInline void Close();
+	void Close();
 
 	PNInline DWORD GetHStream() const { return m_hStream; }
 
@@ -145,6 +145,11 @@ public:
 	PNInline DWORD IsActive() const
 	{
 		return BASS_ChannelIsActive(m_hStream);
+	}
+
+	PNInline HSYNC SetSync(DWORD dwType, QWORD ullParam, SYNCPROC pfn, void* pUser = NULL) const
+	{
+		return BASS_ChannelSetSync(m_hStream, dwType, ullParam, pfn, pUser);
 	}
 };
 

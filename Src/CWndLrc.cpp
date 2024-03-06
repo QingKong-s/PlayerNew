@@ -270,10 +270,7 @@ float CWndLrc::DrawLrcLine(int idxLrc, float y, BOOL bSecondLine)
 
 		constexpr WCHAR szEmpty[]{ L"♪♬♪♬♪" };
 		constexpr int cchEmpty = (int)(ARRAYSIZE(szEmpty) - 1);
-		auto pszEmpty = (PWSTR)malloc(sizeof(szEmpty));
-		EckCheckMem(pszEmpty);
-		memcpy(pszEmpty, szEmpty, sizeof(szEmpty));
-		Utils::LRCINFO FakeLrc{ pszEmpty,nullptr,cchEmpty,cchEmpty,Lrc.fTime,Lrc.fDuration };
+		Utils::LRCINFO FakeLrc{ (PWSTR)szEmpty,nullptr,cchEmpty,cchEmpty,Lrc.fTime,Lrc.fDuration };
 
 		const auto& LrcNew = (Lrc.cchTotal == 0) ? FakeLrc : Lrc;
 
@@ -310,6 +307,8 @@ float CWndLrc::DrawLrcLine(int idxLrc, float y, BOOL bSecondLine)
 				Cache.bTooLongTrans = FALSE;
 			Cache.sizeTrans = { tm.width,tm.height };
 		}
+
+		ZeroMemory(&FakeLrc, sizeof(FakeLrc));
 	}
 
 	const auto& Font = App->GetOptionsMgr().DtLrcFontMain;

@@ -40,7 +40,7 @@ LRESULT CUIVolTrackBar::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			0, 0, GetViewWidth(), GetViewHeight(),
 			this, GetWnd(), IDE_TB_VOL);
 		m_TrackBar.SetRange(0.f, 200.f);
-		m_TrackBar.SetTrackSize(GetBk()->GetDpiSize().cyVolTrack);
+		m_TrackBar.SetTrackSize((float)GetBk()->GetDpiSize().cyVolTrack);
 		m_TrackBar.SetGenEventWhenDragging(TRUE);
 		m_TrackBar.SetFocus();
 

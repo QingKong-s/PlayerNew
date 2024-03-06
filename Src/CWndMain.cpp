@@ -2,6 +2,7 @@
 
 #include "CWndMain.h"
 #include "DragDrop.h"
+#include "resource.h"
 
 
 
@@ -267,7 +268,7 @@ public:
 						rsTemp = eck::StrX2W(pszTempA, cchA);
 						Info.cchFile = rsTemp.Size();
 						Player.Insert(lvhti.iItem, Info, NULL, NULL, rsTemp.Data());
-						r += (cchA + 1);
+						r += (UINT)(cchA + 1);
 						pszTempA = (PCSTR)r.m_pMem;
 					}
 				}
@@ -293,7 +294,6 @@ void CWndMain::UpdateDpi(int iDpi)
 
 void CWndMain::InitBK()
 {
-	RECT rc;
 	//auto p1 = new CUIAlbum;
 	//m_BK.AddElem(p1);
 	//rc = { 30,150,800,700 };
@@ -395,6 +395,7 @@ void CWndMain::OnSize(HWND hWnd, UINT uState, int cx, int cy)
 		cx - m_Ds.cxSeparateBar - m_xSeparateBar,
 		cy, SWP_NOZORDER | SWP_NOACTIVATE);
 	EndDeferWindowPos(hDwp);
+	m_TbGhost.InvalidateLivePreviewCache();
 }
 
 BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
@@ -406,6 +407,13 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	if (m_bDarkColor)
 		App->InvertIconColor();
 
+	auto hr = CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER,
+		IID_PPV_ARGS(&m_pTbList));
+	if (FAILED(hr))
+		CApp::ShowError(HWnd, hr, CApp::ErrSrc::HResult, L"ITaskbarList4创建失败");
+
+	m_pTbList->HrInit();
+
 	App->GetPlayer().SetPlayingCtrlCallBack([this](PLAYINGCTRLTYPE uType, INT_PTR i1, INT_PTR i2)
 		{
 			switch (uType)
@@ -416,6 +424,8 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 					m_Lrc.Draw();
 				DwmInvalidateIconicBitmaps(m_TbGhost.HWnd);
 				m_Lrc.InvalidateCache();
+				m_TbGhost.InvalidateLivePreviewCache();
+				m_TbGhost.InvalidateThumbnailCache();
 				if (i1 >= 0)
 					m_List.m_LVList.RedrawItem((int)i1);
 				m_List.m_LVList.RedrawItem(App->GetPlayer().GetCurrFile());
@@ -438,10 +448,12 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 				pBmp->Release();
 
 				THUMBBUTTON tb;
-				tb.dwMask = THB_ICON;
+				tb.dwMask = THB_ICON | THB_TOOLTIP;
 				tb.iId = IDTBB_PLAY;
 				tb.hIcon = hi;
-				m_pTbList->ThumbBarUpdateButtons(m_TbGhost.HWnd, 1, &tb);
+				wcscpy(tb.szTip, App->GetPlayer().IsPlaying() ? L"暂停" : L"播放");
+				auto hr =m_pTbList->ThumbBarUpdateButtons(m_TbGhost.HWnd, 1, &tb);
+				DestroyIcon(hi);
 			}
 			break;
 			}
@@ -463,7 +475,7 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	m_SPB.Show(SW_SHOWNOACTIVATE);
 
 	m_pDropTarget = new CDropTargetList(*this);
-	const HRESULT hr = RegisterDragDrop(hWnd, m_pDropTarget);
+	hr = RegisterDragDrop(hWnd, m_pDropTarget);
 	if (FAILED(hr))
 		CApp::ShowError(hWnd, hr, CApp::ErrSrc::HResult, L"注册拖放目标失败");
 	
@@ -471,7 +483,7 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	m_BK.SendMsg(PWM_DWMCOLORCHANGED, 0, 0);
 
 	ShowLrc(1);
-	EckDbgPrint(m_Lrc.HWnd);
+
 	return TRUE;
 	WIN32_FIND_DATAW wfd;
 	HANDLE hFind = FindFirstFileW(LR"(D:\@重要文件\@音乐\*.mp3)", &wfd);
@@ -542,7 +554,7 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 			return 0;
 		});
 	m_Sl.Create(NULL, WS_CHILD | WS_VISIBLE | WS_BORDER, 0, 0, 0, 1100, 900, hWnd, 0);
-	m_Sl.SetGroupCount(m_vGroup.size());
+	m_Sl.SetGroupCount((int)m_vGroup.size());
 	EckCounter(m_vGroup.size(), i)
 	{
 		m_Sl.SetGroupItemCount(i, m_vGroup[i].Items.size());
@@ -570,7 +582,8 @@ ATOM CWndMain::RegisterWndClass()
 	wcex.style = CS_HREDRAW | CS_VREDRAW;
 	wcex.lpfnWndProc = DefWindowProcW;
 	wcex.hInstance = App->GetHInstance();
-	wcex.hIcon = LoadIconW(NULL, IDI_APPLICATION);
+	wcex.hIcon = (HICON)LoadIconW(App->GetHInstance(), MAKEINTRESOURCEW(IDI_MAIN));
+	wcex.hIconSm = (HICON)LoadIconW(App->GetHInstance(), MAKEINTRESOURCEW(IDI_MAIN));
 	wcex.hCursor = LoadCursorW(NULL, IDC_ARROW);
 	wcex.lpszClassName = c_pszWndClassMain;
 	wcex.cbWndExtra = sizeof(void*);
@@ -581,55 +594,7 @@ LRESULT CWndMain::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (uMsg == s_uMsgTaskbarButtonCreated)
 	{
-		SafeRelease(m_pTbList);
-		const auto hr = CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER, 
-			IID_PPV_ARGS(&m_pTbList));
-		if (FAILED(hr))
-		{
-			CApp::ShowError(hWnd, hr, CApp::ErrSrc::HResult, L"ITaskbarList4创建失败");
-			return 0;
-		}
-		m_pTbList->HrInit();
-
-		m_pTbList->UnregisterTab(m_TbGhost.HWnd);
-		m_pTbList->RegisterTab(m_TbGhost.HWnd, hWnd);
-#pragma warning(suppress: 6387)// 可能为NULL
-		m_pTbList->SetTabOrder(m_TbGhost.HWnd, NULL);
-
-		HICON hi[3];
-		auto pBmp = App->ScaleImageForButton(IIDX_PrevSolid, m_iDpi);
-		hi[0] = eck::CreateHICON(pBmp);
-		pBmp->Release();
-
-		pBmp = App->ScaleImageForButton(IIDX_PauseSolid, m_iDpi);
-		hi[1] = eck::CreateHICON(pBmp);
-		pBmp->Release();
-
-		pBmp = App->ScaleImageForButton(IIDX_NextSolid, m_iDpi);
-		hi[2] = eck::CreateHICON(pBmp);
-		pBmp->Release();
-
-		THUMBBUTTON tb[3]{};
-		constexpr auto dwMask = THB_ICON | THB_TOOLTIP;
-		tb[0].dwMask = dwMask;
-		tb[0].hIcon = hi[0];
-		tb[0].iId = IDTBB_PREV;
-		wcscpy(tb[0].szTip, L"上一曲");
-
-		tb[1].dwMask = dwMask;
-		tb[1].hIcon = hi[1];
-		tb[1].iId = IDTBB_PLAY;
-		wcscpy(tb[1].szTip, L"播放");
-
-		tb[2].dwMask = dwMask;
-		tb[2].hIcon = hi[2];
-		tb[2].iId = IDTBB_NEXT;
-		wcscpy(tb[2].szTip, L"下一曲");
-
-		m_pTbList->ThumbBarAddButtons(m_TbGhost.HWnd, ARRAYSIZE(tb), tb);
-		DestroyIcon(hi[0]);
-		DestroyIcon(hi[1]);
-		DestroyIcon(hi[2]);
+		SetupTaskbarStuff();
 		return 0;
 	}
 
@@ -669,6 +634,14 @@ LRESULT CWndMain::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 	break;
 
+	case PNWM_CHANNELENDED:
+		App->GetPlayer().AutoNext();
+		return 0;
+	case WM_SYSCOLORCHANGE:
+		m_TbGhost.InvalidateLivePreviewCache();
+		eck::BroadcastChildrenMessage(hWnd, uMsg, wParam, lParam);
+		break;
+
 	case WM_SETTEXT:
 		m_TbGhost.SetText((PCWSTR)lParam);
 		break;
@@ -681,8 +654,8 @@ LRESULT CWndMain::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		
 	case WM_DWMCOLORIZATIONCOLORCHANGED:
 	{
-		m_argbDwm = wParam;
-		m_crDwm = eck::ARGBToD2dColorF(wParam);
+		m_argbDwm = (ARGB)wParam;
+		m_crDwm = eck::ARGBToD2dColorF(m_argbDwm);
 		const BOOL bDark = eck::IsColorLightArgb(m_argbDwm);
 		if (m_bDarkColor != bDark)
 			App->InvertIconColor();
@@ -694,8 +667,53 @@ LRESULT CWndMain::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_DESTROY:
 		m_TbGhost.Destroy();
 		SafeRelease(m_pTbList);
+		m_Lrc.Destroy();
 		PostQuitMessage(0);
 		return 0;
 	}
 	return __super::OnMsg(hWnd, uMsg, wParam, lParam);
+}
+
+void CWndMain::SetupTaskbarStuff()
+{
+	m_pTbList->UnregisterTab(m_TbGhost.HWnd);
+
+	m_pTbList->RegisterTab(m_TbGhost.HWnd, HWnd);
+#pragma warning(suppress: 6387)// 可能为NULL
+	m_pTbList->SetTabOrder(m_TbGhost.HWnd, NULL);
+
+	HICON hi[3];
+	auto pBmp = App->ScaleImageForButton(IIDX_PrevSolid, m_iDpi);
+	hi[0] = eck::CreateHICON(pBmp);
+	pBmp->Release();
+
+	pBmp = App->ScaleImageForButton(IIDX_PauseSolid, m_iDpi);
+	hi[1] = eck::CreateHICON(pBmp);
+	pBmp->Release();
+
+	pBmp = App->ScaleImageForButton(IIDX_NextSolid, m_iDpi);
+	hi[2] = eck::CreateHICON(pBmp);
+	pBmp->Release();
+
+	THUMBBUTTON tb[3]{};
+	constexpr auto dwMask = THB_ICON | THB_TOOLTIP;
+	tb[0].dwMask = dwMask;
+	tb[0].hIcon = hi[0];
+	tb[0].iId = IDTBB_PREV;
+	wcscpy(tb[0].szTip, L"上一曲");
+
+	tb[1].dwMask = dwMask;
+	tb[1].hIcon = hi[1];
+	tb[1].iId = IDTBB_PLAY;
+	wcscpy(tb[1].szTip, L"播放");
+
+	tb[2].dwMask = dwMask;
+	tb[2].hIcon = hi[2];
+	tb[2].iId = IDTBB_NEXT;
+	wcscpy(tb[2].szTip, L"下一曲");
+
+	m_pTbList->ThumbBarAddButtons(m_TbGhost.HWnd, ARRAYSIZE(tb), tb);
+	DestroyIcon(hi[0]);
+	DestroyIcon(hi[1]);
+	DestroyIcon(hi[2]);
 }

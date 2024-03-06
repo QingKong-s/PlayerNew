@@ -282,6 +282,7 @@ void CWndBK::UpdateStaticBmp()
 	const auto pDC = GetD2D().GetDC();
 	pDC->BeginDraw();
 	pDC->SetTarget(m_pBmpBKStatic);
+	pDC->Clear(D2D1::ColorF(D2D1::ColorF::White));
 
 	UINT cx0, cy0;
 	float cyRgn/*截取区域高*/, cx/*缩放后图片宽*/, cy/*缩放后图片高*/;
@@ -299,466 +300,46 @@ void CWndBK::UpdateStaticBmp()
 		 cyPic      cxRgn
 		*/
 		////////////////////处理缩放与截取（无论怎么改变窗口大小，用来模糊的封面图都要居中充满整个窗口）
-		D2D_POINT_2F D2DPtF;
+		D2D_POINT_2F pt;
 		pWICBitmapOrg->GetSize(&cx0, &cy0);
 		cyRgn = (float)m_cyClient / (float)m_cxClient * (float)cx0;
 		if (cyRgn <= cy0)// 情况一
 		{
 			cx = (float)m_cxClient;
 			cy = cx * cy0 / cx0;
-			D2DPtF = { 0,(float)(m_cyClient - cy) / 2 };
+			pt = { 0.f,(float)(m_cyClient - cy) / 2 };
 		}
 		else// 情况二
 		{
 			cy = (float)m_cyClient;
 			cx = cx0 * cy / cy0;
-			D2DPtF = { (float)(m_cxClient - cx) / 2,0 };
+			pt = { (float)(m_cxClient - cx) / 2,0.f };
 		}
 		////////////缩放
-		IWICBitmapScaler* pWICBitmapScaler;// WIC位图缩放器
-		App->m_pWicFactory->CreateBitmapScaler(&pWICBitmapScaler);
-		pWICBitmapScaler->Initialize(pWICBitmapOrg, (UINT)cx, (UINT)cy, WICBitmapInterpolationModeCubic);// 缩放
-		IWICBitmap* pWICBmpScaled;// 缩放后的WIC位图
-		App->m_pWicFactory->CreateBitmapFromSource(pWICBitmapScaler, WICBitmapNoCache, &pWICBmpScaled);
-		pWICBitmapScaler->Release();// 释放WIC位图缩放器
-		ID2D1Bitmap1* pD2DBmpScaled;// 缩放后的D2D位图
-		pDC->CreateBitmapFromWicBitmap(pWICBmpScaled, &pD2DBmpScaled);// 转换为D2D位图
-		pWICBmpScaled->Release();// 释放缩放后的WIC位图
-
+		IWICBitmap* pWicBmpScaled;
+		eck::ScaleWicBitmap(pWICBitmapOrg, pWicBmpScaled, cx, cy,
+			WICBitmapInterpolationModeNearestNeighbor);
+		ID2D1Bitmap1* pBmpScaled;
+		pDC->CreateBitmapFromWicBitmap(pWicBmpScaled, &pBmpScaled);
+		pWicBmpScaled->Release();
 		////////////模糊 
-		ID2D1Image* pD2DBmpBlurred = NULL;
-		ID2D1Effect* pD2DEffect;
-		pDC->CreateEffect(CLSID_D2D1GaussianBlur, &pD2DEffect);
-		if (pD2DEffect)
-		{
-			pD2DEffect->SetInput(0, pD2DBmpScaled);
-			pD2DEffect->SetValue(D2D1_GAUSSIANBLUR_PROP_STANDARD_DEVIATION, 50.f);// 标准偏差
-			pD2DEffect->SetValue(D2D1_GAUSSIANBLUR_PROP_BORDER_MODE, D2D1_BORDER_MODE_HARD);// 硬边缘
-			pD2DEffect->GetOutput(&pD2DBmpBlurred);
-			pD2DEffect->Release();
-		}
-		pD2DBmpScaled->Release();
-		////////////画模糊背景
-		if (pD2DBmpBlurred)
-		{
-			pDC->DrawImage(pD2DBmpBlurred, &D2DPtF);
-			pD2DBmpBlurred->Release();
-		}
-		////////////画半透明遮罩
-		pDC->FillRectangle(&m_rcfClient, m_pBrWhite2);
+		ID2D1Effect* pEffect;
+		pDC->CreateEffect(CLSID_D2D1GaussianBlur, &pEffect);
+		EckAssert(pEffect);
+		pEffect->SetInput(0, pBmpScaled);
+		pEffect->SetValue(D2D1_GAUSSIANBLUR_PROP_STANDARD_DEVIATION, 50.f);
+		pEffect->SetValue(D2D1_GAUSSIANBLUR_PROP_BORDER_MODE, D2D1_BORDER_MODE_HARD);
+		pDC->DrawImage(pEffect, &pt);
+		pEffect->Release();
+		////////////半透明遮罩
+		pDC->FillRectangle(m_rcfClient, m_pBrWhite2);
 	}
-	else// 没有图就全刷白吧
-		pDC->FillRectangle(&m_rcfClient, m_pBrWhite);
 
 	pDC->EndDraw();
 	pDC->SetTarget(GetD2D().GetBitmap());
 
 	SetBkgBitmap(m_pBmpBKStatic);
 }
-
-
-
-//CUIToolBar::CUIToolBar()
-//{
-//    m_uType = UIET_TOOLBAR;
-//    m_uFlags = UIEF_WANTTIMEREVENT;
-//}
-//
-//CUIToolBar::~CUIToolBar()
-//{
-//    DestroyWindow(m_hToolTip);
-//
-//    eck::SafeRelease(m_pBrText);
-//    eck::SafeRelease(m_pBrBtnHot);
-//    eck::SafeRelease(m_pBrBtnPushed);
-//    eck::SafeRelease(m_pBrBtnChecked);
-//}
-//
-//BOOL CUIToolBar::InitElem()
-//{
-//    eck::SafeRelease(m_pBrText);
-//    eck::SafeRelease(m_pBrBtnHot);
-//    eck::SafeRelease(m_pBrBtnPushed);
-//    eck::SafeRelease(m_pBrBtnChecked);
-//    auto pDC = m_pBK->m_pDC;
-//    pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_pBrText);
-//    pDC->CreateSolidColorBrush(D2D1::ColorF(eck::ReverseColorref(MYCLR_BTHOT)), &m_pBrBtnHot);
-//    pDC->CreateSolidColorBrush(D2D1::ColorF(eck::ReverseColorref(MYCLR_BTPUSHED)), &m_pBrBtnPushed);
-//    pDC->CreateSolidColorBrush(D2D1::ColorF(eck::ReverseColorref(MYCLR_BTCHECKED)), &m_pBrBtnChecked);
-//    App->m_pDwFactory->CreateTextFormat(L"微软雅黑", NULL,
-//        DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-//        9, L"zh-cn", &m_pTfTime);
-//    m_pTfTime->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
-//    m_pTfTime->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-//
-//    HWND hWndBK = m_pBK->m_hWnd;
-//    m_hToolTip = CreateWindowExW(0, TOOLTIPS_CLASSW, NULL, TTS_NOPREFIX | TTS_ALWAYSTIP,
-//        0, 0, 0, 0, hWndBK, NULL, NULL, NULL);// 创建工具提示
-//
-//    m_ti = { sizeof(TTTOOLINFOW),TTF_TRACK | TTF_IDISHWND | TTF_ABSOLUTE,hWndBK,(UINT_PTR)hWndBK,{0},App->GetHInstance(),NULL,0 };
-//    SendMessageW(m_hToolTip, TTM_ADDTOOLW, 0, (LPARAM)&m_ti);
-//
-//    m_rcFTimeLabel.left = m_rcF.left;
-//    m_rcFTimeLabel.top = m_rcF.top;
-//    m_rcFTimeLabel.right = m_rcFTimeLabel.left + (float)m_pBK->m_Ds.cxTime;
-//    m_rcFTimeLabel.bottom = m_rcF.bottom;
-//    m_rcTimeLabel = eck::MakeRect(m_rcFTimeLabel);
-//
-//    m_cchTime = lstrlenW(m_szTime);
-//    return TRUE;
-//}
-//
-//void CUIToolBar::Redraw()
-//{
-//    auto pDC = m_pBK->m_pDC;
-////    auto pGdiInteropRT = m_BK.m_pGdiInteropRT;
-////    HDC hDC;
-////
-////    pDC->DrawBitmap(m_BK.m_pBmpBKStatic, &m_rcF, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &m_rcF);
-////
-////    g_pDWTFNormal->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
-////    g_pDWTFNormal->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-////    pDC->DrawTextW(m_szTime, m_cchTime, g_pDWTFNormal, &m_rcFTimeLabel, m_pBrText, D2D1_DRAW_TEXT_OPTIONS_CLIP);
-////
-////    int iIconOffest = (GC.cyBT - GC.iIconSize) / 2;
-////    int x = (int)m_rcFTimeLabel.right, y = m_rc.top + iIconOffest;
-////    RECT rc = { 0,0,0,GC.cyBT };
-////    D2D_RECT_F rcF;
-////    UITOOLBARBTNINDEX i = TBBI_INVALID;
-////    ID2D1SolidColorBrush* pBrush;
-////    if (m_idxHot != -1 || m_idxPush != -1)
-////    {
-////        if (m_idxPush != -1)
-////        {
-////            i = m_idxPush;
-////            pBrush = m_pBrBtnPushed;
-////        }
-////        else
-////        {
-////            i = m_idxHot;
-////            pBrush = m_pBrBtnHot;
-////            if (m_uBtnsCheckState & (1 << i))
-////                goto SkipDrawHot;
-////        }
-////
-////        rcF.left = x + (FLOAT)(GC.cyBT * i);
-////        rcF.top = m_rcF.top;
-////        rcF.right = rcF.left + GC.cyBT;
-////        rcF.bottom = m_rcF.bottom;
-////        pDC->FillRectangle(&rcF, pBrush);
-////    }
-////
-////SkipDrawHot:
-////    if (i != m_idxPush)
-////        for (int i = 0; i < TBBI_COUNT; ++i)
-////        {
-////            if (m_uBtnsCheckState & (1 << i))
-////            {
-////                rcF.left = x + (FLOAT)(GC.cyBT * i);
-////                rcF.top = m_rcF.top;
-////                rcF.right = rcF.left + GC.cyBT;
-////                rcF.bottom = m_rcF.bottom;
-////                pDC->FillRectangle(&rcF, m_pBrBtnChecked);
-////            }
-////        }
-////
-////    pGdiInteropRT->GetDC(D2D1_DC_INITIALIZE_MODE_COPY, &hDC);
-////
-////    HICON hi[] =
-////    {
-////        GR.hiLast,
-////        (g_bPlayIcon ? GR.hiPlay : GR.hiPause),
-////        GR.hiStop,
-////        GR.hiNext,
-////        GR.hiLrc,
-////        NULL,
-////        GR.hiPlaySetting,
-////        GR.hiPlayList,
-////        GR.hiSettings,
-////        GR.hiInfo
-////    };
-////
-////    switch (m_iRepeatMode)
-////    {
-////    case REPEATMODE_TOTALLOOP:  hi[TBBI_REPEATMODE] = GR.hiArrowCircle;      break;
-////    case REPEATMODE_RADOM:      hi[TBBI_REPEATMODE] = GR.hiArrowCross;       break;
-////    case REPEATMODE_SINGLE:     hi[TBBI_REPEATMODE] = GR.hiArrowRight;       break;
-////    case REPEATMODE_SINGLELOOP: hi[TBBI_REPEATMODE] = GR.hiArrowCircleOne;   break;
-////    case REPEATMODE_TOTAL:      hi[TBBI_REPEATMODE] = GR.hiArrowRightThree;  break;
-////    default:                    hi[TBBI_REPEATMODE] = GR.hiArrowCircle;      break;
-////    }
-////
-////    for (HICON hIcon : hi)
-////    {
-////        DrawIconEx(hDC, x + iIconOffest, y, hIcon, 0, 0, 0, NULL, DI_NORMAL);// 6 循环方式
-////        x += GC.cyBT;
-////    }
-////
-////    pGdiInteropRT->ReleaseDC(&m_rcInWnd);
-//    BkDbg_DrawElemFrame();
-//}
-//
-//void CUIToolBar::RedrawTimeInfo()
-//{
-//    auto pDC = m_pBK->m_pDC;
-//
-//    pDC->DrawBitmap(m_pBK->m_pBmpBKStatic, &m_rcFTimeLabel, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &m_rcFTimeLabel);
-//
-//    pDC->DrawTextW(m_szTime, m_cchTime, m_pTfTime, &m_rcFTimeLabel, m_pBrText, D2D1_DRAW_TEXT_OPTIONS_CLIP);
-//
-//    BkDbg_DrawElemFrame();
-//}
-//
-//BOOL CUIToolBar::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
-//{
-//    switch (uMsg)
-//    {
-//    case WM_LBUTTONDOWN:
-//    {
-//        POINT pt = ECK_GET_PT_LPARAM(lParam);
-//        m_idxPush = HitTest(pt);
-//        if (m_idxPush >= 0)
-//        {
-//            m_bLBtnDown = TRUE;
-//            SetCapture(m_pBK->m_hWnd);
-//            CUIElem::Redraw(TRUE);
-//        }
-//    }
-//    return 0;
-//
-//    case WM_LBUTTONUP:
-//    {
-//        POINT pt = ECK_GET_PT_LPARAM(lParam);
-//        if (m_bLBtnDown)
-//        {
-//            m_bLBtnDown = FALSE;
-//            ReleaseCapture();
-//        }
-//
-//        if (PtInRect(&m_rc, pt) || m_idxPush != -1)
-//        {
-//            if (m_idxPush == TBBI_INVALID)
-//                return 0;
-//            UITOOLBARBTNINDEX i = m_idxPush;
-//            m_idxPush = TBBI_INVALID;
-//            m_idxLastHot = TBBI_INVALID;
-//            m_bLBtnDown = FALSE;
-//
-//            CUIElem::Redraw(TRUE);
-//
-//            if (i != HitTest(pt))
-//                return 0;
-//
-//            m_ti.lpszText = NULL;
-//            SendMessageW(m_hToolTip, TTM_GETTOOLINFOW, 0, (LPARAM)&m_ti);
-//            SendMessageW(m_hToolTip, TTM_SETTOOLINFOW, 0, (LPARAM)&m_ti);
-//            DoCmd(i);
-//        }
-//    }
-//    return 0;
-//
-//    case WM_MOUSEMOVE:
-//    {
-//        POINT pt = ECK_GET_PT_LPARAM(lParam);
-//        if (PtInRect(&m_rc, pt))
-//        {
-//            m_bInToolBar = TRUE;
-//            if (!m_bLBtnDown)
-//            {
-//                m_idxHot = HitTest(pt);
-//                if (m_idxLastHot != m_idxHot)
-//                {
-//                    m_ti.lpszText = NULL;
-//                    SendMessageW(m_hToolTip, TTM_GETTOOLINFOW, 0, (LPARAM)&m_ti);
-//                    SendMessageW(m_hToolTip, TTM_SETTOOLINFOW, 0, (LPARAM)&m_ti);
-//                    m_idxLastHot = m_idxHot;
-//                    CUIElem::Redraw(TRUE);
-//                }
-//            }
-//        }
-//        else if (m_bInToolBar)
-//        {
-//            m_bInToolBar = FALSE;
-//            m_idxLastHot = m_idxHot = TBBI_INVALID;
-//            CUIElem::Redraw(TRUE);
-//            SendMessageW(m_hToolTip, TTM_TRACKACTIVATE, FALSE, (LPARAM)&m_ti);
-//        }
-//    }
-//    return 0;
-//
-//    case WM_MOUSELEAVE:
-//    {
-//        if (m_idxHot != TBBI_INVALID)
-//        {
-//            m_ti.lpszText = NULL;
-//            SendMessageW(m_hToolTip, TTM_GETTOOLINFOW, 0, (LPARAM)&m_ti);
-//            SendMessageW(m_hToolTip, TTM_SETTOOLINFOW, 0, (LPARAM)&m_ti);
-//            m_idxLastHover = m_idxLastHot = m_idxHot = TBBI_INVALID;
-//            CUIElem::Redraw(TRUE);
-//            SendMessageW(m_hToolTip, TTM_TRACKACTIVATE, FALSE, (LPARAM)&m_ti);
-//        }
-//    }
-//    return 0;
-//
-//    case WM_MOUSEHOVER:
-//    {
-//        if (m_idxHot != -1 && m_idxPush == -1 && m_idxLastHover != m_idxHot)
-//        {
-//            POINT pt = ECK_GET_PT_LPARAM(lParam);
-//            ClientToScreen(m_pBK->m_hWnd, &pt);
-//            m_idxLastHover = m_idxHot;
-//            m_ti.lpszText = NULL;
-//
-//            if (m_idxHot == 5)
-//                m_ti.lpszText = (LPWSTR)c_szBtmTip[BTMBKBTNCOUNT + (int)App->GetOptionsMgr().iRepeatMode];
-//            else
-//                m_ti.lpszText = (LPWSTR)c_szBtmTip[m_idxHot];
-//
-//            SendMessageW(m_hToolTip, TTM_SETTOOLINFOW, 0, (LPARAM)&m_ti);
-//            SendMessageW(m_hToolTip, TTM_TRACKACTIVATE, TRUE, (LPARAM)&m_ti);
-//            SendMessageW(m_hToolTip, TTM_TRACKPOSITION, 0, MAKELPARAM(pt.x, pt.y));
-//        }
-//    }
-//    return 0;
-//    }
-//    return 0;
-//}
-//
-//UITOOLBARBTNINDEX CUIToolBar::HitTest(POINT pt)
-//{
-//    if (!PtInRect(&m_rc, pt))
-//        return TBBI_INVALID;
-//
-//    int x = m_rc.left + m_pBK->m_Ds.cxTime;
-//    for (int i = 0; i < BTMBKBTNCOUNT; i++)
-//    {
-//        if (pt.x > x + i * m_cy && pt.x < x + (i + 1) * m_cy)
-//            return (UITOOLBARBTNINDEX)i;
-//    }
-//
-//    return TBBI_INVALID;
-//}
-//
-//void CUIToolBar::DoCmd(UITOOLBARBTNINDEX i)
-//{
-//    //switch (i)
-//    //{
-//    //case TBBI_PREV:// 上一曲
-//    //{
-//    //    if (g_iCurrFileIndex == -1)
-//    //        return;
-//    //    Playing_PlayNext(TRUE);
-//    //}
-//    //return;
-//
-//    //case TBBI_PLAY:// 播放/暂停
-//    //{
-//    //    if (g_iCurrFileIndex == -1)
-//    //        if (g_ItemData->iCount > 0)
-//    //            Playing_PlayFile(0);
-//    //        else
-//    //            return;
-//    //    Playing_PlayOrPause();
-//    //}
-//    //return;
-//
-//    //case TBBI_STOP:// 停止
-//    //{
-//    //    if (g_iCurrFileIndex == -1)
-//    //        return;
-//    //    Playing_Stop();
-//    //}
-//    //return;
-//
-//    //case TBBI_NEXT:// 下一曲
-//    //{
-//    //    if (g_iCurrFileIndex == -1)
-//    //        return;
-//    //    Playing_PlayNext();
-//    //}
-//    //return;
-//
-//    //case TBBI_LRC:// 歌词
-//    //{
-//    //    LrcWnd_Show();
-//    //    if (IsWindow(g_hLrcWnd))
-//    //        m_uBtnsCheckState |= (1 << TBBI_LRC);
-//    //    else
-//    //        m_uBtnsCheckState &= ~(1 << TBBI_LRC);
-//    //}
-//    //return;
-//
-//    //case TBBI_REPEATMODE:// 循环方式
-//    //{
-//    //    m_iRepeatMode++;
-//    //    if (m_iRepeatMode > 4)
-//    //        m_iRepeatMode %= 5;
-//    //    CUIElem::Redraw(TRUE);
-//    //}
-//    //return;
-//
-//    //case TBBI_PLAYINGOPT:// 播放设置
-//    //{
-//    //    static HWND hDlgEffect = NULL;
-//    //    if (IsWindow(hDlgEffect) && GetWindowThreadProcessId(hDlgEffect, NULL) == GetCurrentThreadId())
-//    //    {
-//    //        SetForegroundWindow(hDlgEffect);
-//    //    }
-//    //    else
-//    //    {
-//    //        hDlgEffect = CreateDialogParamW(g_hInst, MAKEINTRESOURCEW(IDD_EFFECT), m_pBK->m_hWnd, DlgProc_Effect, 0);
-//    //        ShowWindow(hDlgEffect, SW_SHOW);
-//    //    }
-//    //}
-//    //return;
-//
-//    //case TBBI_PLAYLIST:// 播放列表
-//    //{
-//    //    HMENU hMenu = CreatePopupMenu();
-//    //    AppendMenuW(hMenu, g_bListSeped ? MF_CHECKED : 0, IDMI_PL_SEPARATE, L"将列表从主窗口拆离");
-//    //    AppendMenuW(hMenu, g_bListHidden ? 0 : MF_CHECKED, IDMI_PL_SHOW, L"显示播放列表");
-//
-//    //    int iRet = TrackPopupMenu(hMenu, TPM_RETURNCMD,
-//    //        m_rc.left + (int)m_rcFTimeLabel.right + GC.cyBT * TBBI_PLAYLIST, m_rc.top + (int)m_rcFTimeLabel.bottom, 0, m_BK.m_hWnd, NULL);
-//    //    DestroyMenu(hMenu);
-//    //    switch (iRet)
-//    //    {
-//    //    case IDMI_PL_SEPARATE:
-//    //        UI_SeparateListWnd(!g_bListSeped);
-//    //        break;
-//
-//    //    case IDMI_PL_SHOW:
-//    //        UI_ShowList(g_bListHidden);
-//    //        break;
-//    //    }
-//    //}
-//    //return;
-//
-//    //case TBBI_OPTIONS:// 设置
-//    //    DialogBoxParamW(g_hInst, MAKEINTRESOURCEW(IDD_OPTIONS), g_hMainWnd, DlgProc_Options, 0);
-//    //    return;
-//
-//    //case TBBI_ABOUT: // 关于
-//    //    DialogBoxParamW(g_hInst, MAKEINTRESOURCEW(IDD_ABOUT), g_hMainWnd, DlgProc_About, 0);
-//    //    return;
-//    //}
-//}
-//
-//void CUIToolBar::OnTimer(UINT uTimerID)
-//{
-//    if (uTimerID == CWndBK::IDT_PGS)
-//    {
-//        const int iMin = (int)App->GetPlayer().GetPosF() / 60,
-//            iMin2 = (int)(App->GetPlayer().GetLength() / 1000 / 60);
-//
-//        m_cchTime = swprintf_s(m_szTime, L"%02d:%02d/%02d:%02d",
-//            iMin,
-//            (int)App->GetPlayer().GetPosF() - iMin * 60,
-//            iMin2,
-//            (int)(App->GetPlayer().GetLength() / 1000) - iMin2 * 60);
-//        RedrawTimeInfo();
-//    }
-//}
 
 LRESULT CUIElem::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {

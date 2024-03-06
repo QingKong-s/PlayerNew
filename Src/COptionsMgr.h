@@ -88,8 +88,10 @@ public:
 	ARGB DtLrcBorderColor{};
 	int DtLrcAlign[2]{};
 	SIZE DtLrcMinSize{};
-	BOOL DtLrcEnableShadow{1};
-	float DtLrcShadowOffset{1.5f};
+	BOOL DtLrcEnableShadow{ 1 };
+	float DtLrcShadowOffset{ 1.5f };
+
+	BOOL ProgShowCoverLivePreview{ 1 };
 
 
 	//static COptionsMgr& GetInst()

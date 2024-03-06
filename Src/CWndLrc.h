@@ -4,6 +4,7 @@
 #include "eck\CToolTip.h"
 #include "eck\GraphicsHelper.h"
 
+constexpr inline PCWSTR WCN_LRC = L"PlayerNew.WndClass.Lrc";
 
 enum
 {
@@ -158,7 +159,7 @@ private:
 
 	PNInline float CalcLrcMargin() { return m_DsF.Margin * 3.f; }
 public:
-	static ATOM RegisterWndClass() { return eck::EzRegisterWndClass(L"PlayerNew.WndClass.Lrc"); }
+	static ATOM RegisterWndClass() { return eck::EzRegisterWndClass(WCN_LRC); }
 
 	LRESULT OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 
@@ -166,7 +167,7 @@ public:
 		int x, int y, int cx, int cy, HWND hParent, HMENU hMenu, PCVOID pData = NULL) override
 	{
 		return IntCreate(WS_EX_LAYERED | WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW | WS_EX_TOPMOST,
-			eck::WCN_BK, pszText, WS_POPUP | WS_VISIBLE,
+			WCN_LRC, pszText, WS_POPUP | WS_VISIBLE,
 			x, y, cx, cy, NULL, NULL, App->GetHInstance(), NULL);
 	}
 

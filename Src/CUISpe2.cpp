@@ -24,14 +24,14 @@ LRESULT CUISpe2::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
                 if (k < 0)
                     k = 0;
                 else if (k > cy)
-                    k = cy;
+                    k = (int)cy;
                 PtF1 = { i * m_cxStep,(float)k };
 
                 l = (int)((1 - m_pfBuf[(i + 1) * 2 + j]) * cy / 2);
                 if (l < 0)
                     l = 0;
                 else if (l > cy)
-                    l = cy;
+                    l = (int)cy;
                 PtF2 = { (i + 1) * m_cxStep,(float)l };
                 m_pDC->DrawLine(PtF1, PtF2, m_pBrLine, GetBk()->m_DsF.cxSepLine);
             }
