@@ -2,11 +2,12 @@
 #include "CApp.h"
 #include "COptionsMgr.h"
 
+#include "CDlgEffect.h"
+
 #include "eck\DuiBase.h"
 #include "eck\CDuiCircleButton.h"
 #include "eck\CDuiTrackBar.h"
 #include "eck\CScrollView.h"
-
 
 #include <thread>
 
@@ -133,6 +134,8 @@ private:
 	std::vector<CUIElem*> m_vElemsWantTimer{};
 
 	UINT m_uMsgCUIButton = 0;// (uCode, pElem)
+
+	CDlgEffect m_DlgFx{};
 
 	enum
 	{

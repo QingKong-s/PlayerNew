@@ -405,3 +405,53 @@ TICKCHANGING CPlayer::Tick()
 
 	return uRet;
 }
+
+HFX CPlayer::SetFx(int idx)
+{
+	if (idx == FXI_PARAMEQ)
+	{
+		const auto hFx = m_FxMgr.GetHFxEQ();
+		EckCounter(ARRAYSIZE(CEffectMgr::EQ), i)
+		{
+			if (!hFx[i])
+				hFx[i] = m_Bass.SetFx(
+					CEffectMgr::Fxi2BassIdx(FXI_PARAMEQ),
+					m_FxMgr.GetPriority(FXI_PARAMEQ));
+		}
+	}
+	else
+	{
+		const auto hFx = m_FxMgr.GetHFx(idx);
+		if (!hFx)
+			return m_FxMgr.GetHFx(idx) = m_Bass.SetFx(
+				CEffectMgr::Fxi2BassIdx(idx), m_FxMgr.GetPriority(idx));
+	}
+}
+
+BOOL CPlayer::RemoveFx(int idx)
+{
+	if (idx == FXI_PARAMEQ)
+	{
+		const auto hFx = m_FxMgr.GetHFxEQ();
+		EckCounter(ARRAYSIZE(CEffectMgr::EQ), i)
+		{
+			if (hFx[i])
+			{
+				m_Bass.RemoveFx(hFx[i]);
+				hFx[i] = NULL;
+			}
+		}
+		return TRUE;
+	}
+	else
+	{
+		const auto hFx = m_FxMgr.GetHFx(idx);
+		if (hFx)
+		{
+			const auto b = m_Bass.RemoveFx(hFx);
+			m_FxMgr.GetHFx(idx) = NULL;
+			return b;
+		}
+		return TRUE;
+	}
+}

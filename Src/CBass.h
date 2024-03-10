@@ -55,7 +55,7 @@ public:
 
 	DWORD Open(PCWSTR pszFile,
 		DWORD dwFlagsHS = BASS_SAMPLE_FX | BASS_STREAM_DECODE,
-		DWORD dwFlagsHM = BASS_SAMPLE_FX | BASS_MUSIC_PRESCAN | BASS_STREAM_DECODE,
+		DWORD dwFlagsHM = BASS_SAMPLE_FX | BASS_STREAM_DECODE | BASS_MUSIC_PRESCAN,
 		DWORD dwFlagsHMIDI = BASS_SAMPLE_FX | BASS_STREAM_DECODE);
 
 	PNInline BOOL Play(BOOL bReset = FALSE) const
@@ -83,14 +83,14 @@ public:
 		return GetAttr(BASS_ATTRIB_VOL);
 	}
 
-	PNInline BOOL SetPan(float fPan) const
-	{
-		return SetAttr(BASS_ATTRIB_PAN, fPan);
-	}
-
 	PNInline BOOL SetSpeed(float fScale) const
 	{
 		return SetAttr(BASS_ATTRIB_FREQ, fScale * m_fDefSpeed);
+	}
+
+	PNInline float GetSpeed() const
+	{
+		return GetAttr(BASS_ATTRIB_FREQ) / m_fDefSpeed;
 	}
 
 	PNInline BOOL SetPosition(double fTime) const
@@ -151,5 +151,14 @@ public:
 	{
 		return BASS_ChannelSetSync(m_hStream, dwType, ullParam, pfn, pUser);
 	}
-};
 
+	PNInline HFX SetFx(DWORD dwType, int iPriority) const
+	{
+		return BASS_ChannelSetFX(m_hStream, dwType, iPriority);
+	}
+
+	PNInline BOOL RemoveFx(HFX hFx) const
+	{
+		return BASS_ChannelRemoveFX(m_hStream, hFx);
+	}
+};

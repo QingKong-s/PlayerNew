@@ -12,6 +12,7 @@
 #define IDD_EQ                          179
 #define IDD_EFFECT                      190
 #define IDD_SBV                         191
+#define IDD_FXCOMM                      191
 #define IDD_INPUT                       192
 #define IDD_OPTIONS                     200
 #define IDD_OPTIONS2                    201
@@ -30,6 +31,7 @@
 #define IDD_OPTVISUAL                   257
 #define IDD_OPTHOTKEY                   258
 #define IDC_LIST1                       1002
+#define IDC_LB_FXPRIORITY               1002
 #define IDC_BUTTON1                     1003
 #define IDC_LK_AUTHOR                   1004
 #define IDC_LK_3RDPARTYLIB              1005
@@ -37,6 +39,7 @@
 #define IDC_ST_COMPILECOUNT             1007
 #define IDC_ST_BASSVER                  1008
 #define IDC_LK_OPENGITHUB               1009
+#define IDC_RB_QUADWAVE                 1009
 #define IDC_ST_PNVER                    1010
 #define IDOK2                           1032
 #define IDC_BT_CANCEL                   1034
@@ -60,9 +63,11 @@
 #define IDC_TB10                        1057
 #define IDC_CM                          1059
 #define IDC_TAB                         1060
+#define IDC_TAB_EFFECT                  1060
 #define IDC_TB_SPEED                    1061
 #define IDC_TB_VOL                      1062
 #define IDC_TB_BLANCE                   1063
+#define IDC_TB_PAN                      1063
 #define IDC_ST_SPEED                    1064
 #define IDC_ST_BLANCE                   1065
 #define IDC_ST_SPEED2                   1066
@@ -70,15 +75,17 @@
 #define IDC_BT_VOL                      1068
 #define IDC_ST_BLANCE2                  1069
 #define IDC_ED_INPUT                    1069
+#define IDC_ST_PAN                      1069
 #define IDC_ST_VOL2                     1070
 #define IDC_ST_INPUT                    1070
+#define IDC_ST_VOL                      1070
 #define IDC_ST_ABOUT                    1071
 #define IDC_TB_TEMPO                    1071
-#define IDC_LV_BOOKMARK                 1072
 #define IDC_ST_TEMPO                    1072
 #define IDC_ED_BMNAME                   1073
 #define IDC_ST_TEMPO2                   1073
 #define IDC_ED_BMCOMMENT                1074
+#define IDC_ST_TEMPO3                   1074
 #define IDC_ED_BMINDEX                  1075
 #define IDC_ED_BMCLR                    1076
 #define IDC_BT_BMSAVE                   1077
@@ -180,7 +187,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        137
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1009
+#define _APS_NEXT_CONTROL_VALUE         1010
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

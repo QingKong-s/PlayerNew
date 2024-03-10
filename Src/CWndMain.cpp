@@ -407,13 +407,6 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	if (m_bDarkColor)
 		App->InvertIconColor();
 
-	auto hr = CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER,
-		IID_PPV_ARGS(&m_pTbList));
-	if (FAILED(hr))
-		CApp::ShowError(HWnd, hr, CApp::ErrSrc::HResult, L"ITaskbarList4创建失败");
-
-	m_pTbList->HrInit();
-
 	App->GetPlayer().SetPlayingCtrlCallBack([this](PLAYINGCTRLTYPE uType, INT_PTR i1, INT_PTR i2)
 		{
 			switch (uType)
@@ -423,6 +416,7 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 				if (m_Lrc.IsBkVisible())
 					m_Lrc.Draw();
 				DwmInvalidateIconicBitmaps(m_TbGhost.HWnd);
+				//m_TbGhost.SendMsg(WM_DWMSENDICONICTHUMBNAIL, 0, MAKELPARAM(120, 120));
 				m_Lrc.InvalidateCache();
 				m_TbGhost.InvalidateLivePreviewCache();
 				m_TbGhost.InvalidateThumbnailCache();
@@ -475,7 +469,7 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	m_SPB.Show(SW_SHOWNOACTIVATE);
 
 	m_pDropTarget = new CDropTargetList(*this);
-	hr = RegisterDragDrop(hWnd, m_pDropTarget);
+	const auto hr = RegisterDragDrop(hWnd, m_pDropTarget);
 	if (FAILED(hr))
 		CApp::ShowError(hWnd, hr, CApp::ErrSrc::HResult, L"注册拖放目标失败");
 	
@@ -594,7 +588,8 @@ LRESULT CWndMain::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (uMsg == s_uMsgTaskbarButtonCreated)
 	{
-		SetupTaskbarStuff();
+		if (m_pTbList)
+			SetupTaskbarStuff();
 		return 0;
 	}
 

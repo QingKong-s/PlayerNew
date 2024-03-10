@@ -1,7 +1,6 @@
 ﻿#pragma once
-#include "CBass.h"
 #include "CPlayList.h"
-#include "Utils.h"
+#include "CEffectMgr.h"
 
 #include "eck\CRefStr.h"
 
@@ -67,6 +66,8 @@ private:
 	IWICBitmap* m_pWicCoverBmp = NULL;
 
 	FOnPlayingControl m_fnPayingCtrl{};
+
+	CEffectMgr m_FxMgr{};
 
 	void ApplyPrevEffect()
 	{
@@ -294,4 +295,10 @@ public:
 	TICKCHANGING Tick();
 
 	PNInline BOOL IsPlaying() { return GetBass().IsActive() == BASS_ACTIVE_PLAYING; }
+
+	PNInline auto& GetEffectMgr() { return m_FxMgr; }
+
+	HFX SetFx(int idx);
+
+	BOOL RemoveFx(int idx);
 };

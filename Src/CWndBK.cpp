@@ -119,6 +119,8 @@ LRESULT CWndBK::OnElemEvent(Dui::CElem* pElem, UINT uMsg, WPARAM wParam, LPARAM 
 			//pVol->Create(NULL, Dui::DES_VISIBLE, 0,
 			//	rc.left - 40, rc.top - 200, 400, 100, NULL, this);
 			//pVol = 0;
+			if (!m_DlgFx.IsValid())
+				m_DlgFx.CreateDlg(HWnd, NULL);
 		}
 		break;
 		case IDE_BT_REPEATMODE:

@@ -133,11 +133,11 @@ LRESULT CUIPlayingCtrl::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
         const auto pElem = (Dui::CElem*)wParam;
 		if (pElem == &m_BTPlayOpt && ((Dui::DUINMHDR*)lParam)->uCode == Dui::EE_COMMAND)
         {
-            if (!m_VolTB.IsVisible())
-                m_VolTB.SetVisible(TRUE);
-            m_VolTB.m_TrackBar.SetFocus();
-            m_VolTB.m_TrackBar.SetPos(App->GetPlayer().GetBass().GetVolume() * 100.f);
-            return TRUE;
+            //if (!m_VolTB.IsVisible())
+            //    m_VolTB.SetVisible(TRUE);
+            //m_VolTB.m_TrackBar.SetFocus();
+            //m_VolTB.m_TrackBar.SetPos(App->GetPlayer().GetBass().GetVolume() * 100.f);
+            //return TRUE;
         }
     }
     break;

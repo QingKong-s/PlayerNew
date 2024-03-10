@@ -106,6 +106,43 @@
     <ClInclude Include="CLVPlay.h">
       <Filter>控件</Filter>
     </ClInclude>
+    <ClInclude Include="CDlgEffect.h">
+      <Filter>对话框</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgChorus.h">
+      <Filter>对话框</Filter>
+    </ClInclude>
+    <ClInclude Include="CEffectMgr.h">
+      <Filter>程序</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgFxCompression.h">
+      <Filter>对话框</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgFxDistortion.h">
+      <Filter>对话框</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgFxEcho.h">
+      <Filter>对话框</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgFxEQ.h">
+      <Filter>对话框</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgFxFlanger.h">
+      <Filter>对话框</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgFxGargle.h">
+      <Filter>对话框</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgFxI3DL2Reverb.h">
+      <Filter>对话框</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgFxReverb.h">
+      <Filter>对话框</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgFxRotate.h">
+      <Filter>对话框</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgFxCommon.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CDlgBookmark.cpp">
@@ -189,7 +226,6 @@
     <ClCompile Include="CWndLrc.cpp">
       <Filter>窗体</Filter>
     </ClCompile>
-    <ClCompile Include="$(ECK_INCLUDE)\eck\ECK.cpp" />
     <ClCompile Include="CUIProgressBar.cpp">
       <Filter>视觉对象</Filter>
     </ClCompile>
@@ -205,6 +241,46 @@
     <ClCompile Include="CLVPlay.cpp">
       <Filter>控件</Filter>
     </ClCompile>
+    <ClCompile Include="CDlgEffect.cpp">
+      <Filter>对话框</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgChorus.cpp">
+      <Filter>对话框</Filter>
+    </ClCompile>
+    <ClCompile Include="CEffectMgr.cpp">
+      <Filter>程序</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgFxCompression.cpp">
+      <Filter>对话框</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgFxDistortion.cpp">
+      <Filter>对话框</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgFxEcho.cpp">
+      <Filter>对话框</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgFxEQ.cpp">
+      <Filter>对话框</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgFxFlanger.cpp">
+      <Filter>对话框</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgFxGargle.cpp">
+      <Filter>对话框</Filter>
+    </ClCompile>
+    <ClCompile Include="$(ECK_INCLUDE)\eck\ECK.cpp">
+      <Filter>eck</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgFxI3DL2Reverb.cpp">
+      <Filter>对话框</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgFxReverb.cpp">
+      <Filter>对话框</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgFxRotate.cpp">
+      <Filter>对话框</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgFxCommon.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PlayerNew.rc">

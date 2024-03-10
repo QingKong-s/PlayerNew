@@ -14,7 +14,7 @@ LRESULT CTbGhost::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_DWMSENDICONICLIVEPREVIEWBITMAP:
 	{
-		RECT rcMainClient;
+        RECT rcMainClient;
 		GetClientRect(m_WndMain.HWnd, &rcMainClient);
 		if (!App->GetOptionsMgr().ProgShowCoverLivePreview ||
 			(!rcMainClient.right || !rcMainClient.bottom))
@@ -113,7 +113,7 @@ LRESULT CTbGhost::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         {
             BITMAP bmp;
             GetObjectW(m_hbmThumbnailCache, sizeof(bmp), &bmp);
-            if (bmp.bmWidth == cxMax && bmp.bmHeight == cyMax)
+            if (bmp.bmWidth <= cxMax && bmp.bmHeight <= cyMax)
             {
                 DwmSetIconicThumbnail(hWnd, m_hbmThumbnailCache, 0);
                 return 0;
@@ -153,17 +153,17 @@ LRESULT CTbGhost::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         GpBitmap* pBitmapBK;
         GpGraphics* pGraphics;
-        GdipCreateBitmapFromScan0(cxMax, cyMax, 0, PixelFormat32bppARGB, NULL, &pBitmapBK);
+        GdipCreateBitmapFromScan0(cx, cy, 0, PixelFormat32bppARGB, NULL, &pBitmapBK);
         GdipGetImageGraphicsContext(pBitmapBK, &pGraphics);
         GdipGraphicsClear(pGraphics, 0x00000000);
         GdipDrawImageRectRectI(pGraphics, pBitmap,
-            (cxMax - cx) / 2, (cyMax - cy) / 2, cx, cy,
+            0, 0, cx, cy,
             0, 0, cx0, cy0,
             UnitPixel, NULL, NULL, NULL);
         GdipDeleteGraphics(pGraphics);
         GdipCreateHBITMAPFromBitmap(pBitmapBK, &hBitmap, 0x00000000);
 
-        DwmSetIconicThumbnail(hWnd, hBitmap, 0);
+        EckAssert(SUCCEEDED(DwmSetIconicThumbnail(hWnd, hBitmap, 0)));
 
         GdipDisposeImage(pBitmap);
         GdipDisposeImage(pBitmapBK);

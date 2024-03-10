@@ -107,22 +107,25 @@ LRESULT CTBList::OnNotifyMsg(HWND hParent, UINT uMsg, WPARAM wParam, LPARAM lPar
             }
             return CDRF_SKIPDEFAULT;
         }
-    }
-    break;
+	}
+	break;
 
-    case WM_COMMAND:
-    {
-        bProcessed = TRUE;
-        const int idx = LOWORD(wParam) - TBCID_BEGIN;
-        m_uBTFlags[idx] = 1;
-        //Redraw();
-        const auto lResult = DefNotifyMsg(hParent, uMsg, wParam, lParam);
-        m_uBTFlags[idx] = 0;
-        Redraw();
-        return lResult;
-    }
-    break;
-    }
+	case WM_COMMAND:
+	{
+		const int idx = LOWORD(wParam) - TBCID_BEGIN;
+		EckAssert(idx >= 0 && idx < ARRAYSIZE(c_idxIcon));
+		if (idx == 1 || idx == 4)
+		{
+			bProcessed = TRUE;
+            m_uBTFlags[idx] = 1;
+			const auto lResult = DefNotifyMsg(hParent, uMsg, wParam, lParam);
+			m_uBTFlags[idx] = 0;
+			Redraw();
+			return lResult;
+		}
+	}
+	break;
+	}
 
-    return __super::OnNotifyMsg(hParent, uMsg, wParam, lParam, bProcessed);
+	return __super::OnNotifyMsg(hParent, uMsg, wParam, lParam, bProcessed);
 }

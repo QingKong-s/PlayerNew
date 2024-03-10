@@ -116,8 +116,22 @@ public:
 		m_TbGhost.Create(NULL, WS_OVERLAPPEDWINDOW,
 			WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE,
 			-32000, -32000, 0, 0, HWnd, NULL);
-		return IntCreate(dwExStyle, c_pszWndClassMain, pszText, dwStyle,
+
+		const auto hWnd = IntCreate(dwExStyle, c_pszWndClassMain, pszText, dwStyle,
 			x, y, cx, cy, NULL, NULL, App->GetHInstance(), NULL);
+
+		EckAssert(!m_pTbList);
+		const auto hr = CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER,
+			IID_PPV_ARGS(&m_pTbList));
+		if (FAILED(hr))
+			CApp::ShowError(HWnd, hr, CApp::ErrSrc::HResult, L"ITaskbarList4创建失败");
+		else
+		{
+			m_pTbList->HrInit();
+			SetupTaskbarStuff();
+		}
+
+		return hWnd;
 	}
 
 	void ShowLrc(BOOL bShow)
