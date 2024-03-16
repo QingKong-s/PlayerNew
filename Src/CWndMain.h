@@ -137,10 +137,14 @@ public:
 	void ShowLrc(BOOL bShow)
 	{
 		if (bShow)
-			m_Lrc.Create(NULL, 0, 0, 
-				700, 1100, 1100, 400, NULL, NULL, NULL);
+			if (m_Lrc.IsValid())
+				SetForegroundWindow(m_Lrc.HWnd);
+			else
+				m_Lrc.Create(NULL, 0, 0,
+					700, 1100, 1100, 400, NULL, NULL, NULL);
 		else
-			m_Lrc.Destroy();
+			if (m_Lrc.IsValid())
+				m_Lrc.Destroy();
 	}
 
 	PNInline ARGB GetDwmColorArgb() const { return m_argbDwm; }

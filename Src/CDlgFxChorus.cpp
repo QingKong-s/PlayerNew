@@ -1,6 +1,6 @@
-﻿#include "CDlgChorus.h"
+﻿#include "CDlgFxChorus.h"
 
-void CDlgChorus::UpdateCtrl()
+void CDlgFxChorus::UpdateCtrl()
 {
     const auto& Param = App->GetPlayer().GetEffectMgr().Chorus;
 
@@ -25,7 +25,7 @@ void CDlgChorus::UpdateCtrl()
     m_CBBPhase.SetCurSel(Param.lPhase);
 }
 
-LRESULT CDlgChorus::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CDlgFxChorus::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
@@ -111,7 +111,7 @@ LRESULT CDlgChorus::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return __super::OnMsg(hWnd, uMsg, wParam, lParam);
 }
 
-BOOL CDlgChorus::OnInitDialog(HWND hDlg, HWND hFocus, LPARAM lParam)
+BOOL CDlgFxChorus::OnInitDialog(HWND hDlg, HWND hFocus, LPARAM lParam)
 {
     m_CBEnable.AttachNew(GetDlgItem(hDlg, IDC_CB_ENABLE));
     m_BTReset.AttachNew(GetDlgItem(hDlg, IDC_BT_RESET));

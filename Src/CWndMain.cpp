@@ -294,10 +294,9 @@ void CWndMain::UpdateDpi(int iDpi)
 
 void CWndMain::InitBK()
 {
-	//auto p1 = new CUIAlbum;
-	//m_BK.AddElem(p1);
-	//rc = { 30,150,800,700 };
-	//p1->SetElemRect(&rc);
+	auto pa = new CUIAlbum;
+	pa->Create(NULL, Dui::DES_VISIBLE, 0,
+		10, 10, 400, 500, NULL, &m_BK);
 
 	//auto p = new CUIInfo;
 	//m_BK.AddElem(p);
@@ -323,7 +322,7 @@ void CWndMain::InitBK()
 
 	auto plrc = new CUILrc{};
 	plrc->Create(NULL, Dui::DES_VISIBLE, 0,
-		0, 0, 800, 730, NULL, &m_BK);
+		200, 0, 800, 730, NULL, &m_BK);
 
 	auto ppb = new CUIProgressBar{};
 	ppb->Create(NULL, Dui::DES_VISIBLE, 0,
@@ -413,11 +412,13 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 			{
 			case PCT_PLAYNEW:
 			{
-				if (m_Lrc.IsBkVisible())
+				if (m_Lrc.IsValid() && m_Lrc.IsBkVisible())
+				{
+					m_Lrc.InvalidateCache();
 					m_Lrc.Draw();
+				}
 				DwmInvalidateIconicBitmaps(m_TbGhost.HWnd);
 				//m_TbGhost.SendMsg(WM_DWMSENDICONICTHUMBNAIL, 0, MAKELPARAM(120, 120));
-				m_Lrc.InvalidateCache();
 				m_TbGhost.InvalidateLivePreviewCache();
 				m_TbGhost.InvalidateThumbnailCache();
 				if (i1 >= 0)
@@ -433,7 +434,7 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 				break;
 			case PCT_PLAY_OR_PAUSE:
 			{
-				if (m_Lrc.IsBkVisible())
+				if (m_Lrc.IsValid() && m_Lrc.IsBkVisible())
 					m_Lrc.Draw();
 				const auto pBmp = App->ScaleImageForButton(
 					App->GetPlayer().IsPlaying() ? IIDX_PauseSolid : IIDX_TriangleSolid,
@@ -475,9 +476,6 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	
 	InitBK();
 	m_BK.SendMsg(PWM_DWMCOLORCHANGED, 0, 0);
-
-	ShowLrc(1);
-
 	return TRUE;
 	WIN32_FIND_DATAW wfd;
 	HANDLE hFind = FindFirstFileW(LR"(D:\@重要文件\@音乐\*.mp3)", &wfd);

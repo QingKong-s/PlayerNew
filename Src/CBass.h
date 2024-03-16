@@ -90,7 +90,10 @@ public:
 
 	PNInline float GetSpeed() const
 	{
-		return GetAttr(BASS_ATTRIB_FREQ) / m_fDefSpeed;
+		if (eck::FloatEqual(m_fDefSpeed, 0.f))
+			return 0.f;
+		else [[likely]]
+			return GetAttr(BASS_ATTRIB_FREQ) / m_fDefSpeed;
 	}
 
 	PNInline BOOL SetPosition(double fTime) const
@@ -105,7 +108,7 @@ public:
 
 	PNInline float GetAttr(DWORD dwAttr, BOOL* pb = NULL) const
 	{
-		float f;
+		float f{};
 		const auto b = BASS_ChannelGetAttribute(m_hStream, dwAttr, &f);
 		if (pb)
 			*pb = b;

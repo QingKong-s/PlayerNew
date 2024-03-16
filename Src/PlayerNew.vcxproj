@@ -204,7 +204,7 @@
     <ClInclude Include="CBass.h" />
     <ClInclude Include="CDlgAbout.h" />
     <ClInclude Include="CDlgBookmark.h" />
-    <ClInclude Include="CDlgChorus.h" />
+    <ClInclude Include="CDlgFxChorus.h" />
     <ClInclude Include="CDlgEffect.h" />
     <ClInclude Include="CDlgFxCommon.h" />
     <ClInclude Include="CDlgFxCompression.h" />
@@ -219,6 +219,7 @@
     <ClInclude Include="CDlgListFile.h" />
     <ClInclude Include="CDlgNewBookmark.h" />
     <ClInclude Include="CEffectMgr.h" />
+    <ClInclude Include="CWndGenSharePic.h" />
     <ClInclude Include="CLVPlay.h" />
     <ClInclude Include="COptionsMgr.h" />
     <ClInclude Include="CPlayer.h" />
@@ -243,7 +244,7 @@
     <ClCompile Include="CBass.cpp" />
     <ClCompile Include="CDlgAbout.cpp" />
     <ClCompile Include="CDlgBookmark.cpp" />
-    <ClCompile Include="CDlgChorus.cpp" />
+    <ClCompile Include="CDlgFxChorus.cpp" />
     <ClCompile Include="CDlgEffect.cpp" />
     <ClCompile Include="CDlgFxCommon.cpp" />
     <ClCompile Include="CDlgFxCompression.cpp" />
@@ -258,6 +259,7 @@
     <ClCompile Include="CDlgListFile.cpp" />
     <ClCompile Include="CDlgNewBookmark.cpp" />
     <ClCompile Include="CEffectMgr.cpp" />
+    <ClCompile Include="CWndGenSharePic.cpp" />
     <ClCompile Include="CLVPlay.cpp" />
     <ClCompile Include="COptionsMgr.cpp" />
     <ClCompile Include="CPlayer.cpp" />
@@ -291,10 +293,9 @@
   <ItemGroup>
     <None Include="..\Tools\CompileCount" />
     <None Include="..\Tools\CompileTime" />
-    <None Include=".\Tools\CompileCount" />
-    <None Include=".\Tools\CompileTime" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="..\Res\Note.ico" />
     <Image Include="..\Res\Tone.ico" />
     <Image Include="..\Res\Tone.png" />
   </ItemGroup>

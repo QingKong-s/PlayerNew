@@ -109,7 +109,7 @@
     <ClInclude Include="CDlgEffect.h">
       <Filter>对话框</Filter>
     </ClInclude>
-    <ClInclude Include="CDlgChorus.h">
+    <ClInclude Include="CDlgFxChorus.h">
       <Filter>对话框</Filter>
     </ClInclude>
     <ClInclude Include="CEffectMgr.h">
@@ -142,7 +142,12 @@
     <ClInclude Include="CDlgFxRotate.h">
       <Filter>对话框</Filter>
     </ClInclude>
-    <ClInclude Include="CDlgFxCommon.h" />
+    <ClInclude Include="CDlgFxCommon.h">
+      <Filter>对话框</Filter>
+    </ClInclude>
+    <ClInclude Include="CWndGenSharePic.h">
+      <Filter>窗体</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CDlgBookmark.cpp">
@@ -244,7 +249,7 @@
     <ClCompile Include="CDlgEffect.cpp">
       <Filter>对话框</Filter>
     </ClCompile>
-    <ClCompile Include="CDlgChorus.cpp">
+    <ClCompile Include="CDlgFxChorus.cpp">
       <Filter>对话框</Filter>
     </ClCompile>
     <ClCompile Include="CEffectMgr.cpp">
@@ -280,7 +285,12 @@
     <ClCompile Include="CDlgFxRotate.cpp">
       <Filter>对话框</Filter>
     </ClCompile>
-    <ClCompile Include="CDlgFxCommon.cpp" />
+    <ClCompile Include="CDlgFxCommon.cpp">
+      <Filter>对话框</Filter>
+    </ClCompile>
+    <ClCompile Include="CWndGenSharePic.cpp">
+      <Filter>窗体</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PlayerNew.rc">
@@ -288,8 +298,6 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include=".\Tools\CompileTime" />
-    <None Include=".\Tools\CompileCount" />
     <None Include="..\Tools\CompileCount" />
     <None Include="..\Tools\CompileTime" />
   </ItemGroup>
@@ -298,6 +306,9 @@
       <Filter>资源文件</Filter>
     </Image>
     <Image Include="..\Res\Tone.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="..\Res\Note.ico">
       <Filter>资源文件</Filter>
     </Image>
   </ItemGroup>

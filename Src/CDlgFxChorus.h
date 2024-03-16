@@ -7,7 +7,7 @@
 #include "eck\CTrackBar.h"
 #include "eck\CComboBox.h"
 
-class CDlgChorus final :public eck::CDialog
+class CDlgFxChorus final :public eck::CDialog
 {
 private:
 	eck::CCheckButton m_CBEnable{};

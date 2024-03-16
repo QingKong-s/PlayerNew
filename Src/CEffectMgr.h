@@ -14,8 +14,8 @@ enum
 	FXI_PARAMEQ,	
 	FXI_REVERB,		
 	FXI_ROTATE,		
-	FXI_PHASER,
-	FXI_AUTOWAH,	
+/*	FXI_PHASER,
+	FXI_AUTOWAH,*/	
 
 	FXI_MAX
 };
@@ -34,8 +34,8 @@ struct CEffectMgr
 		BASS_FX_DX8_PARAMEQ,
 		BASS_FX_DX8_REVERB,
 		BASS_FX_BFX_ROTATE,
-		BASS_FX_BFX_PHASER,
-		BASS_FX_BFX_AUTOWAH,
+		//BASS_FX_BFX_PHASER,
+		//BASS_FX_BFX_AUTOWAH,
 	};
 
 	constexpr static PCWSTR FxName[FXI_MAX]
@@ -50,8 +50,8 @@ struct CEffectMgr
 		L"均衡器",
 		L"混响",
 		L"环绕",
-		L"移相",
-		L"自动哇音",
+		//L"移相",
+		//L"自动哇音",
 	};
 
 	constexpr static BASS_DX8_CHORUS DefChorus

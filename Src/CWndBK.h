@@ -8,6 +8,7 @@
 #include "eck\CDuiCircleButton.h"
 #include "eck\CDuiTrackBar.h"
 #include "eck\CScrollView.h"
+#include "eck\CMenu.h"
 
 #include <thread>
 
@@ -171,6 +172,7 @@ private:
 		ECK_DS_ENTRY(cyVolTrack, 14)
 		ECK_DS_ENTRY(cyVolParent, 40)
 		ECK_DS_ENTRY(cxVolTrack, 170)
+		ECK_DS_ENTRY(cxyMinSBThumb, 10)
 		;
 	ECK_DS_END_VAR(m_Ds);
 
@@ -185,6 +187,7 @@ private:
 		ECK_DS_ENTRY_F(sizeTopTipGap, 6.f)
 		ECK_DS_ENTRY_F(cxIcon, 20.f)
 		ECK_DS_ENTRY_F(cyIcon, 20.f)
+		ECK_DS_ENTRY_F(cxySBTrack, 10.f)
 		;
 	ECK_DS_END_VAR(m_DsF);
 
@@ -242,6 +245,8 @@ public:
 	}
 
 	PNInline const auto& GetDpiSize() const { return m_Ds; }
+
+	PNInline const auto& GetDpiSizeF() const { return m_DsF; }
 };
 
 #ifndef NDEBUG
@@ -463,9 +468,11 @@ class CUILrc final :public CUIElem
 private:
 	struct ITEM
 	{
+		IDWriteTextLayout* pLayout = NULL;
 		float y = 0.f;
 		float cy = 0.f;
-		IDWriteTextLayout* pLayout = NULL;
+		float cx = 0.f;
+		BITBOOL bSel : 1 = FALSE;
 
 		ITEM() = default;
 		ITEM(const ITEM& x) = delete;
@@ -491,13 +498,15 @@ private:
 
 	ID2D1SolidColorBrush* m_pBrTextNormal = NULL;
 	ID2D1SolidColorBrush* m_pBrTextHighlight = NULL;
+	ID2D1SolidColorBrush* m_pBrush = NULL;
 
 	IDWriteTextFormat* m_pTextFormat = NULL;
 
 	eck::CInertialScrollView m_ScrollView{};
-	HANDLE m_hEventSV = NULL;
 
 	int m_idxTop = -1;
+	int m_idxHot = -1;
+	int m_idxMark = -1;
 	int m_idxPrevCurr = -1;
 	std::vector<ITEM> m_vItem{};
 
@@ -509,6 +518,28 @@ private:
 
 	int m_tMouseIdle = 0;
 
+	BITBOOL m_bThumbLBtnDown : 1 = FALSE;
+	BITBOOL m_bCtxMenuOpen : 1 = FALSE;
+
+	enum
+	{
+		IDMI_PLAY_FROM_THIS = 100,
+		IDMI_COPY_LRC,
+		IDMI_COPY_LRC_1,
+		IDMI_COPY_LRC_2,
+		IDMI_GEN_SHARE_IMAGE,
+	};
+
+	eck::CMenu m_Menu
+	{
+		{ L"从此处播放",IDMI_PLAY_FROM_THIS },
+		{ L"复制歌词",IDMI_COPY_LRC },
+		{ L"复制歌词原文",IDMI_COPY_LRC_1 },
+		{ L"复制歌词翻译",IDMI_COPY_LRC_2 },
+		{ NULL,0,MF_SEPARATOR },
+		{ L"生成分享图片",IDMI_GEN_SHARE_IMAGE },
+	};
+
 	enum
 	{
 		IDT_MOUSEIDLE = 1001,
@@ -518,98 +549,113 @@ private:
 
 	static void ScrollProc(int iPos, int iPrevPos, LPARAM lParam);
 
-	void CalcTopItem()
+	PNInline void FillItemBkg(int idx, const D2D1_RECT_F& rc)
 	{
-		auto it = LowerBound(m_vItem.begin(), m_vItem.end(), m_ScrollView.GetPos(),
-			[this](decltype(m_vItem)::iterator it, int iPos)
-			{
-				const auto& e = *it;
-				float y = e.y;
-				const int idx = (int)std::distance(m_vItem.begin(), it);
-				if (idx > m_idxPrevAnItem && m_idxPrevAnItem >= 0)
-					y += (m_vItem[m_idxPrevAnItem].cy * (1.4f - m_fAnValue));
-				if (idx > m_idxCurrAnItem && m_idxCurrAnItem >= 0)
-					y += (m_vItem[m_idxCurrAnItem].cy * (m_fAnValue - 1.f));
-				return y < iPos;
-			});
-		EckAssert(it != m_vItem.end());
+		constexpr D2D1_COLOR_F crHot{ eck::ColorrefToD2dColorF(eck::Colorref::Silver,0.5f) };
+		constexpr D2D1_COLOR_F crSel{ eck::ColorrefToD2dColorF(eck::Colorref::Gray,0.6f) };
+		constexpr D2D1_COLOR_F crHotSel{ eck::ColorrefToD2dColorF(eck::Colorref::Gray,0.8f) };
 
-		if (it == m_vItem.begin())
-		{
-			m_idxTop = 0;
-			return;
-		}
-		--it;
-		m_idxTop = (int)std::distance(m_vItem.begin(), it);
+		if (m_vItem[idx].bSel)
+			if (idx == m_idxHot)
+				m_pBrush->SetColor(crHotSel);
+			else
+				m_pBrush->SetColor(crSel);
+		else
+			if (idx == m_idxHot)
+				m_pBrush->SetColor(crHot);
+			else
+				return;
+		m_pDC->FillRectangle(rc, m_pBrush);
 	}
 
-	BOOL DrawItem(int idx, float& y)
+	void CalcTopItem();
+
+	BOOL DrawItem(int idx, float& y);
+
+	void DrawScrollBar();
+
+	void GetSBThumbRect(D2D1_RECT_F& rc)
 	{
-		EckAssert(idx >= 0 && idx < (int)m_vItem.size());
-		const auto& Item = m_vItem[idx];
-
-		y = Item.y - m_ScrollView.GetPos();
-		if (idx > m_idxPrevAnItem && m_idxPrevAnItem >= 0)
-			y += (m_vItem[m_idxPrevAnItem].cy * (1.4f - m_fAnValue));
-		if (idx > m_idxCurrAnItem && m_idxCurrAnItem >= 0)
-			y += (m_vItem[m_idxCurrAnItem].cy * (m_fAnValue - 1.f));
-
-
-		if (idx == m_idxPrevAnItem)
+		const int cyThumb = m_ScrollView.GetThumbSize();
+		const int yThumb = m_ScrollView.GetThumbPos(cyThumb);
+		const float cxView = GetViewWidthF();
+		rc =
 		{
-			m_pDC->SetTransform(D2D1::Matrix3x2F::Scale(2.4f - m_fAnValue, 2.4f - m_fAnValue, { 0.f,y }));
-			m_pDC->DrawTextLayout({ 0.f,y }, Item.pLayout,
-				idx == App->GetPlayer().GetCurrLrc() ? m_pBrTextHighlight : m_pBrTextNormal);
-			m_pDC->SetTransform(D2D1::Matrix3x2F::Identity());
-			return TRUE;
-		}
-
-		if (idx == m_idxCurrAnItem)
-		{
-			m_pDC->SetTransform(D2D1::Matrix3x2F::Scale(m_fAnValue, m_fAnValue, { 0.f,y }));
-			m_pDC->DrawTextLayout({ 0.f,y }, Item.pLayout,
-				idx == App->GetPlayer().GetCurrLrc() ? m_pBrTextHighlight : m_pBrTextNormal);
-			m_pDC->SetTransform(D2D1::Matrix3x2F::Identity());
-			return TRUE;
-		}
-
-		m_pDC->DrawTextLayout({ 0.f,y }, Item.pLayout,
-			idx == App->GetPlayer().GetCurrLrc() ? m_pBrTextHighlight : m_pBrTextNormal);
-		return TRUE;
-	}
-
-	BOOL DrawItem(int idx, D2D1_RECT_F& rcF)
-	{
-		return FALSE;
-		EckAssert(idx >= 0 && idx < (int)m_vItem.size());
-		const auto& Item = m_vItem[idx];
-
-		const float y = Item.y - m_ScrollView.GetPos();
-		rcF =
-		{
-			0.f,
-			y,
-			GetViewWidthF(),
-			y + Item.cy,
+			cxView - GetBk()->GetDpiSizeF().cxySBTrack,
+			(float)yThumb,
+			cxView,
+			(float)yThumb + cyThumb
 		};
-		if (rcF.top >= GetViewHeightF() || rcF.bottom <= 0.f)
-			return FALSE;
-		if (rcF.top < 0.f)
-			rcF.top = 0.f;
-		if (rcF.bottom > GetViewHeightF())
-			rcF.bottom = GetViewHeightF();
-		m_pDC->DrawTextLayout({ rcF.left,y }, Item.pLayout,
-			idx == App->GetPlayer().GetCurrLrc() ? m_pBrTextHighlight : m_pBrTextNormal);
-		m_pDC->PopAxisAlignedClip();
-		return TRUE;
 	}
 
-	void BeginMouseIdleDetect()
+	PNInline void GetSBThumbRect(RECT& rc)
+	{
+		D2D1_RECT_F rcf;
+		GetSBThumbRect(rcf);
+		rc = eck::MakeRect(rcf);
+	}
+
+	PNInline void BeginMouseIdleDetect()
 	{
 		m_tMouseIdle = T_MOUSEIDLEMAX;
 		SetTimer(GetWnd()->HWnd, IDT_MOUSEIDLE, TE_MOUSEIDLE, NULL);
 	}
+
+	int HitTest(POINT pt);
+
+	PNInline void GetItemRect(int idx, RECT& rc)
+	{
+		const auto y = GetItemY(idx);
+		const auto fScale = App->GetOptionsMgr().LrcCurrFontScale;
+		rc.left = 0;
+		rc.top = (long)y;
+		
+		if (idx == m_idxPrevAnItem)
+		{
+			rc.right = m_vItem[idx].cx * (fScale + 1.f - m_fAnValue);
+			rc.bottom = (long)(y + m_vItem[idx].cy * (fScale + 1.f - m_fAnValue));
+		}
+		else if (idx == m_idxCurrAnItem)
+		{
+			rc.right = m_vItem[idx].cx * m_fAnValue;
+			rc.bottom = (long)(y + m_vItem[idx].cy * m_fAnValue);
+		}
+		else ECKLIKELY
+		{ 
+			rc.right = m_vItem[idx].cx;
+			rc.bottom = (long)(y + m_vItem[idx].cy);
+		}
+	}
+
+	PNInline float GetItemY(int idx)
+	{
+		const auto fScale = App->GetOptionsMgr().LrcCurrFontScale;
+		float y = m_vItem[idx].y - m_ScrollView.GetPos();
+		if (idx > m_idxPrevAnItem && m_idxPrevAnItem >= 0)
+			y += (m_vItem[m_idxPrevAnItem].cy * (fScale - m_fAnValue));
+		if (idx > m_idxCurrAnItem && m_idxCurrAnItem >= 0)
+			y += (m_vItem[m_idxCurrAnItem].cy * (m_fAnValue - 1.f));
+		return y;
+	}
+
+	PNInline void InvalidateItem(int idx)
+	{
+		RECT rc;
+		GetItemRect(idx, rc);
+		ElemToClient(rc);
+		rc.top -= 1;
+		rc.bottom += 1;
+		rc.right += 1;
+		InvalidateRect(&rc);
+	}
+
+	void ScrollToCurrPos();
 public:
+	CUILrc()
+	{
+		int a = 0;
+	}
+
 	LRESULT OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 
 	void OnTimer(UINT uTimerID) override;
@@ -686,82 +732,3 @@ public:
 
 	void OnTimer(UINT uTimerID) override;
 };
-
-//// 工具条按钮状态
-//enum UITOOLBARBTNSTATE
-//{
-//	TBBS_NORMAL = 0x00000000,
-//	TBBS_CHECK = 0x00000001
-//};
-//// 工具条按钮索引
-//enum UITOOLBARBTNINDEX
-//{
-//	TBBI_INVALID = -1,
-//
-//	TBBI_PREV = 0,
-//	TBBI_PLAY = 1,
-//	TBBI_STOP = 2,
-//	TBBI_NEXT = 3,
-//	TBBI_LRC = 4,
-//	TBBI_REPEATMODE = 5,
-//	TBBI_PLAYINGOPT = 6,
-//	TBBI_PLAYLIST = 7,
-//	TBBI_OPTIONS = 8,
-//	TBBI_ABOUT = 9,
-//
-//	TBBI_COUNT = 10
-//};
-//
-//#define BUFSIZE_TOOLBATTIME			48
-//#define BUFSIZE_TOOLBATTIMEMAXCH	47
-//// 工具条
-//class CUIToolBar final :public CUIElem
-//{
-//private:
-//	BOOL m_bLBtnDown = FALSE;		// 左键是否按下
-//	BOOL m_bInToolBar = FALSE;		// 光标是否在工具条内
-//
-//	D2D1_RECT_F m_rcFTimeLabel = {};// 时间标签矩形
-//	RECT m_rcTimeLabel = {};		// 时间标签矩形
-//	WCHAR m_szTime[BUFSIZE_TOOLBATTIME] = { L"00:00/00:00" };// 时间标签内容
-//	UINT32 m_cchTime = 0;			// 时间标签文本长度
-//
-//	UITOOLBARBTNINDEX m_idxHot = TBBI_INVALID;		// 热点索引
-//	UITOOLBARBTNINDEX m_idxLastHot = TBBI_INVALID;	// 上次热点索引
-//	UITOOLBARBTNINDEX m_idxPush = TBBI_INVALID;		// 按下索引
-//	UITOOLBARBTNINDEX m_idxLastHover = TBBI_INVALID;// 上次悬停索引
-//
-//	UINT m_uBtnsCheckState = 0;		// 按钮检查状态，使用 1<<索引 设置位标志
-//
-//	HWND m_hToolTip = NULL;			// 工具提示窗口句柄
-//	TTTOOLINFOW m_ti = {};			// 工具调试结构
-//
-//	ID2D1SolidColorBrush* m_pBrText = NULL;			// 文本画刷
-//	ID2D1SolidColorBrush* m_pBrBtnHot = NULL;		// 热点背景画刷
-//	ID2D1SolidColorBrush* m_pBrBtnPushed = NULL;	// 按下背景画刷
-//	ID2D1SolidColorBrush* m_pBrBtnChecked = NULL;	// 检查背景画刷
-//	IDWriteTextFormat* m_pTfTime = NULL;
-//public:
-//	CUIToolBar();
-//	~CUIToolBar();
-//
-//	LRESULT OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
-//
-//	/// <summary>
-//	/// 重画时间标签
-//	/// </summary>
-//	void RedrawTimeInfo();
-//
-//	/// <summary>
-//	/// 命中测试
-//	/// </summary>
-//	/// <param name="pt">测试点</param>
-//	/// <returns>按钮索引</returns>
-//	UITOOLBARBTNINDEX HitTest(POINT pt);
-//
-//	/// <summary>
-//	/// 执行按钮动作
-//	/// </summary>
-//	/// <param name="idx">索引</param>
-//	void DoCmd(UITOOLBARBTNINDEX idx);
-//};

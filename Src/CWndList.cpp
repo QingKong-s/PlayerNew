@@ -148,7 +148,8 @@ BOOL CWndList::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	m_EDSearch.Create(NULL, WS_VISIBLE | ES_AUTOHSCROLL, 0, 0, 0, 0, 0, hWnd, IDC_ED_SEARCH);
 	m_EDSearch.SetFrameType(1);
 
-	m_BTSearch.Create(L"搜索", WS_VISIBLE, 0, 0, 0, m_Ds.cySearch, m_Ds.cySearch, hWnd, IDC_BT_SEARCH);
+	m_BTSearch.Create(L"搜索", WS_VISIBLE | BS_ICON, 0, 
+		0, 0, m_Ds.cySearch, m_Ds.cySearch, hWnd, IDC_BT_SEARCH);
 
 	m_TBManage.Create(NULL,
 		TBSTYLE_LIST | TBSTYLE_TRANSPARENT | TBSTYLE_WRAPABLE |

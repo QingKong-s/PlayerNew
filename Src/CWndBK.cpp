@@ -155,6 +155,9 @@ LRESULT CWndBK::OnElemEvent(Dui::CElem* pElem, UINT uMsg, WPARAM wParam, LPARAM 
 			break;
 		case IDE_BT_LRC:
 		{
+			auto& om = App->GetOptionsMgr();
+			ECKBOOLNOT(om.DtLrcShow);
+			App->GetMainWnd()->ShowLrc(om.DtLrcShow);
 			break;
 		}
 		case IDE_BT_ABOUT:
@@ -213,7 +216,9 @@ LRESULT CWndBK::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			auto uTickRet = App->GetPlayer().Tick();
 
-			if (uTickRet & TKC_LRCPOSUPDATED || App->GetMainWnd()->m_Lrc.IsCacheLayoutTooLong())
+			if (App->GetOptionsMgr().DtLrcShow &&
+				((uTickRet & TKC_LRCPOSUPDATED) ||
+					App->GetMainWnd()->m_Lrc.IsCacheLayoutTooLong()))
 				App->GetMainWnd()->m_Lrc.Draw();
 		}
 		break;
@@ -256,10 +261,10 @@ void CWndBK::OnPlayingControl(PLAYINGCTRLTYPE uType)
 	case PCT_PLAYNEW:
 	{
 		eck::SafeRelease(m_pBmpAlbum);
-		/* m_pDC->CreateBitmapFromWicBitmap(App->GetPlayer().GetWicBmpCover(), &m_pBmpAlbum);
+		GetD2D().GetDC()->CreateBitmapFromWicBitmap(App->GetPlayer().GetWicBmpCover(), &m_pBmpAlbum);
 		auto Size = m_pBmpAlbum->GetSize();
 		m_cxAlbum = (int)Size.width;
-		m_cyAlbum = (int)Size.height;*/
+		m_cyAlbum = (int)Size.height;
 		UpdateStaticBmp();
 		SetTimer(m_hWnd, IDT_PGS, 40, NULL);
 	}

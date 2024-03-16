@@ -624,7 +624,7 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 		case LrcEncoding::Auto:
 		{
 			int i = IS_TEXT_UNICODE_REVERSE_MASK | IS_TEXT_UNICODE_NULL_BYTES;
-			if (IsTextUnicode(pFileData, (int)cbMem, &i))//  先测UTF-16BE，不然会出问题
+			if (IsTextUnicode(pFileData, (int)cbMem, &i))// 先测UTF-16BE，不然会出问题
 				goto GetLrc_UTF16BE;
 			else
 			{
@@ -809,7 +809,7 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 	int pos3;
 	int cchTimeLabel;
 
-	std::vector<LRCTIMELABEL> vTimeLabel{};
+	std::vector<LRCTIMELABEL> vTimeLabel{};// 相同的时间标签
 
 	PWSTR pszTimeLabel;
 	int posTimeDiv1, posTimeDiv2;
@@ -818,7 +818,7 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 	EckCounter(Lines.size(), i)
 	{
 		pszLine = Lines[i].first;
-		vTimeLabel.clear();// 相同的时间标签
+		vTimeLabel.clear();
 
 		pos1 = eck::FindStr(pszLine, L"[");// 先找左中括号
 		if (pos1 < 0)// 找不到左中括号

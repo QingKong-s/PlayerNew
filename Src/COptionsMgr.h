@@ -90,9 +90,13 @@ public:
 	SIZE DtLrcMinSize{};
 	BOOL DtLrcEnableShadow{ 1 };
 	float DtLrcShadowOffset{ 1.5f };
+	BOOL DtLrcShow{ FALSE };
 
 	BOOL ProgShowCoverLivePreview{ 1 };
 
+	BOOL PlaySilent{};
+
+	float LrcCurrFontScale{ 1.3f };
 
 	//static COptionsMgr& GetInst()
 	//{

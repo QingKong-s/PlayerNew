@@ -41,6 +41,10 @@
 #define IDC_LK_OPENGITHUB               1009
 #define IDC_RB_QUADWAVE                 1009
 #define IDC_ST_PNVER                    1010
+#define IDC_ST_TEMPOTIP                 1015
+#define IDC_ST_SPEEDTIP                 1016
+#define IDC_ST_PANTIP                   1017
+#define IDC_ST_PITCHTIP                 1018
 #define IDOK2                           1032
 #define IDC_BT_CANCEL                   1034
 #define IDC_BT_OK                       1036
@@ -70,6 +74,7 @@
 #define IDC_TB_PAN                      1063
 #define IDC_ST_SPEED                    1064
 #define IDC_ST_BLANCE                   1065
+#define IDC_TB_PITCH                    1065
 #define IDC_ST_SPEED2                   1066
 #define IDC_ST_VU                       1067
 #define IDC_BT_VOL                      1068
@@ -84,6 +89,7 @@
 #define IDC_ST_TEMPO                    1072
 #define IDC_ED_BMNAME                   1073
 #define IDC_ST_TEMPO2                   1073
+#define IDC_ST_PITCH                    1073
 #define IDC_ED_BMCOMMENT                1074
 #define IDC_ST_TEMPO3                   1074
 #define IDC_ED_BMINDEX                  1075
@@ -187,7 +193,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        137
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1010
+#define _APS_NEXT_CONTROL_VALUE         1019
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

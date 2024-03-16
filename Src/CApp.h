@@ -20,7 +20,7 @@
 #include "CPlayer.h"
 #include "COptionsMgr.h"
 
-#include "eck\CWnd.h"
+#include "eck\CForm.h"
 #include "eck\SystemHelper.h"
 #include "eck\ImageHelper.h"
 
@@ -50,7 +50,7 @@ enum
 	IIDX_ArrowCross,
 	IIDX_ArrowRight,
 	IIDX_ArrowRight3,
-	IIDX_Blance,
+	IIDX_Balance,
 	IIDX_Block,
 	IIDX_BrowseFile,
 	IIDX_Circle,
@@ -76,7 +76,7 @@ enum
 	IIDX_Prev,
 	IIDX_PrevSolid,
 	IIDX_Reserve,
-	IIDX_Slient,
+	IIDX_Silent,
 	IIDX_SoundFont,
 	IIDX_Speaker,
 	IIDX_Speed,
@@ -86,6 +86,7 @@ enum
 	IIDX_Triangle,
 	IIDX_TriangleSolid,
 	IIDX_DefCover,
+	IIDX_Pitch,
 
 	IIDX__MAX,
 };
@@ -135,6 +136,7 @@ private:
 		LR"(\Img\Triangle.png)",
 		LR"(\Img\TriangleSolid.png)",
 		LR"(\Img\DefCover.png)",
+		LR"(\Img\Pitch.png)",
 	};
 	static_assert(IIDX__MAX == ARRAYSIZE(CApp::c_szResFile));
 public:
@@ -164,8 +166,8 @@ private:
 
 	CLIPFORMAT m_cfListDrag = 0;
 
-	IWICBitmap* m_pWicRes[ARRAYSIZE(c_szResFile)]{};
-	HICON m_hIcon[ARRAYSIZE(c_szResFile)]{};
+	IWICBitmap* m_pWicRes[IIDX__MAX]{};
+	HICON m_hIcon[IIDX__MAX]{};
 
 	static HRESULT WICCreateBitmap(IWICBitmapDecoder* pDecoder, IWICBitmap** ppBitmap);
 
