@@ -16,7 +16,6 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #include "Resource.h"
 #include "CApp.h"
 #include "CWndMain.h"
-#include "CSimpleList.h"
 #include "CWndLrc.h"
 #include "CTbGhost.h"
 
@@ -46,7 +45,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	CWndMain::RegisterWndClass();
 	CWndBK::RegisterWndClass();
 	CWndList::RegisterWndClass();
-	CSimpleList::RegisterWndClass();
 	CWndLrc::RegisterWndClass();
 	CTbGhost::RegisterWndClass();
 

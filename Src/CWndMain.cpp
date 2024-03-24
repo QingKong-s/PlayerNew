@@ -294,9 +294,9 @@ void CWndMain::UpdateDpi(int iDpi)
 
 void CWndMain::InitBK()
 {
-	auto pa = new CUIAlbum;
-	pa->Create(NULL, Dui::DES_VISIBLE, 0,
-		10, 10, 400, 500, NULL, &m_BK);
+	//auto pa = new CUIAlbum;
+	//pa->Create(NULL, Dui::DES_VISIBLE, 0,
+	//	10, 10, 400, 500, NULL, &m_BK);
 
 	//auto p = new CUIInfo;
 	//m_BK.AddElem(p);
@@ -322,21 +322,19 @@ void CWndMain::InitBK()
 
 	auto plrc = new CUILrc{};
 	plrc->Create(NULL, Dui::DES_VISIBLE, 0,
-		200, 0, 800, 730, NULL, &m_BK);
+		0, 0, 800, 730, NULL, &m_BK);
 
 	auto ppb = new CUIProgressBar{};
 	ppb->Create(NULL, Dui::DES_VISIBLE, 0,
-				70, 730, 800, 70, NULL, &m_BK);
+		70, 730, 800, 70, NULL, &m_BK);
 
 	auto ppc = new CUIPlayingCtrl{};
 	ppc->Create(NULL, Dui::DES_VISIBLE, 0,
 		70, 800, 800, 80, NULL, &m_BK);
 
-	//auto pw = new CUIWaves;
-	//m_BK.AddElem(pw);
-	//pw->InitElem();
-	//rc = { 400,730,900,900 };
-	//pw->SetElemRect(&rc);
+	//auto pw = new CUIWaves{};
+	//pw->Create(NULL, Dui::DES_VISIBLE, 0,
+	//	400, 730, 500, 140, NULL, &m_BK);
 	//pw->SetLineWidth((int)(2.f * 1.5f));
 
 	//auto pspe = new CUISpe;
@@ -476,84 +474,6 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	
 	InitBK();
 	m_BK.SendMsg(PWM_DWMCOLORCHANGED, 0, 0);
-	return TRUE;
-	WIN32_FIND_DATAW wfd;
-	HANDLE hFind = FindFirstFileW(LR"(D:\@重要文件\@音乐\*.mp3)", &wfd);
-	int i = 0;
-	do
-	{
-		++i;
-		using namespace std::literals;
-		//if (i < 500)
-		//	continue;
-		auto p = new Utils::MUSICINFO{};
-		Utils::GetMusicInfo((LR"(D:\@重要文件\@音乐\)"s + wfd.cFileName).c_str(), *p);
-		m_vItem.emplace_back(p);
-		m_vGroup.emplace_back(p->rsAlbum);
-		m_vGroup.back().Items.emplace_back(p);
-		m_vGroup.back().Items.emplace_back(p);
-		m_vGroup.back().Items.emplace_back(p);
-		//
-		//if (i > 100)
-		//	break;
-	} while (FindNextFileW(hFind, &wfd));
-	FindClose(hFind);
-
-	
-
-	//m_vStr.resize(100000);
-	//EckCounter(m_vStr.size(), i)
-	//{
-	//	m_vStr[i] = std::format(L"第{}行", i).c_str();
-	//}
-	m_Sl.SetItemHeight(60);
-	m_Sl.SetDispInfoProc([this](SLGETDISPINFO* p)
-		{
-			if (p->bItem)
-			{
-				if (p->Item.idxGroup < 0)
-				{
-					p->Item.pszText = m_vStr[p->Item.idxItem].Data();
-					p->Item.cchText = m_vStr[p->Item.idxItem].Size();
-				}
-				else
-				{
-					auto& rs = m_vGroup[p->Item.idxGroup].Items[p->Item.idxItem]->rsTitle;
-					p->Item.pszText = rs.Data();
-					p->Item.cchText = rs.Size();
-				}
-			}
-			else
-			{
-				p->Group.pszText = m_vGroup[p->Group.idxItem].rs.Data();
-				p->Group.cchText = m_vGroup[p->Group.idxItem].rs.Size();
-				if (m_vGroup[p->Group.idxItem].pBmp)
-				{
-					p->Group.pBmp = m_vGroup[p->Group.idxItem].pBmp;
-				}
-				else
-				{
-					IWICBitmap* pWicBmp;
-					auto pStream = new eck::CRefBinStream(m_vGroup[p->Group.idxItem].Items[0]->rbCover);
-					CApp::WICCreateBitmap(pStream, &pWicBmp);
-					pStream->LeaveRelease();
-					if (!pWicBmp)
-						pWicBmp = App->GetWicRes()[IIDX_DefCover];
-					p->Group.pDC->CreateBitmapFromWicBitmap(pWicBmp, &p->Group.pBmp);
-					m_vGroup[p->Group.idxItem].pBmp = p->Group.pBmp;
-				}
-			}
-			return 0;
-		});
-	m_Sl.Create(NULL, WS_CHILD | WS_VISIBLE | WS_BORDER, 0, 0, 0, 1100, 900, hWnd, 0);
-	m_Sl.SetGroupCount((int)m_vGroup.size());
-	EckCounter(m_vGroup.size(), i)
-	{
-		m_Sl.SetGroupItemCount(i, m_vGroup[i].Items.size());
-	}
-	m_Sl.ReCalc(0);
-	m_Sl.Redraw();
-	//m_Sl.SetItemCount((int)m_vStr.size());
 	return TRUE;
 }
 

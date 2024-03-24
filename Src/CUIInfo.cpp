@@ -2,8 +2,8 @@
 
 void CUIInfo::UpdateTextFormat()
 {
-    eck::SafeRelease(m_pTfTitle);
-    eck::SafeRelease(m_pTfTip);
+    SafeRelease(m_pTfTitle);
+    SafeRelease(m_pTfTip);
     App->m_pDwFactory->CreateTextFormat(L"微软雅黑", NULL,
         DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
         GetBk()->Dpi(18.f), L"zh-cn", &m_pTfTitle);
@@ -106,8 +106,8 @@ LRESULT CUIInfo::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_CREATE:
 	{
-		eck::SafeRelease(m_pBrBigTip);
-		eck::SafeRelease(m_pBrSmallTip);
+		SafeRelease(m_pBrBigTip);
+		SafeRelease(m_pBrSmallTip);
 		m_pDC->CreateSolidColorBrush(c_D2DClrCyanDeeper, &m_pBrBigTip);
 		m_pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_pBrSmallTip);
 		UpdateTextFormat();
@@ -116,10 +116,10 @@ LRESULT CUIInfo::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_DESTROY:
 	{
-		eck::SafeRelease(m_pBrBigTip);
-		eck::SafeRelease(m_pBrSmallTip);
-		eck::SafeRelease(m_pTfTitle);
-		eck::SafeRelease(m_pTfTip);
+		SafeRelease(m_pBrBigTip);
+		SafeRelease(m_pBrSmallTip);
+		SafeRelease(m_pTfTitle);
+		SafeRelease(m_pTfTip);
 	}
 	break;
 	}

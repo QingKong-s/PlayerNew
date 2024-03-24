@@ -6,7 +6,7 @@
 
 HRESULT CPlayer::CreateWicBmpCover()
 {
-	eck::SafeRelease(m_pWicCoverBmp);
+	SafeRelease(m_pWicCoverBmp);
 	auto pStream = new eck::CRefBinStream(m_MusicInfo.rbCover);
 	HRESULT hr = CApp::WICCreateBitmap(pStream, &m_pWicCoverBmp);
 	pStream->Release();
@@ -19,7 +19,7 @@ HRESULT CPlayer::CreateWicBmpCover()
 
 CPlayer::~CPlayer()
 {
-	eck::SafeRelease(m_pWicCoverBmp);
+	SafeRelease(m_pWicCoverBmp);
 }
 
 void CPlayer::ShowPlayErr(HWND hWnd, PlayOpErr uErr)
@@ -426,6 +426,7 @@ HFX CPlayer::SetFx(int idx)
 			return m_FxMgr.GetHFx(idx) = m_Bass.SetFx(
 				CEffectMgr::Fxi2BassIdx(idx), m_FxMgr.GetPriority(idx));
 	}
+	return 0;
 }
 
 BOOL CPlayer::RemoveFx(int idx)

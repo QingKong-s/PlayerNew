@@ -225,7 +225,6 @@
     <ClInclude Include="CPlayer.h" />
     <ClInclude Include="CPlayList.h" />
     <ClInclude Include="CPlayListFile.h" />
-    <ClInclude Include="CSimpleList.h" />
     <ClInclude Include="CTbGhost.h" />
     <ClInclude Include="CTBList.h" />
     <ClInclude Include="CWndBK.h" />
@@ -268,7 +267,6 @@
     <ClCompile Include="CTbGhost.cpp" />
     <ClCompile Include="CTBList.cpp" />
     <ClCompile Include="CUIProgressBar.cpp" />
-    <ClCompile Include="CSimpleList.cpp" />
     <ClCompile Include="CUIAlbum.cpp" />
     <ClCompile Include="CUIAlbumRotating.cpp" />
     <ClCompile Include="CUIElem.cpp" />

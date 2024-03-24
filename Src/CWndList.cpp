@@ -266,7 +266,7 @@ void CWndList::OnMenuAddFile()
 		{L"所有文件",L"*.*"}
 	};
 	pfod->SetFileTypes(ARRAYSIZE(c_cdfs), c_cdfs);
-	pfod->Show(m_hWnd);
+	pfod->Show(HWnd);
 	IShellItemArray* psia;
 	hr = pfod->GetResults(&psia);
 	if (FAILED(hr))

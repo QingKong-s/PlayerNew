@@ -61,6 +61,7 @@ BOOL CWndBK::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 
 void CWndBK::OnSize(HWND hWnd, UINT state, int cx, int cy)
 {
+	ECK_DUILOCKWND;
 	m_cxClient = cx;
 	m_cyClient = cy;
 	m_rcfClient = eck::MakeD2DRcF({ 0,0,cx,cy });
@@ -260,7 +261,8 @@ void CWndBK::OnPlayingControl(PLAYINGCTRLTYPE uType)
 	{
 	case PCT_PLAYNEW:
 	{
-		eck::SafeRelease(m_pBmpAlbum);
+		ECK_DUILOCKWND;
+		SafeRelease(m_pBmpAlbum);
 		GetD2D().GetDC()->CreateBitmapFromWicBitmap(App->GetPlayer().GetWicBmpCover(), &m_pBmpAlbum);
 		auto Size = m_pBmpAlbum->GetSize();
 		m_cxAlbum = (int)Size.width;
@@ -280,6 +282,7 @@ void CWndBK::OnPlayingControl(PLAYINGCTRLTYPE uType)
 
 void CWndBK::UpdateStaticBmp()
 {
+	ECK_DUILOCKWND;
 	if (m_cxClient <= 0 || m_cyClient <= 0)
 		return;
 	IWICBitmap* pWICBitmapOrg = App->GetPlayer().GetWicBmpCover();// 原始WIC位图
@@ -324,7 +327,7 @@ void CWndBK::UpdateStaticBmp()
 		}
 		////////////缩放
 		IWICBitmap* pWicBmpScaled;
-		eck::ScaleWicBitmap(pWICBitmapOrg, pWicBmpScaled, cx, cy,
+		eck::ScaleWicBitmap(pWICBitmapOrg, pWicBmpScaled, (int)cx, (int)cy,
 			WICBitmapInterpolationModeNearestNeighbor);
 		ID2D1Bitmap1* pBmpScaled;
 		pDC->CreateBitmapFromWicBitmap(pWicBmpScaled, &pBmpScaled);

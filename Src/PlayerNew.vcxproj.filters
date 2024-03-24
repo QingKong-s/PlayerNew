@@ -88,9 +88,6 @@
     <ClInclude Include="DragDrop.h">
       <Filter>程序</Filter>
     </ClInclude>
-    <ClInclude Include="CSimpleList.h">
-      <Filter>视觉对象</Filter>
-    </ClInclude>
     <ClInclude Include="CDlgAbout.h">
       <Filter>对话框</Filter>
     </ClInclude>
@@ -196,9 +193,6 @@
       <Filter>程序</Filter>
     </ClCompile>
     <ClCompile Include="CUILrc.cpp">
-      <Filter>视觉对象</Filter>
-    </ClCompile>
-    <ClCompile Include="CSimpleList.cpp">
       <Filter>视觉对象</Filter>
     </ClCompile>
     <ClCompile Include="CUIElem.cpp">

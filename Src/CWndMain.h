@@ -9,8 +9,6 @@
 #include "CWndLrc.h"
 #include "CTbGhost.h"
 
-#include "CSimpleList.h"
-
 constexpr inline PCWSTR c_pszWndClassMain = L"PlayerNew.WndClass.Main";
 
 enum
@@ -75,8 +73,6 @@ private:
 		;
 	ECK_DS_END_VAR(m_Ds);
 
-
-	CSimpleList m_Sl{};
 	std::vector<eck::CRefStrW> m_vStr{};
 
 	struct GROUP

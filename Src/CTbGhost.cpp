@@ -113,7 +113,7 @@ LRESULT CTbGhost::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         {
             BITMAP bmp;
             GetObjectW(m_hbmThumbnailCache, sizeof(bmp), &bmp);
-            if (bmp.bmWidth <= cxMax && bmp.bmHeight <= cyMax)
+            if (bmp.bmWidth <= (int)cxMax && bmp.bmHeight <= (int)cyMax)
             {
                 DwmSetIconicThumbnail(hWnd, m_hbmThumbnailCache, 0);
                 return 0;

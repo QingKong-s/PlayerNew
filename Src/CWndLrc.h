@@ -51,8 +51,8 @@ public:
 	~CLrcBtnBox()
 	{
 		for (auto& x : m_Btn)
-			eck::SafeRelease(x.pBmp);
-		eck::SafeRelease(m_pBmpPlay);
+			SafeRelease(x.pBmp);
+		SafeRelease(m_pBmpPlay);
 	}
 
 	void PostCreateRenderTarget();

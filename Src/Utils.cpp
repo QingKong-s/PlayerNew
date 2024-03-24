@@ -480,7 +480,7 @@ void ParseLrc_ProcTimeLabel(std::vector<LRCINFO>& Result, std::vector<LRCLABEL>&
 
 		// 删首尾空
 		const auto pos = eck::RLTrimStr(pszLrc, cchLrc);
-		const auto cchReal = pos.second - pos.first;
+		const auto cchReal = int(pos.second - pos.first);
 		if (cchReal)
 		{
 			const auto pTemp = (PWSTR)malloc(eck::Cch2Cb(cchReal));

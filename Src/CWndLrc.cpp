@@ -42,7 +42,7 @@ public:
 
 		if (om.DtLrcEnableShadow != 0.f)
 		{
-			const float oxy = eck::DpiScaleF(om.DtLrcShadowOffset, (float)m_Wnd.GetDpiValue());
+			const float oxy = eck::DpiScaleF(om.DtLrcShadowOffset, m_Wnd.GetDpiValue());
 
 			App->m_pD2dFactory->CreateTransformedGeometry(
 				pPathGeometry,
@@ -158,7 +158,7 @@ void CWndLrc::ReSizeRenderStuff(int cx, int cy)
 		D2D1_FEATURE_LEVEL_DEFAULT
 	};
 
-	eck::SafeRelease(m_pRT);
+	SafeRelease(m_pRT);
 	HRESULT hr;
 	if (FAILED(hr = App->m_pD2dFactory->CreateDCRenderTarget(&DcRtProp, &m_pRT)))
 	{
@@ -171,8 +171,8 @@ void CWndLrc::ReSizeRenderStuff(int cx, int cy)
 
 	UpdateSysColorBrush();
 	UpdateTextBrush();
-	eck::SafeRelease(m_pBrBk);
-	eck::SafeRelease(m_pBrFrame);
+	SafeRelease(m_pBrBk);
+	SafeRelease(m_pBrFrame);
 	m_pRT->CreateSolidColorBrush(D2D1::ColorF(0x3F3F3F, 0.5), &m_pBrBk);
 	m_pRT->CreateSolidColorBrush(D2D1::ColorF(0x97D2CB, 0.5), &m_pBrFrame);
 
@@ -181,8 +181,8 @@ void CWndLrc::ReSizeRenderStuff(int cx, int cy)
 
 void CWndLrc::UpdateSysColorBrush()
 {
-	eck::SafeRelease(m_pBrHot);
-	eck::SafeRelease(m_pBrPressed);
+	SafeRelease(m_pBrHot);
+	SafeRelease(m_pBrPressed);
 
 	m_pRT->CreateSolidColorBrush(
 		eck::ColorrefToD2dColorF(GetSysColor(COLOR_HOTLIGHT), 0.5f), &m_pBrHot);
@@ -265,8 +265,8 @@ float CWndLrc::DrawLrcLine(int idxLrc, float y, BOOL bSecondLine)
 	if (Cache.idxLrc != idxLrc)// 更新缓存
 	{
 		Cache.idxLrc = idxLrc;
-		eck::SafeRelease(Cache.pLayout);
-		eck::SafeRelease(Cache.pLayoutTrans);
+		SafeRelease(Cache.pLayout);
+		SafeRelease(Cache.pLayoutTrans);
 
 		constexpr WCHAR szEmpty[]{ L"♪♬♪♬♪" };
 		constexpr int cchEmpty = (int)(ARRAYSIZE(szEmpty) - 1);
@@ -480,8 +480,8 @@ void CWndLrc::DrawStaticLine(int idxFake, float y)
 
 void CWndLrc::UpdateTextFormat()
 {
-	eck::SafeRelease(m_pTfMain);
-	eck::SafeRelease(m_pTfTranslation);
+	SafeRelease(m_pTfMain);
+	SafeRelease(m_pTfTranslation);
 
 	const auto& Font = App->GetOptionsMgr().DtLrcFontMain;
 	m_pTfMain = FONTOPTIONS::CreateTextFormat(App->m_pDwFactory, Font, m_iDpi);
@@ -672,19 +672,19 @@ LRESULT CWndLrc::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_DESTROY:
 	{
-		eck::SafeRelease(m_pBrHot);
-		eck::SafeRelease(m_pBrPressed);
-		eck::SafeRelease(m_pBrBk);
-		eck::SafeRelease(m_pBrFrame);
-		eck::SafeRelease(m_pBrTextBorder);
-		eck::SafeRelease(m_pTfMain);
-		eck::SafeRelease(m_pTfTranslation);
-		eck::SafeRelease(m_pRT);
+		SafeRelease(m_pBrHot);
+		SafeRelease(m_pBrPressed);
+		SafeRelease(m_pBrBk);
+		SafeRelease(m_pBrFrame);
+		SafeRelease(m_pBrTextBorder);
+		SafeRelease(m_pTfMain);
+		SafeRelease(m_pTfTranslation);
+		SafeRelease(m_pRT);
 		m_DC.Destroy();
-		eck::SafeRelease(m_TextCache[0].pLayout);
-		eck::SafeRelease(m_TextCache[0].pLayoutTrans);
-		eck::SafeRelease(m_TextCache[1].pLayout);
-		eck::SafeRelease(m_TextCache[1].pLayoutTrans);
+		SafeRelease(m_TextCache[0].pLayout);
+		SafeRelease(m_TextCache[0].pLayoutTrans);
+		SafeRelease(m_TextCache[1].pLayout);
+		SafeRelease(m_TextCache[1].pLayoutTrans);
 		InvalidateCache();
 	}
 	break;
@@ -694,7 +694,7 @@ LRESULT CWndLrc::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void CWndLrc::UpdateTextBrush()
 {
-	eck::SafeRelease(m_pBrTextBorder);
+	SafeRelease(m_pBrTextBorder);
 
 	m_pRT->CreateSolidColorBrush(eck::ColorrefToD2dColorF(App->GetOptionsMgr().DtLrcBorderColor, 1.f),
 		&m_pBrTextBorder);
@@ -755,17 +755,17 @@ void CWndLrc::Lock(BOOL bLock)
 void CLrcBtnBox::PostCreateRenderTarget()
 {
 	const auto pRT = m_Wnd.m_pRT;
-	eck::SafeRelease(m_Btn[0].pBmp);
+	SafeRelease(m_Btn[0].pBmp);
 	pRT->CreateBitmapFromWicBitmap(App->GetWicRes()[IIDX_PrevSolid], &m_Btn[0].pBmp);
-	eck::SafeRelease(m_Btn[1].pBmp);
+	SafeRelease(m_Btn[1].pBmp);
 	pRT->CreateBitmapFromWicBitmap(App->GetWicRes()[IIDX_PauseSolid], &m_Btn[1].pBmp);
-	eck::SafeRelease(m_Btn[2].pBmp);
+	SafeRelease(m_Btn[2].pBmp);
 	pRT->CreateBitmapFromWicBitmap(App->GetWicRes()[IIDX_NextSolid], &m_Btn[2].pBmp);
-	eck::SafeRelease(m_Btn[3].pBmp);
+	SafeRelease(m_Btn[3].pBmp);
 	pRT->CreateBitmapFromWicBitmap(App->GetWicRes()[IIDX_LockSolid], &m_Btn[3].pBmp);
-	eck::SafeRelease(m_Btn[4].pBmp);
+	SafeRelease(m_Btn[4].pBmp);
 	pRT->CreateBitmapFromWicBitmap(App->GetWicRes()[IIDX_CrossSolid], &m_Btn[4].pBmp);
-	eck::SafeRelease(m_pBmpPlay);
+	SafeRelease(m_pBmpPlay);
 	pRT->CreateBitmapFromWicBitmap(App->GetWicRes()[IIDX_TriangleSolid], &m_pBmpPlay);
 }
 
@@ -808,7 +808,7 @@ void CLrcBtnBox::Draw()
 
 	D2D1_RECT_F rc;
 	const int cxBtnTotal = m_Wnd.m_Ds.cxBtnPadding * (c_cBtn - 1) + m_Wnd.m_Ds.cxyBtn * c_cBtn;
-	rc.left = (m_Wnd.m_cxClient - cxBtnTotal) / 2;
+	rc.left = (float)((m_Wnd.m_cxClient - cxBtnTotal) / 2);
 	rc.top = m_Wnd.m_DsF.Margin * 3;
 	rc.right = rc.left + m_Wnd.m_DsF.cxyBtn;
 	rc.bottom = rc.top + m_Wnd.m_DsF.cxyBtn;

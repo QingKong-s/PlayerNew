@@ -85,11 +85,11 @@ LRESULT CUIWaves::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			m_pDC->DrawLine(PtF1, PtF2, m_pBrLine, (FLOAT)m_cxLine);
 			x += m_cxLine;
 			i++;
-			if (i > cBars - 1 || x >= m_rc.right)
+			if (i > cBars - 1 || x >= cx)
 				break;
 		}
 		i = idxCurr;
-		x = m_rc.left + cx / 2.f;
+		x = cx / 2.f;
 		while (TRUE)// 向左画
 		{
 			PtF1 = { (FLOAT)x, (FLOAT)(y - HIWORD(m_vWavesData[i]) * (cy / 2.f) / 32768) };
@@ -97,10 +97,10 @@ LRESULT CUIWaves::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			m_pDC->DrawLine(PtF1, PtF2, m_pBrLine, (FLOAT)m_cxLine);
 			x -= m_cxLine;
 			i--;
-			if (i < 0 || x < m_rc.left)
+			if (i < 0 || x < 0)
 				break;
 		}
-		x = m_rc.left + cx / 2.f;
+		x = cx / 2.f;
 
 		PtF1 = { (FLOAT)x, 0.f };
 		PtF2 = { (FLOAT)x, cy };
@@ -140,8 +140,8 @@ LRESULT CUIWaves::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_CREATE:
 	{
 		m_hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
-		eck::SafeRelease(m_pBrLine);
-		eck::SafeRelease(m_pBrCenterMark);
+		SafeRelease(m_pBrLine);
+		SafeRelease(m_pBrCenterMark);
 		m_pDC->CreateSolidColorBrush(c_D2DClrCyanDeeper, &m_pBrLine);
 		m_pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Red), &m_pBrCenterMark);
 		App->m_pDwFactory->CreateTextFormat(L"微软雅黑", NULL,
@@ -149,6 +149,8 @@ LRESULT CUIWaves::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			GetBk()->Dpi(18.f), L"zh-cn", &m_pTfTip);
 		m_pTfTip->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
 		m_pTfTip->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);// 水平垂直都居中
+
+		GetBk()->RegisterTimerElem(this);
 	}
 	break;
 
@@ -163,4 +165,12 @@ LRESULT CUIWaves::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	break;
 	}
 	return __super::OnEvent(uMsg, wParam, lParam);
+}
+
+void CUIWaves::OnTimer(UINT uTimerID)
+{
+	if (uTimerID == CWndBK::IDT_PGS)
+	{
+		InvalidateRect();
+	}
 }

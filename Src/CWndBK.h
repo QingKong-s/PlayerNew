@@ -7,7 +7,7 @@
 #include "eck\DuiBase.h"
 #include "eck\CDuiCircleButton.h"
 #include "eck\CDuiTrackBar.h"
-#include "eck\CScrollView.h"
+#include "eck\CInertialScrollView.h"
 #include "eck\CMenu.h"
 
 #include <thread>
@@ -173,6 +173,7 @@ private:
 		ECK_DS_ENTRY(cyVolParent, 40)
 		ECK_DS_ENTRY(cxVolTrack, 170)
 		ECK_DS_ENTRY(cxyMinSBThumb, 10)
+		ECK_DS_ENTRY(ScrollDelta, 80)
 		;
 	ECK_DS_END_VAR(m_Ds);
 
@@ -335,8 +336,6 @@ private:
 
 	void GetWavesData();
 public:
-	CUIWaves();
-	~CUIWaves();
 
 	LRESULT OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 
@@ -502,7 +501,7 @@ private:
 
 	IDWriteTextFormat* m_pTextFormat = NULL;
 
-	eck::CInertialScrollView m_ScrollView{};
+	eck::CInertialScrollView* m_psv = NULL;
 
 	int m_idxTop = -1;
 	int m_idxHot = -1;
@@ -576,8 +575,8 @@ private:
 
 	void GetSBThumbRect(D2D1_RECT_F& rc)
 	{
-		const int cyThumb = m_ScrollView.GetThumbSize();
-		const int yThumb = m_ScrollView.GetThumbPos(cyThumb);
+		const int cyThumb = m_psv->GetThumbSize();
+		const int yThumb = m_psv->GetThumbPos(cyThumb);
 		const float cxView = GetViewWidthF();
 		rc =
 		{
@@ -612,17 +611,17 @@ private:
 		
 		if (idx == m_idxPrevAnItem)
 		{
-			rc.right = m_vItem[idx].cx * (fScale + 1.f - m_fAnValue);
+			rc.right = (long)(m_vItem[idx].cx * (fScale + 1.f - m_fAnValue));
 			rc.bottom = (long)(y + m_vItem[idx].cy * (fScale + 1.f - m_fAnValue));
 		}
 		else if (idx == m_idxCurrAnItem)
 		{
-			rc.right = m_vItem[idx].cx * m_fAnValue;
+			rc.right = (long)(m_vItem[idx].cx * m_fAnValue);
 			rc.bottom = (long)(y + m_vItem[idx].cy * m_fAnValue);
 		}
 		else ECKLIKELY
 		{ 
-			rc.right = m_vItem[idx].cx;
+			rc.right = (long)m_vItem[idx].cx;
 			rc.bottom = (long)(y + m_vItem[idx].cy);
 		}
 	}
@@ -630,7 +629,7 @@ private:
 	PNInline float GetItemY(int idx)
 	{
 		const auto fScale = App->GetOptionsMgr().LrcCurrFontScale;
-		float y = m_vItem[idx].y - m_ScrollView.GetPos();
+		float y = m_vItem[idx].y - m_psv->GetPos();
 		if (idx > m_idxPrevAnItem && m_idxPrevAnItem >= 0)
 			y += (m_vItem[m_idxPrevAnItem].cy * (fScale - m_fAnValue));
 		if (idx > m_idxCurrAnItem && m_idxCurrAnItem >= 0)

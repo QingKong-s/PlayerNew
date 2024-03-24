@@ -26,7 +26,7 @@ void CDlgFxCommon::UpdateCtrl()
 	m_STVol.SetText(sz);
 
 	f = Bass.GetAttr(BASS_ATTRIB_TEMPO_PITCH);
-	m_TBPitch.SetPos((int)f * 10.f);
+	m_TBPitch.SetPos((int)(f * 10.f));
 	swprintf(sz, L"%d", (int)f);
 	m_STPitch.SetText(sz);
 }

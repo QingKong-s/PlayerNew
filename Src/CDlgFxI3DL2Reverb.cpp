@@ -5,16 +5,16 @@ void CDlgFxI3DL2Reverb::UpdateCtrl()
 	const auto& Param = App->GetPlayer().GetEffectMgr().I3DL2Reverb;
 	m_TBRoom.SetPos(Param.lRoom);
 	m_TBRoomHF.SetPos(Param.lRoomHF);
-	m_TBRoomRollOffFactor.SetPos((float)(Param.flRoomRolloffFactor * 10.f));
-	m_TBDecayTime.SetPos((float)(Param.flDecayTime * 10.f));
-	m_TBDecayHFRatio.SetPos((float)(Param.flDecayHFRatio * 100.f));
+	m_TBRoomRollOffFactor.SetPos((int)(Param.flRoomRolloffFactor * 10.f));
+	m_TBDecayTime.SetPos((int)(Param.flDecayTime * 10.f));
+	m_TBDecayHFRatio.SetPos((int)(Param.flDecayHFRatio * 100.f));
 	m_TBReflections.SetPos(Param.lReflections);
-	m_TBReflectionsDelay.SetPos((float)(Param.flReflectionsDelay * 1000.f));
+	m_TBReflectionsDelay.SetPos((int)(Param.flReflectionsDelay * 1000.f));
 	m_TBReverb.SetPos(Param.lReverb);
-	m_TBReverbDelay.SetPos((float)(Param.flReverbDelay * 1000.f));
-	m_TBDiffusion.SetPos((float)(Param.flDiffusion));
-	m_TBDensity.SetPos((float)(Param.flDensity));
-	m_TBHFReference.SetPos((float)(Param.flHFReference));
+	m_TBReverbDelay.SetPos((int)(Param.flReverbDelay * 1000.f));
+	m_TBDiffusion.SetPos((int)(Param.flDiffusion));
+	m_TBDensity.SetPos((int)(Param.flDensity));
+	m_TBHFReference.SetPos((int)(Param.flHFReference));
 }
 
 LRESULT CDlgFxI3DL2Reverb::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -95,15 +95,15 @@ LRESULT CDlgFxI3DL2Reverb::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			FxMgr.ApplyParam(FXI_I3DL2REVERB);
 			return 0;
 		case IDC_TB_DIFFUSION:
-			FxMgr.I3DL2Reverb.flDiffusion = m_TBDiffusion.GetPos();
+			FxMgr.I3DL2Reverb.flDiffusion = (float)m_TBDiffusion.GetPos();
 			FxMgr.ApplyParam(FXI_I3DL2REVERB);
 			return 0;
 		case IDC_TB_DENSITY:
-			FxMgr.I3DL2Reverb.flDensity = m_TBDensity.GetPos();
+			FxMgr.I3DL2Reverb.flDensity = (float)m_TBDensity.GetPos();
 			FxMgr.ApplyParam(FXI_I3DL2REVERB);
 			return 0;
 		case IDC_TB_HFREFERENCE:
-			FxMgr.I3DL2Reverb.flHFReference = m_TBHFReference.GetPos();
+			FxMgr.I3DL2Reverb.flHFReference = (float)m_TBHFReference.GetPos();
 			FxMgr.ApplyParam(FXI_I3DL2REVERB);
 			return 0;
 		}

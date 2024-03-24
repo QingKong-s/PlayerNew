@@ -52,14 +52,14 @@ LRESULT CUISpe2::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_CREATE:
 	{
-		eck::SafeRelease(m_pBrLine);
+		SafeRelease(m_pBrLine);
 		m_pDC->CreateSolidColorBrush(c_D2DClrCyanDeeper, &m_pBrLine);
 	}
 	break;
 
 	case WM_DESTROY:
 	{
-		eck::SafeRelease(m_pBrLine);
+		SafeRelease(m_pBrLine);
 	}
 	break;
 	}
