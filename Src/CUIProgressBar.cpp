@@ -49,7 +49,11 @@ void CUIProgressBar::OnTimer(UINT uTimerID)
 {
 	if (uTimerID == CWndBK::IDT_PGS)
 	{
-		m_TrackBar.SetPos(App->GetPlayer().GetPosF());
-		m_TrackBar.InvalidateRect();
+		const auto f = App->GetPlayer().GetPosF();
+		if (fabs(f - m_TrackBar.GetPos()) > 0.5f)
+		{
+			m_TrackBar.SetPos(f);
+			m_TrackBar.InvalidateRect();
+		}
 	}
 }

@@ -8,7 +8,7 @@ void CUILrc::ScrollProc(int iPos, int iPrevPos, LPARAM lParam)
 	auto p = (CUILrc*)lParam;
 
 	if (!p->m_AnEnlarge.IsEnd())
-		p->m_fAnValue = p->m_AnEnlarge.Tick(30);
+		p->m_fAnValue = p->m_AnEnlarge.Tick(p->m_psv->GetCurrTickInterval());
 	else
 		p->m_bEnlarging = FALSE;
 
@@ -377,31 +377,34 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			const float cx = GetViewWidthF(), cy = GetViewHeightF();
 
 			m_vItem.clear();
-			m_vItem.resize(vLrc.size());
-			const float cxMax = cx / fScale;
-			IDWriteTextLayout* pLayout;
-			DWRITE_TEXT_METRICS Metrics;
-			float y = 0.f;
-			const float cyPadding = GetBk()->Dpi(App->GetOptionsMgr().cyLrcPadding);
-			EckCounter(vLrc.size(), i)
+			if (!vLrc.empty())
 			{
-				App->m_pDwFactory->CreateTextLayout(vLrc[i].pszLrc, vLrc[i].cchTotal,
-					m_pTextFormat, cxMax, (float)cy, &pLayout);
-				pLayout->GetMetrics(&Metrics);
-				m_vItem[i].y = y;
-				m_vItem[i].cx = Metrics.width;
-				m_vItem[i].cy = Metrics.height;
-				m_vItem[i].pLayout = pLayout;
+				m_vItem.resize(vLrc.size());
+				const float cxMax = cx / fScale;
+				IDWriteTextLayout* pLayout;
+				DWRITE_TEXT_METRICS Metrics;
+				float y = 0.f;
+				const float cyPadding = GetBk()->Dpi(App->GetOptionsMgr().cyLrcPadding);
+				EckCounter(vLrc.size(), i)
+				{
+					App->m_pDwFactory->CreateTextLayout(vLrc[i].pszLrc, vLrc[i].cchTotal,
+						m_pTextFormat, cxMax, (float)cy, &pLayout);
+					pLayout->GetMetrics(&Metrics);
+					m_vItem[i].y = y;
+					m_vItem[i].cx = Metrics.width;
+					m_vItem[i].cy = Metrics.height;
+					m_vItem[i].pLayout = pLayout;
 
-				y += (Metrics.height + cyPadding);
+					y += (Metrics.height + cyPadding);
+				}
+
+				m_psv->SetMin(int(-cy / 2.f));
+				m_psv->SetMax(int(y - cyPadding + cy / 2.f));
+				m_psv->SetPos(m_psv->GetMin());
+				m_psv->SetPage((int)cy);
+				CalcTopItem();
+				InvalidateRect();
 			}
-
-			m_psv->SetMin(int(-cy / 2.f));
-			m_psv->SetMax(int(y - cyPadding + cy / 2.f));
-			m_psv->SetPos(m_psv->GetMin());
-			m_psv->SetPage((int)cy);
-			CalcTopItem();
-			InvalidateRect();
 		}
 	}
 	return 0;
@@ -434,6 +437,7 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		SafeRelease(m_pBrTextNormal);
 		SafeRelease(m_pBrTextHighlight);
+		SafeRelease(m_pBrush);
 		SafeRelease(m_pTextFormat);
 		SafeRelease(m_psv);
 	}
@@ -463,7 +467,7 @@ void CUILrc::OnTimer(UINT uTimerID)
 				m_bEnlarging = TRUE;
 				m_idxPrevAnItem = idxPrev;
 				m_idxCurrAnItem = m_idxPrevCurr;
-				m_AnEnlarge.Begin(1.f, fScale - 1.f, 400);
+				m_AnEnlarge.Begin(1.f, fScale - 1.f, m_psv->GetDuration());
 				const auto& CurrItem = m_vItem[m_idxPrevCurr];
 				float yDest = CurrItem.y + CurrItem.cy * fScale / 2.f;
 				GetWnd()->GetCriticalSection()->Leave();

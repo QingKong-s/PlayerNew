@@ -58,8 +58,6 @@ private:
 	}
 	m_SortParam{};
 
-
-
 	static PNInline size_t Sf2FnIdx(SortFlags u)
 	{
 		return LOWORD(u) - 1;

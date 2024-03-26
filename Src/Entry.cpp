@@ -6,6 +6,7 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #pragma comment(lib,R"(..\BassLib\bass_x64.lib)")
 #pragma comment(lib,R"(..\BassLib\bass_fx_x64.lib)")
 #pragma comment(lib,R"(..\BassLib\bassmidi_x64.lib)")
+#pragma comment(lib,R"(..\Sqlite\sqlite3_x64.lib)")
 #elif defined _WIN32
 #pragma comment(lib,R"(..\BassLib\bass.lib)")
 #pragma comment(lib,R"(..\BassLib\bass_fx.lib)")

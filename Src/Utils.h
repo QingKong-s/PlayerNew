@@ -4,6 +4,7 @@
 #include "eck\CRefStr.h"
 #include "eck\CMemWalker.h"
 #include "eck\CException.h"
+#include "eck\SystemHelper.h"
 
 #include <algorithm>
 

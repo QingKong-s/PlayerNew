@@ -580,7 +580,8 @@ LRESULT CWndMain::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_DESTROY:
 		m_TbGhost.Destroy();
 		SafeRelease(m_pTbList);
-		m_Lrc.Destroy();
+		if (m_Lrc.IsValid())
+			m_Lrc.Destroy();
 		PostQuitMessage(0);
 		return 0;
 	}

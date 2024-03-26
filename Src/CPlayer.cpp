@@ -53,13 +53,20 @@ PlayOpErr CPlayer::Play(int idx)
 	const auto idxPrev = m_idxCurrFile;
 	m_idxCurrFile = idx;
 	m_Bass.TempoCreate();
-	m_Bass.Play();
+	m_Bass.Play(TRUE);
 	ApplyPrevEffect();
 
 	m_ullLength = (ULONGLONG)(m_Bass.GetLength() * 1000.);
 
 	Utils::GetMusicInfo(m_rsCurrFile.Data(), m_MusicInfo);
+
+	m_Stat.IncPlayCount(m_MusicInfo.rsTitle);
+	std::vector<eck::CRefStrW> vArtist{};
+	eck::SplitStr(m_MusicInfo.rsArtist.Data(), L"、", vArtist);
+	m_Stat.IncPlayCount(vArtist);
+
 	CreateWicBmpCover();
+	m_vLrc.clear();
 	Utils::ParseLrc(m_rsCurrFile.Data(), 0u, m_vLrc, m_vLrcLabel,
 		App->GetOptionsMgr().iLrcFileEncoding, (float)m_Bass.GetLength());
 	if (!m_vLrc.size())

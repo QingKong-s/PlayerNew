@@ -509,7 +509,7 @@ private:
 	int m_idxPrevCurr = -1;
 	std::vector<ITEM> m_vItem{};
 
-	eck::CEasingAn<eck::Easing::FOutSine> m_AnEnlarge{};
+	eck::CEasingAn<eck::Easing::FOutCubic> m_AnEnlarge{};
 	BOOL m_bEnlarging = FALSE;
 	int m_idxPrevAnItem = -1,
 		m_idxCurrAnItem = -1;

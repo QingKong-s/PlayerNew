@@ -108,7 +108,7 @@ private:
 		ECK_DS_ENTRY(iGap, 4)
 		ECK_DS_ENTRY(cxLVTextSpace, 4)
 		ECK_DS_ENTRY(cyLVItem, c_cyLVItem)
-		ECK_DS_ENTRY(cxColumn1, 240)
+		ECK_DS_ENTRY(cxColumn1, 280)
 		ECK_DS_ENTRY(cxColumn2, 60)
 		;
 	ECK_DS_END_VAR(m_Ds);

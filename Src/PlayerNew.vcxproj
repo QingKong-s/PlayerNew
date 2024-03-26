@@ -219,6 +219,7 @@
     <ClInclude Include="CDlgListFile.h" />
     <ClInclude Include="CDlgNewBookmark.h" />
     <ClInclude Include="CEffectMgr.h" />
+    <ClInclude Include="CStatistics.h" />
     <ClInclude Include="CWndGenSharePic.h" />
     <ClInclude Include="CLVPlay.h" />
     <ClInclude Include="COptionsMgr.h" />
@@ -234,6 +235,7 @@
     <ClInclude Include="DragDrop.h" />
     <ClInclude Include="Entry.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="sqlite3.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>
@@ -258,6 +260,7 @@
     <ClCompile Include="CDlgListFile.cpp" />
     <ClCompile Include="CDlgNewBookmark.cpp" />
     <ClCompile Include="CEffectMgr.cpp" />
+    <ClCompile Include="CStatistics.cpp" />
     <ClCompile Include="CWndGenSharePic.cpp" />
     <ClCompile Include="CLVPlay.cpp" />
     <ClCompile Include="COptionsMgr.cpp" />

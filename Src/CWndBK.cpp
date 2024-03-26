@@ -78,7 +78,7 @@ void CWndBK::OnSize(HWND hWnd, UINT state, int cx, int cy)
 
 	SafeRelease(m_pBmpBKStatic);
 	D2D_SIZE_U D2DSizeU = { (UINT32)cx, (UINT32)cy };
-	D2dBmpProp.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE;
+	D2dBmpProp.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET;
 	if (FAILED(hr = GetD2D().GetDC()->CreateBitmap(D2DSizeU, NULL, 0, D2dBmpProp, &m_pBmpBKStatic)))
 	{
 		EckDbgPrint(L"ID2D1DeviceContext::CreateBitmap Error");
@@ -91,9 +91,8 @@ void CWndBK::OnDestroy(HWND hWnd)
 	m_vElemsWantTimer.clear();
 	m_pBrWhite->Release();
 	m_pBrWhite2->Release();
-	if (m_pBmpAlbum)
-		m_pBmpAlbum->Release();
 	m_pBmpBKStatic->Release();
+	SafeRelease(m_pBmpAlbum);
 	for (auto pBmp : m_pBmpIcon)
 		pBmp->Release();
 }
@@ -341,6 +340,7 @@ void CWndBK::UpdateStaticBmp()
 		pEffect->SetValue(D2D1_GAUSSIANBLUR_PROP_BORDER_MODE, D2D1_BORDER_MODE_HARD);
 		pDC->DrawImage(pEffect, &pt);
 		pEffect->Release();
+		pBmpScaled->Release();
 		////////////半透明遮罩
 		pDC->FillRectangle(m_rcfClient, m_pBrWhite2);
 	}

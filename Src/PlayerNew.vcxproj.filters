@@ -26,6 +26,9 @@
     <Filter Include="控件">
       <UniqueIdentifier>{ebd24187-ce72-41a2-a47d-7039b4772248}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Sqlite">
+      <UniqueIdentifier>{ae453d36-3365-4e90-a8f6-d53c576cdb71}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CDlgBookmark.h">
@@ -144,6 +147,10 @@
     </ClInclude>
     <ClInclude Include="CWndGenSharePic.h">
       <Filter>窗体</Filter>
+    </ClInclude>
+    <ClInclude Include="CStatistics.h" />
+    <ClInclude Include="sqlite3.h">
+      <Filter>Sqlite</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -285,6 +292,7 @@
     <ClCompile Include="CWndGenSharePic.cpp">
       <Filter>窗体</Filter>
     </ClCompile>
+    <ClCompile Include="CStatistics.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PlayerNew.rc">

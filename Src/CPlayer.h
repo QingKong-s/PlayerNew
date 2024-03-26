@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "CPlayList.h"
 #include "CEffectMgr.h"
+#include "CStatistics.h"
 
 #include "eck\CRefStr.h"
 
@@ -69,6 +70,8 @@ private:
 
 	CEffectMgr m_FxMgr{};
 
+	CStatistics m_Stat{};
+
 	void ApplyPrevEffect()
 	{
 
@@ -76,6 +79,12 @@ private:
 
 	HRESULT CreateWicBmpCover();
 public:
+	CPlayer()
+	{
+		m_Stat.LoadDataBase((eck::GetRunningPath() + L"\\Data\\Stat.db").Data());
+		m_Stat.InitTable();
+	}
+
 	~CPlayer();
 
 	static constexpr PNInline PCWSTR GetErrMsg(PlayOpErr uErrCode)
