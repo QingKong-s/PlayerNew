@@ -61,7 +61,6 @@ BOOL CDlgEffect::OnInitDialog(HWND hDlg, HWND hFocus, LPARAM lParam)
 			rcTabItem.bottom,
 			rc.right - rc.left,
 			rc.bottom - rcTabItem.bottom, SWP_NOZORDER | SWP_NOACTIVATE);
-		pDlg->SetBkColor(GetSysColor(COLOR_WINDOW));
 
 		auto pBT = dynamic_cast<eck::CButton*>
 			(eck::CWndFromHWND(GetDlgItem(pDlg->HWnd, IDC_BT_RESET)));
@@ -72,6 +71,8 @@ BOOL CDlgEffect::OnInitDialog(HWND hDlg, HWND hFocus, LPARAM lParam)
 		if (pBT)
 			pBT->SetImage(m_hiTick, IMAGE_ICON);
 	}
+	m_Tab.SetCurSel(App->GetOptionsMgr().FxPage);
+	m_pDlg[App->GetOptionsMgr().FxPage]->Show(SW_SHOWNOACTIVATE);
 	Show(SW_SHOW);
 
 	return FALSE;
@@ -87,6 +88,7 @@ LRESULT CDlgEffect::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (pnmhdr->code == TCN_SELCHANGE && pnmhdr->hwndFrom == m_Tab.HWnd)
 		{
 			const int idxCurr = m_Tab.GetCurSel();
+			App->GetOptionsMgr().FxPage = idxCurr;
 			int i = 0;
 			m_pDlg[idxCurr]->Show(SW_SHOWNOACTIVATE);
 			for (; i < idxCurr; ++i)

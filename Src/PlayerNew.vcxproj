@@ -218,6 +218,7 @@
     <ClInclude Include="CDlgFxRotate.h" />
     <ClInclude Include="CDlgListFile.h" />
     <ClInclude Include="CDlgNewBookmark.h" />
+    <ClInclude Include="CDlgStatViewer.h" />
     <ClInclude Include="CEffectMgr.h" />
     <ClInclude Include="CStatistics.h" />
     <ClInclude Include="CWndGenSharePic.h" />
@@ -259,6 +260,7 @@
     <ClCompile Include="CDlgFxRotate.cpp" />
     <ClCompile Include="CDlgListFile.cpp" />
     <ClCompile Include="CDlgNewBookmark.cpp" />
+    <ClCompile Include="CDlgStatViewer.cpp" />
     <ClCompile Include="CEffectMgr.cpp" />
     <ClCompile Include="CStatistics.cpp" />
     <ClCompile Include="CWndGenSharePic.cpp" />

@@ -78,6 +78,7 @@ private:
 
 	eck::CEzCDC m_DC{};
 	ID2D1DCRenderTarget* m_pRT = NULL;
+	ID2D1DeviceContext1* m_pDC1 = NULL;
 	ID2D1SolidColorBrush* m_pBrHot = NULL;
 	ID2D1SolidColorBrush* m_pBrPressed = NULL;
 
@@ -99,6 +100,12 @@ private:
 	{
 		IDWriteTextLayout* pLayout = NULL;
 		IDWriteTextLayout* pLayoutTrans = NULL;
+		ID2D1GeometryRealization* pGrS = NULL;
+		ID2D1GeometryRealization* pGrSTrans = NULL;
+		ID2D1GeometryRealization* pGrF = NULL;
+		ID2D1GeometryRealization* pGrFTrans = NULL;
+		ID2D1LinearGradientBrush* pBr;
+		ID2D1LinearGradientBrush* pBrTrans;
 		D2D1_SIZE_F size{};
 		D2D1_SIZE_F sizeTrans{};
 		int idxLrc = c_InvalidCacheIdx;
@@ -158,6 +165,9 @@ private:
 	PNInline float CalcMaxLrcWidth() { return (float)m_cxClient - m_DsF.Margin * 6.f; }
 
 	PNInline float CalcLrcMargin() { return m_DsF.Margin * 3.f; }
+
+	void ReCreateBrush(float cyText, float cyTextTrans, BOOL bHiLight,
+		ID2D1LinearGradientBrush** ppBrMain, ID2D1LinearGradientBrush** ppBrTrans);
 public:
 	static ATOM RegisterWndClass() { return eck::EzRegisterWndClass(WCN_LRC); }
 
@@ -197,4 +207,18 @@ public:
 	}
 
 	EckInline BOOL IsBkVisible() const { return m_bShowBk; }
+
+	void UpdateBrush()
+	{
+		SafeRelease(m_TextCache[0].pBr);
+		SafeRelease(m_TextCache[0].pBrTrans);
+		ReCreateBrush(m_TextCache[0].size.height, m_TextCache[0].sizeTrans.height,
+			App->GetPlayer().GetCurrLrc() == m_TextCache[0].idxLrc,
+			&m_TextCache[0].pBr, &m_TextCache[0].pBrTrans);
+		SafeRelease(m_TextCache[1].pBr);
+		SafeRelease(m_TextCache[1].pBrTrans);
+		ReCreateBrush(m_TextCache[1].size.height, m_TextCache[1].sizeTrans.height,
+			App->GetPlayer().GetCurrLrc() == m_TextCache[1].idxLrc,
+			&m_TextCache[1].pBr, &m_TextCache[1].pBrTrans);
+	}
 };

@@ -126,7 +126,7 @@ LRESULT CWndBK::OnElemEvent(Dui::CElem* pElem, UINT uMsg, WPARAM wParam, LPARAM 
 		case IDE_BT_REPEATMODE:
 		{
 			const auto pBtn = (Dui::CCircleButton*)pElem;
-			App->GetOptionsMgr().iRepeatMode = COptionsMgr::NextRepeatMode(App->GetOptionsMgr().iRepeatMode);
+			App->GetOptionsMgr().PlayRepeatMode = COptionsMgr::NextRepeatMode(App->GetOptionsMgr().PlayRepeatMode);
 			constexpr int idx[]
 			{
 				CWndBK::ICIDX_RMAllLoop,
@@ -135,7 +135,7 @@ LRESULT CWndBK::OnElemEvent(Dui::CElem* pElem, UINT uMsg, WPARAM wParam, LPARAM 
 				CWndBK::ICIDX_RMSingleLoop,
 				CWndBK::ICIDX_RMSingle,
 			};
-			auto iRM = (int)App->GetOptionsMgr().iRepeatMode;
+			auto iRM = (int)App->GetOptionsMgr().PlayRepeatMode;
 			EckAssert(iRM >= 0 && iRM < ARRAYSIZE(idx));
 			pBtn->SetImage(m_pBmpIcon[idx[iRM]]);
 			pBtn->InvalidateRect();
@@ -215,11 +215,16 @@ LRESULT CWndBK::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case IDT_PGS:
 		{
 			auto uTickRet = App->GetPlayer().Tick();
-
+			auto& LrcWnd = App->GetMainWnd()->m_Lrc;
 			if (App->GetOptionsMgr().DtLrcShow &&
+				LrcWnd.IsValid() &&
 				((uTickRet & TKC_LRCPOSUPDATED) ||
-					App->GetMainWnd()->m_Lrc.IsCacheLayoutTooLong()))
-				App->GetMainWnd()->m_Lrc.Draw();
+					LrcWnd.IsCacheLayoutTooLong()))
+			{
+				if (uTickRet & TKC_LRCPOSUPDATED)
+					LrcWnd.UpdateBrush();
+				LrcWnd.Draw();
+			}
 		}
 		break;
 		}

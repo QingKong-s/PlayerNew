@@ -2,147 +2,6 @@
 
 #include "COptionsMgr.h"
 
-class CTextRenderer : public IDWriteTextRenderer
-{
-private:
-	ULONG m_uRef = 1;
-public:
-	ID2D1Brush* m_pBr = NULL;
-	ID2D1SolidColorBrush* m_pBrOutLine = NULL;
-	ID2D1RenderTarget* m_pRT = NULL;
-	CWndLrc& m_Wnd;
-
-	CTextRenderer(CWndLrc& Wnd, ID2D1RenderTarget* pRT, ID2D1Brush* pBr, ID2D1SolidColorBrush* pBrOutLine)
-		:m_Wnd{ Wnd }, m_pRT{ pRT }, m_pBr{ pBr }, m_pBrOutLine{ pBrOutLine } {}
-
-	STDMETHOD(DrawGlyphRun)(
-		void* pClientDrawingContext,
-		FLOAT xOrgBaseline,
-		FLOAT yOrgBaseline,
-		DWRITE_MEASURING_MODE MeasuringMode,
-		DWRITE_GLYPH_RUN const* pGlyphRun,
-		DWRITE_GLYPH_RUN_DESCRIPTION const* pGlyphRunDesc,
-		IUnknown* pClientDrawingEffect)
-	{
-		const auto& om = App->GetOptionsMgr();
-
-		ID2D1PathGeometry* pPathGeometry;
-		ID2D1TransformedGeometry* pTransformedGeometry;
-		ID2D1GeometrySink* pSink;
-		HRESULT hr;
-		hr = App->m_pD2dFactory->CreatePathGeometry(&pPathGeometry);
-		if (!pPathGeometry)
-			return hr;
-
-		pPathGeometry->Open(&pSink);
-		pGlyphRun->fontFace->GetGlyphRunOutline(pGlyphRun->fontEmSize, pGlyphRun->glyphIndices,
-			pGlyphRun->glyphAdvances, pGlyphRun->glyphOffsets, pGlyphRun->glyphCount,
-			pGlyphRun->isSideways, pGlyphRun->bidiLevel, pSink);
-		pSink->Close();
-
-		if (om.DtLrcEnableShadow != 0.f)
-		{
-			const float oxy = eck::DpiScaleF(om.DtLrcShadowOffset, m_Wnd.GetDpiValue());
-
-			App->m_pD2dFactory->CreateTransformedGeometry(
-				pPathGeometry,
-				D2D1::Matrix3x2F::Translation(xOrgBaseline + oxy, yOrgBaseline + oxy),
-				&pTransformedGeometry);
-			EckAssert(pTransformedGeometry);
-			m_pRT->FillGeometry(pTransformedGeometry, m_pBrOutLine);
-			pTransformedGeometry->Release();
-		}
-
-		hr = App->m_pD2dFactory->CreateTransformedGeometry(pPathGeometry,
-			D2D1::Matrix3x2F::Translation(xOrgBaseline, yOrgBaseline), &pTransformedGeometry);
-		if (!pTransformedGeometry)
-			return hr;
-
-		m_pRT->DrawGeometry(pTransformedGeometry, m_pBrOutLine,
-			eck::DpiScaleF(1.5f, m_Wnd.GetDpiValue()));// 描边
-		m_pRT->FillGeometry(pTransformedGeometry, m_pBr);// 填充
-		pTransformedGeometry->Release();
-
-		pPathGeometry->Release();
-		pSink->Release();
-		return S_OK;
-	}
-
-	STDMETHOD(DrawUnderline)(
-		void* pClientDrawingContext,
-		FLOAT xOrgBaseline,
-		FLOAT yOrgBaseline,
-		DWRITE_UNDERLINE const* pUnderline,
-		IUnknown* pClientDrawingEffect)
-	{
-		return E_NOTIMPL;
-	}
-
-	STDMETHOD(DrawStrikethrough)(
-		void* pClientDrawingContext,
-		FLOAT xOrgBaseline,
-		FLOAT yOrgBaseline,
-		DWRITE_STRIKETHROUGH const* strikethrough,
-		IUnknown* pClientDrawingEffect)
-	{
-		return E_NOTIMPL;
-	}
-
-	STDMETHOD(DrawInlineObject)(
-		void* pClientDrawingContext,
-		FLOAT xOrg,
-		FLOAT yOrg,
-		IDWriteInlineObject* pInlineObject,
-		BOOL bSideways,
-		BOOL bRightToLeft,
-		IUnknown* pClientDrawingEffect)
-	{
-		return E_NOTIMPL;
-	}
-
-	STDMETHOD(IsPixelSnappingDisabled)(void* pClientDrawingContext, BOOL* pbDisabled)
-	{
-		*pbDisabled = FALSE;
-		return S_OK;
-	}
-
-	STDMETHOD(GetCurrentTransform)(void* pClientDrawingContext, DWRITE_MATRIX* pMatrix)
-	{
-		m_pRT->GetTransform((D2D1_MATRIX_3X2_F*)pMatrix);
-		return S_OK;
-	}
-
-	STDMETHOD(GetPixelsPerDip)(void* pClientDrawingContext, FLOAT* pfPixelsPerDip)
-	{
-		float x, y;
-		m_pRT->GetDpi(&x, &y);
-		*pfPixelsPerDip = x / 96.f;
-		return S_OK;
-	}
-
-	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void** ppvObj)
-	{
-		const static QITAB qit[]
-		{
-			QITABENT(CTextRenderer, IDWriteTextRenderer),
-			QITABENT(CTextRenderer, IDWritePixelSnapping),
-			{},
-		};
-		return QISearch(this, qit, iid, ppvObj);
-	}
-
-	ULONG STDMETHODCALLTYPE AddRef() { return ++m_uRef; }
-
-	ULONG STDMETHODCALLTYPE Release()
-	{
-		--m_uRef;
-		if (m_uRef)
-			return m_uRef;
-		delete this;
-		return 0;
-	}
-};
-
 void CWndLrc::ReSizeRenderStuff(int cx, int cy)
 {
 	InvalidateCache();
@@ -175,6 +34,9 @@ void CWndLrc::ReSizeRenderStuff(int cx, int cy)
 	SafeRelease(m_pBrFrame);
 	m_pRT->CreateSolidColorBrush(D2D1::ColorF(0x3F3F3F, 0.5), &m_pBrBk);
 	m_pRT->CreateSolidColorBrush(D2D1::ColorF(0x97D2CB, 0.5), &m_pBrFrame);
+
+	SafeRelease(m_pDC1);
+	m_pRT->QueryInterface(&m_pDC1);
 
 	m_BtnBox.PostCreateRenderTarget();
 }
@@ -264,6 +126,16 @@ float CWndLrc::DrawLrcLine(int idxLrc, float y, BOOL bSecondLine)
 
 	if (Cache.idxLrc != idxLrc)// 更新缓存
 	{
+		float xDpi, yDpi;
+		m_pDC1->GetDpi(&xDpi, &yDpi);
+
+		const float fTolerance = D2D1::ComputeFlatteningTolerance(
+			D2D1::Matrix3x2F::Identity(), xDpi, yDpi, 1.f);
+
+		const float cxStroke = eck::DpiScaleF(App->GetOptionsMgr().DtLrcBorderWidth * 2.f, m_iDpi);
+
+		float cyOld;
+
 		Cache.idxLrc = idxLrc;
 		SafeRelease(Cache.pLayout);
 		SafeRelease(Cache.pLayoutTrans);
@@ -273,7 +145,7 @@ float CWndLrc::DrawLrcLine(int idxLrc, float y, BOOL bSecondLine)
 		Utils::LRCINFO FakeLrc{ (PWSTR)szEmpty,nullptr,cchEmpty,cchEmpty,Lrc.fTime,Lrc.fDuration };
 
 		const auto& LrcNew = (Lrc.cchTotal == 0) ? FakeLrc : Lrc;
-
+		//-----------重建文本布局
 		DWRITE_TEXT_METRICS tm;
 		const auto& om = App->GetOptionsMgr();
 		m_pTfMain->SetTextAlignment((DWRITE_TEXT_ALIGNMENT)om.DtLrcAlign[bSecondLine]);
@@ -289,10 +161,27 @@ float CWndLrc::DrawLrcLine(int idxLrc, float y, BOOL bSecondLine)
 		}
 		else
 			Cache.bTooLong = FALSE;
+		cyOld = Cache.size.height;
 		Cache.size = { tm.width,tm.height };
+		//-----------重建画刷
+		if (Cache.pBr || !eck::FloatEqual(cyOld, tm.height))
+		{
+			SafeRelease(Cache.pBr);
+			ReCreateBrush(tm.height, 0.f, bHiLight, &Cache.pBr, NULL);
+		}
+		//-----------重建几何实现
+		ID2D1PathGeometry* pPath;
+		eck::GetTextLayoutPathGeometry(Cache.pLayout, m_pRT, 0, 0, pPath);
+		SafeRelease(Cache.pGrF);
+		SafeRelease(Cache.pGrS);
+		m_pDC1->CreateFilledGeometryRealization(pPath, fTolerance, &Cache.pGrF);
+		m_pDC1->CreateStrokedGeometryRealization(pPath, fTolerance, 
+			cxStroke, NULL, &Cache.pGrS);
+		pPath->Release();
 
 		if (LrcNew.pszTranslation)
 		{
+			//-----------重建文本布局
 			m_pTfTranslation->SetTextAlignment((DWRITE_TEXT_ALIGNMENT)om.DtLrcAlign[bSecondLine]);
 			App->m_pDwFactory->CreateTextLayout(LrcNew.pszTranslation, LrcNew.cchTotal - Lrc.cchLrc, m_pTfTranslation,
 				cxMax, (float)m_cyClient, &Cache.pLayoutTrans);
@@ -305,34 +194,28 @@ float CWndLrc::DrawLrcLine(int idxLrc, float y, BOOL bSecondLine)
 			}
 			else
 				Cache.bTooLongTrans = FALSE;
+			cyOld = Cache.size.height;
 			Cache.sizeTrans = { tm.width,tm.height };
+			//-----------重建画刷
+			if (Cache.pBrTrans || !eck::FloatEqual(cyOld, tm.height))
+			{
+				SafeRelease(Cache.pBrTrans);
+				ReCreateBrush(0.f, tm.height, bHiLight, NULL, &Cache.pBrTrans);
+			}
+			//-----------重建几何实现
+			ID2D1PathGeometry* pPath;
+			eck::GetTextLayoutPathGeometry(Cache.pLayoutTrans, m_pRT, 0, 0, pPath);
+
+			SafeRelease(Cache.pGrFTrans);
+			SafeRelease(Cache.pGrSTrans);
+			m_pDC1->CreateFilledGeometryRealization(pPath, fTolerance, &Cache.pGrFTrans);
+			m_pDC1->CreateStrokedGeometryRealization(pPath, fTolerance, 
+				cxStroke, NULL, &Cache.pGrSTrans);
+			pPath->Release();
 		}
 
 		ZeroMemory(&FakeLrc, sizeof(FakeLrc));
 	}
-
-	const auto& Font = App->GetOptionsMgr().DtLrcFontMain;
-	D2D1_GRADIENT_STOP Stops[]
-	{
-		{ 0.f, eck::ARGBToD2dColorF(bHiLight ? Font.argbHiLightGra[0] : Font.argbNormalGra[0]) },
-		{ 1.f, eck::ARGBToD2dColorF(bHiLight ? Font.argbHiLightGra[1] : Font.argbNormalGra[1]) },
-	};
-	ID2D1GradientStopCollection* pStopCollection;
-	m_pRT->CreateGradientStopCollection(Stops, 2, &pStopCollection);
-	EckAssert(pStopCollection);
-
-	D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES Prop
-	{
-		D2D1::Point2F(0, y),
-		D2D1::Point2F(0, y + Cache.size.height),
-	};
-
-	ID2D1LinearGradientBrush* pBrush;
-	m_pRT->CreateLinearGradientBrush(&Prop, NULL, pStopCollection, &pBrush);
-	pStopCollection->Release();
-	EckAssert(pBrush);
-
-	auto pRenderer = new CTextRenderer(*this, m_pRT, pBrush, m_pBrTextBorder);
 
 	const float dTime = App->GetPlayer().GetPosF() - Lrc.fTime;
 
@@ -350,30 +233,19 @@ float CWndLrc::DrawLrcLine(int idxLrc, float y, BOOL bSecondLine)
 	}
 	else
 		dx = 0.f;
-
-	Cache.pLayout->Draw(NULL, pRenderer, xStart + dx, y);
-
-	pBrush->Release();
+#pragma warning(push)
+#pragma warning(disable:6387)// 可能为NULL
+	D2D1_MATRIX_3X2_F mat0;
+	m_pDC1->GetTransform(&mat0);
+	m_pDC1->SetTransform(D2D1::Matrix3x2F::Translation(xStart + dx, y));
+	m_pDC1->DrawGeometryRealization(Cache.pGrS, m_pBrTextBorder);
+	m_pDC1->DrawGeometryRealization(Cache.pGrF, Cache.pBr);
+	m_pDC1->SetTransform(mat0);
 
 	float cy = Cache.size.height;
 	if (Cache.pLayoutTrans)
 	{
 		const float yNew = y + cy;
-		const auto& Font = App->GetOptionsMgr().DtLrcFontTranslation;
-
-		Stops[0].color = eck::ARGBToD2dColorF(bHiLight ? Font.argbHiLightGra[0] : Font.argbNormalGra[0]);
-		Stops[1].color = eck::ARGBToD2dColorF(bHiLight ? Font.argbHiLightGra[1] : Font.argbNormalGra[1]);
-		m_pRT->CreateGradientStopCollection(Stops, 2, &pStopCollection);
-		EckAssert(pStopCollection);
-
-		Prop.startPoint.y += cy;
-		Prop.endPoint.y = Prop.startPoint.y + Cache.sizeTrans.height;
-		m_pRT->CreateLinearGradientBrush(&Prop, NULL, pStopCollection, &pBrush);
-		pStopCollection->Release();
-		EckAssert(pBrush);
-
-		pRenderer->m_pBr = pBrush;
-
 		if (Cache.bTooLongTrans)
 		{
 			dx = dTime * Cache.sizeTrans.width / Lrc.fDuration;
@@ -386,18 +258,16 @@ float CWndLrc::DrawLrcLine(int idxLrc, float y, BOOL bSecondLine)
 		}
 		else
 			dx = 0.f;
-		Cache.pLayoutTrans->Draw(NULL, pRenderer, xStart + dx, yNew);
-		pBrush->Release();
+
+		m_pDC1->GetTransform(&mat0);
+		m_pDC1->SetTransform(D2D1::Matrix3x2F::Translation(xStart + dx, yNew));
+		m_pDC1->DrawGeometryRealization(Cache.pGrSTrans, m_pBrTextBorder);
+		m_pDC1->DrawGeometryRealization(Cache.pGrFTrans, Cache.pBr);
+		m_pDC1->SetTransform(mat0);
 
 		cy += Cache.sizeTrans.height;
 	}
-
-#ifdef _DEBUG
-	EckAssert(pRenderer->Release() == 0);
-#else
-	pRenderer->Release();
-#endif // _DEBUG
-
+#pragma warning(pop)
 	return cy;
 }
 
@@ -407,9 +277,20 @@ void CWndLrc::DrawStaticLine(int idxFake, float y)
 	auto& Cache = m_TextCache[0];
 	if (Cache.idxLrc != idxFake)
 	{
+		float xDpi, yDpi;
+		m_pDC1->GetDpi(&xDpi, &yDpi);
+
+		const float fTolerance = D2D1::ComputeFlatteningTolerance(
+			D2D1::Matrix3x2F::Identity(), xDpi, yDpi, 1.f);
+
+		const float cxStroke = eck::DpiScaleF(App->GetOptionsMgr().DtLrcBorderWidth * 2.f, m_iDpi);
+
 		Cache.idxLrc = idxFake;
 		SafeRelease(Cache.pLayout);
 		SafeRelease(Cache.pLayoutTrans);
+		SafeRelease(Cache.pBrTrans);
+		SafeRelease(Cache.pGrFTrans);
+		SafeRelease(Cache.pGrSTrans);
 		Cache.bScrolling = FALSE;
 		Cache.bTooLong = Cache.bTooLongTrans = FALSE;
 
@@ -430,6 +311,7 @@ void CWndLrc::DrawStaticLine(int idxFake, float y)
 		}
 		break;
 		default:
+			EckDbgBreak();
 			return;
 		}
 
@@ -441,41 +323,35 @@ void CWndLrc::DrawStaticLine(int idxFake, float y)
 			cxMax, (float)m_cyClient, &Cache.pLayout);
 		DWRITE_TEXT_METRICS tm;
 		Cache.pLayout->GetMetrics(&tm);
+		const float cyOld = Cache.size.height;
 		Cache.size = { tm.width,tm.height };
 		m_pTfMain->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
+		//-----------重建画刷
+		if (Cache.pBr || !eck::FloatEqual(cyOld, tm.height))
+		{
+			SafeRelease(Cache.pBr);
+			ReCreateBrush(tm.height, 0.f, FALSE, &Cache.pBr, NULL);
+		}
+		//-----------重建几何实现
+		ID2D1PathGeometry* pPath;
+		eck::GetTextLayoutPathGeometry(Cache.pLayout, m_pRT, 0, 0, pPath);
+		SafeRelease(Cache.pGrF);
+		SafeRelease(Cache.pGrS);
+		m_pDC1->CreateFilledGeometryRealization(pPath, fTolerance, &Cache.pGrF);
+		m_pDC1->CreateStrokedGeometryRealization(pPath, fTolerance,
+			cxStroke, NULL, &Cache.pGrS);
+		pPath->Release();
 	}
 
-	const auto& Font = App->GetOptionsMgr().DtLrcFontMain;
-
-	D2D1_GRADIENT_STOP Stops[]
-	{
-		{ 0.f, eck::ARGBToD2dColorF(Font.argbNormalGra[0]) },
-		{ 1.f, eck::ARGBToD2dColorF(Font.argbNormalGra[1]) },
-	};
-	ID2D1GradientStopCollection* pStopCollection;
-	m_pRT->CreateGradientStopCollection(Stops, 2, &pStopCollection);
-	EckAssert(pStopCollection);
-
-	D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES Prop
-	{
-		D2D1::Point2F(0, y),
-		D2D1::Point2F(0, y + Cache.size.height),
-	};
-
-	ID2D1LinearGradientBrush* pBrush;
-	m_pRT->CreateLinearGradientBrush(&Prop, NULL, pStopCollection, &pBrush);
-	pStopCollection->Release();
-	EckAssert(pBrush);
-
-	auto pRenderer = new CTextRenderer(*this, m_pRT, pBrush, m_pBrTextBorder);
-	Cache.pLayout->Draw(NULL, pRenderer, CalcLrcMargin(), y);
-	pBrush->Release();
-
-#ifdef _DEBUG
-	EckAssert(pRenderer->Release() == 0);
-#else
-	pRenderer->Release();
-#endif // _DEBUG
+#pragma warning(push)
+#pragma warning(disable:6387)// 可能为NULL
+	D2D1_MATRIX_3X2_F mat0;
+	m_pDC1->GetTransform(&mat0);
+	m_pDC1->SetTransform(D2D1::Matrix3x2F::Translation(CalcLrcMargin(), y));
+	m_pDC1->DrawGeometryRealization(Cache.pGrS, m_pBrTextBorder);
+	m_pDC1->DrawGeometryRealization(Cache.pGrF, Cache.pBr);
+	m_pDC1->SetTransform(mat0);
+#pragma warning(pop)
 }
 
 void CWndLrc::UpdateTextFormat()
@@ -502,6 +378,48 @@ void CWndLrc::UpdateDpi(int iDpi)
 	eck::UpdateDpiSize(m_Ds, iDpi);
 	eck::UpdateDpiSizeF(m_DsF, iDpi);
 	UpdateTextFormat();
+}
+
+void CWndLrc::ReCreateBrush(float cyTextMain, float cyTextTrans, BOOL bHiLight,
+	ID2D1LinearGradientBrush** ppBrMain, ID2D1LinearGradientBrush** ppBrTrans)
+{
+	D2D1_GRADIENT_STOP Stops[]{ {0.f},{1.f} };
+	ID2D1GradientStopCollection* pStopCollection;
+	D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES Prop
+	{
+		D2D1::Point2F(0, 0),
+		D2D1::Point2F(0, 0),
+	};
+	ID2D1LinearGradientBrush* pBrush;
+	if(ppBrMain)
+	{
+		const auto& Font = App->GetOptionsMgr().DtLrcFontMain;
+		Stops[0].color = eck::ARGBToD2dColorF(
+			bHiLight ? Font.argbHiLightGra[0] : Font.argbNormalGra[0]);
+		Stops[1].color = eck::ARGBToD2dColorF(
+			bHiLight ? Font.argbHiLightGra[1] : Font.argbNormalGra[1]);
+		m_pRT->CreateGradientStopCollection(Stops, 2, &pStopCollection);
+		EckAssert(pStopCollection);
+
+		Prop.endPoint.y = cyTextMain;
+		m_pRT->CreateLinearGradientBrush(&Prop, NULL, pStopCollection, &pBrush);
+		pStopCollection->Release();
+		*ppBrMain = pBrush;
+	}
+	if (ppBrTrans)
+	{
+		const auto& Font = App->GetOptionsMgr().DtLrcFontTranslation;
+
+		Stops[0].color = eck::ARGBToD2dColorF(bHiLight ? Font.argbHiLightGra[0] : Font.argbNormalGra[0]);
+		Stops[1].color = eck::ARGBToD2dColorF(bHiLight ? Font.argbHiLightGra[1] : Font.argbNormalGra[1]);
+		m_pRT->CreateGradientStopCollection(Stops, 2, &pStopCollection);
+		EckAssert(pStopCollection);
+
+		Prop.endPoint.y = cyTextTrans;
+		m_pRT->CreateLinearGradientBrush(&Prop, NULL, pStopCollection, &pBrush);
+		pStopCollection->Release();
+		*ppBrTrans = pBrush;
+	}
 }
 
 LRESULT CWndLrc::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -680,11 +598,19 @@ LRESULT CWndLrc::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SafeRelease(m_pTfMain);
 		SafeRelease(m_pTfTranslation);
 		SafeRelease(m_pRT);
+		SafeRelease(m_pDC1);
 		m_DC.Destroy();
-		SafeRelease(m_TextCache[0].pLayout);
-		SafeRelease(m_TextCache[0].pLayoutTrans);
-		SafeRelease(m_TextCache[1].pLayout);
-		SafeRelease(m_TextCache[1].pLayoutTrans);
+		for (auto& e : m_TextCache)
+		{
+			SafeRelease(e.pLayout);
+			SafeRelease(e.pLayoutTrans);
+			SafeRelease(e.pGrF);
+			SafeRelease(e.pGrS);
+			SafeRelease(e.pGrFTrans);
+			SafeRelease(e.pGrSTrans);
+			SafeRelease(e.pBr);
+			SafeRelease(e.pBrTrans);
+		}
 		InvalidateCache();
 	}
 	break;

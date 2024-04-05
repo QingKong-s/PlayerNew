@@ -14,11 +14,9 @@ LRESULT CTbGhost::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_DWMSENDICONICLIVEPREVIEWBITMAP:
 	{
-        RECT rcMainClient;
-		GetClientRect(m_WndMain.HWnd, &rcMainClient);
-		if (!App->GetOptionsMgr().ProgShowCoverLivePreview ||
-			(!rcMainClient.right || !rcMainClient.bottom))
+		if (!App->GetOptionsMgr().ProgShowCoverLivePreview)
 		{
+        SetEmptyBitmap:
 			eck::CDib dib{};
 			dib.Create(1, 1);
 			DwmSetIconicLivePreviewBitmap(hWnd, dib.GetHBitmap(), NULL, 0);
@@ -29,18 +27,21 @@ LRESULT CTbGhost::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         {
             DwmSetIconicLivePreviewBitmap(hWnd, m_hbmLivePreviewCache, NULL, 0);
             return 0;
-        }
+		}
 
-        const int iDpi = eck::GetDpi(m_WndMain.HWnd);
-        const UINT xMargin = eck::DpiScale(50, iDpi);
-        const UINT yMargin = xMargin;
-        const UINT cxMax = rcMainClient.right - xMargin * 2;
-        const UINT cyMax = rcMainClient.bottom - yMargin * 2;
+		RECT rcMainClient;
+		if (!eck::GetWindowClientRect(m_WndMain.HWnd, rcMainClient))
+			goto SetEmptyBitmap;
+		const int iDpi = eck::GetDpi(m_WndMain.HWnd);
+		const UINT xMargin = eck::DpiScale(50, iDpi);
+		const UINT yMargin = xMargin;
+		const UINT cxMax = rcMainClient.right - xMargin * 2;
+		const UINT cyMax = rcMainClient.bottom - yMargin * 2;
 
-        const auto& rbCover = App->GetPlayer().GetMusicInfo().rbCover;
-        const auto pStream = new eck::CStreamView(rbCover);
+		const auto& rbCover = App->GetPlayer().GetMusicInfo().rbCover;
+		const auto pStream = new eck::CStreamView(rbCover);
 
-        HBITMAP hBitmap;
+		HBITMAP hBitmap;
         GpBitmap* pBitmap;
         GdipCreateBitmapFromStream(pStream, &pBitmap);
         if (!pBitmap)
@@ -163,7 +164,7 @@ LRESULT CTbGhost::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         GdipDeleteGraphics(pGraphics);
         GdipCreateHBITMAPFromBitmap(pBitmapBK, &hBitmap, 0x00000000);
 
-        EckAssert(SUCCEEDED(DwmSetIconicThumbnail(hWnd, hBitmap, 0)));
+        DwmSetIconicThumbnail(hWnd, hBitmap, 0);
 
         GdipDisposeImage(pBitmap);
         GdipDisposeImage(pBitmapBK);

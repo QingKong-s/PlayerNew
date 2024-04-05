@@ -168,7 +168,7 @@ BOOL CWndList::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	m_TBManage.AddButtons(ARRAYSIZE(TBBtns), TBBtns);
 	m_TBManage.Show(SW_SHOWNOACTIVATE);
 
-	constexpr DWORD dwLVStyle = LVS_REPORT | LVS_SHOWSELALWAYS | LVS_OWNERDATA;
+	constexpr DWORD dwLVStyle = LVS_REPORT | LVS_SHOWSELALWAYS | LVS_OWNERDATA | LVS_EDITLABELS;
 	m_LVSearch.Create(NULL, dwLVStyle, 0, 0, 0, 0, 0, hWnd, IDC_LV_LIST);
 	m_LVSearch.SetExplorerTheme();
 
@@ -266,7 +266,10 @@ void CWndList::OnMenuAddFile()
 		{L"所有文件",L"*.*"}
 	};
 	pfod->SetFileTypes(ARRAYSIZE(c_cdfs), c_cdfs);
+
+	eck::GetThreadCtx()->bEnableDarkModeHook = FALSE;
 	pfod->Show(HWnd);
+	eck::GetThreadCtx()->bEnableDarkModeHook = TRUE;
 	IShellItemArray* psia;
 	hr = pfod->GetResults(&psia);
 	if (FAILED(hr))
@@ -323,11 +326,14 @@ void CWndList::OnMenuAddDir()
 		return;
 	}
 	pfod->SetOptions(FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM | FOS_PATHMUSTEXIST);
+	eck::GetThreadCtx()->bEnableDarkModeHook = FALSE;
 	if (FAILED(pfod->Show(m_hWnd)))
 	{
+		eck::GetThreadCtx()->bEnableDarkModeHook = TRUE;
 		pfod->Release();
 		return;
 	}
+	eck::GetThreadCtx()->bEnableDarkModeHook = TRUE;
 	IShellItem* psi;
 	hr = pfod->GetResult(&psi);
 	if (FAILED(hr))
@@ -438,7 +444,7 @@ void CWndList::OnCmdSaveList()
 		CPlayListFileWriter ListFile{};
 		if (!ListFile.Open(Param.rsRetFile.Data()))
 		{
-			CApp::ShowError(m_hWnd, std::nullopt, CApp::ErrSrc::Win32, L"打开列表文件失败");
+			CApp::ShowError(m_hWnd, std::nullopt, CApp::ErrSrc::Win32, L"保存列表文件失败");
 			return;
 		}
 
@@ -555,21 +561,27 @@ BOOL CWndList::OnListLVNRClick(NMITEMACTIVATE* pnmia)
 		OnMenuOpenInExplorer();
 		break;
 	case IDMI_DELETE_FROM_LIST:
-		OnMenuDelFromList();
+		if (Utils::MsgBox(L"确定要从列表中移除选中的项目吗", L"移除后无法恢复",
+			L"询问", 2, (HICON)TD_WARNING_ICON, HWnd) == Utils::MBBID_1)
+			OnMenuDel(FALSE);
 		break;
 	case IDMI_DELETE_FROM_DISK:
-#pragma message("TODO：删除文件")
+		if (Utils::MsgBox(L"确定要从磁盘上删除选中的文件吗", L"删除后无法恢复",
+			L"询问", 2, (HICON)TD_WARNING_ICON, HWnd) == Utils::MBBID_1)
+			OnMenuDel(TRUE);
 		break;
 	case IDMI_IGNORE:
 		ECKBOOLNOT(List.At(idx).bIgnore);
 		m_LVList.RedrawItem(idx);
 		break;
-	case IDMI_RENAME:
-#pragma message("TODO：重命名")
+	case IDMI_RENAME:// TODO : 替换默认编辑控件
+		m_LVList.EditLabel(idx);
 		break;
 	case IDMI_DETAIL:
-#pragma message("TODO：详细信息")
-		break;
+	{
+		// TODO : 详细信息
+	}
+	break;
 	case IDMI_PREVBOOKMARK:
 	{
 		for (int i = idx; i >= 0; --i)
@@ -679,7 +691,7 @@ void CWndList::OnMenuOpenInExplorer()
 		}, pvSelPaths));
 }
 
-void CWndList::OnMenuDelFromList()
+void CWndList::OnMenuDel(BOOL bDelFile)
 {
 	auto& Player = App->GetPlayer();
 	auto& List = Player.GetList();
@@ -692,8 +704,11 @@ void CWndList::OnMenuDelFromList()
 		{
 			if (m_LVList.GetItemState(i, LVIS_SELECTED) == LVIS_SELECTED)
 			{
+				auto& e = List.At(i);
 				m_LVList.SetItemState(i, 0, LVIS_SELECTED);
-				vIdx.emplace_back(List.At(i).idxSortMapping);
+				vIdx.push_back(e.idxSortMapping);
+				if (bDelFile)
+					DeleteFileW(e.rsFile.Data());
 			}
 		}
 		std::sort(std::execution::par_unseq, vIdx.begin(), vIdx.end());
@@ -706,6 +721,8 @@ void CWndList::OnMenuDelFromList()
 			if (m_LVList.GetItemState(i, LVIS_SELECTED) == LVIS_SELECTED)
 			{
 				m_LVList.SetItemState(i, 0, LVIS_SELECTED);
+				if (bDelFile)
+					DeleteFileW(List.AtAbs(i).rsFile.Data());
 				Player.Delete(i);
 			}
 		}
@@ -906,6 +923,20 @@ void CWndList::OnENChange()
 	}
 }
 
+BOOL CWndList::OnListLVNEndLabelEdit(NMLVDISPINFOW* pnmlvdi)
+{
+	if (pnmlvdi->item.pszText)
+		App->GetPlayer().GetList().At(pnmlvdi->item.iItem).rsName = pnmlvdi->item.pszText;
+	return FALSE;
+}
+
+BOOL CWndList::OnSearchLVNEndLabelEdit(NMLVDISPINFOW* pnmlvdi)
+{
+	if (pnmlvdi->item.pszText)
+		App->GetPlayer().AtSearching(pnmlvdi->item.iItem).rsName = pnmlvdi->item.pszText;
+	return FALSE;
+}
+
 void CWndList::EnsureVisibleBookmark(int idx)
 {
 	m_LVList.EnsureVisible(idx);
@@ -941,6 +972,8 @@ LRESULT CWndList::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			case LVN_BEGINDRAG:
 				OnListLVNBeginDrag((NMLISTVIEW*)lParam);
 				return 0;
+			case LVN_ENDLABELEDIT:
+				return OnListLVNEndLabelEdit((NMLVDISPINFOW*)lParam);
 			}
 		else if (((NMHDR*)lParam)->hwndFrom == m_LVSearch.GetHWND())
 			switch (((NMHDR*)lParam)->code)
@@ -953,6 +986,8 @@ LRESULT CWndList::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			case LVN_BEGINDRAG:
 				OnSearchLVNBeginDrag((NMLISTVIEW*)lParam);
 				return 0;
+			case LVN_ENDLABELEDIT:
+				return OnSearchLVNEndLabelEdit((NMLVDISPINFOW*)lParam);
 			}
 	}
 	break;

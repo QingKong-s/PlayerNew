@@ -6,7 +6,7 @@
 
 #include "eck\CRefStr.h"
 #include "eck\WndHelper.h"
-
+#include "eck\CWindowPosSetting.h"
 
 
 struct FONTOPTIONS
@@ -72,37 +72,30 @@ enum class RepeatMode
 class COptionsMgr
 {
 public:
-	FONTOPTIONS LrcFont{};
+	RepeatMode PlayRepeatMode{};
+	BOOL PlaySilent{};
 
-	RepeatMode iRepeatMode{};
-
-	Utils::LrcEncoding iLrcFileEncoding{};
-
-	std::vector<eck::CRefStrW> vListPath{};
-
-	float cyLrcPadding{};
-
-	FONTOPTIONS DtLrcFontMain{};
-	FONTOPTIONS DtLrcFontTranslation{};
-	BOOL DtLrcBorder = TRUE;
-	ARGB DtLrcBorderColor{};
-	int DtLrcAlign[2]{};
-	SIZE DtLrcMinSize{};
-	BOOL DtLrcEnableShadow{ 1 };
-	float DtLrcShadowOffset{ 1.5f };
-	BOOL DtLrcShow{ FALSE };
+	Utils::LrcEncoding		LrcFileEncoding{};
+	FONTOPTIONS				LrcFont{};
+	float					LrcPaddingHeight{};
+	float					LrcCurrFontScale{ 1.3f };
+	FONTOPTIONS				DtLrcFontMain{};
+	FONTOPTIONS				DtLrcFontTranslation{};
+	BOOL					DtLrcBorder{ TRUE };
+	ARGB					DtLrcBorderColor{};
+	float					DtLrcBorderWidth{ 1.f };
+	int						DtLrcAlign[2]{};
+	SIZE					DtLrcMinSize{};
+	BOOL					DtLrcEnableShadow{ 1 };
+	float					DtLrcShadowOffset{ 1.5f };
+	BOOL					DtLrcShow{ FALSE };
+	eck::CWindowPosSetting	DtLrcWndPos{};
 
 	BOOL ProgShowCoverLivePreview{ 1 };
 
-	BOOL PlaySilent{};
+	std::vector<eck::CRefStrW> ListFilePath{};
 
-	float LrcCurrFontScale{ 1.3f };
-
-	//static COptionsMgr& GetInst()
-	//{
-	//	static COptionsMgr om;
-	//	return om;
-	//}
+	int FxPage{};
 
 	static RepeatMode NextRepeatMode(RepeatMode i)
 	{

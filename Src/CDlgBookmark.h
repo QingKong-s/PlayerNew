@@ -22,6 +22,8 @@ private:
 	eck::CEditExt m_EDName{};
 	eck::CColorPicker m_CLPColor{};
 
+	HIMAGELIST m_hIml = NULL;
+
 	HFONT m_hFont = NULL;
 
 	PARAM* m_pParam = NULL;
@@ -59,7 +61,8 @@ private:
 		ECK_DS_ENTRY(cxColumn3, 80)
 		ECK_DS_ENTRY(cyLVItem, c_cyLVItem)
 		ECK_DS_ENTRY(iLVClrBlockPadding, 3)
-		ECK_DS_ENTRY(cyTB, 36)
+		ECK_DS_ENTRY(cxTB, 60)
+		ECK_DS_ENTRY(cyTB, 32)
 		ECK_DS_ENTRY(iMargin, 10)
 		;
 	ECK_DS_END_VAR(m_Ds);
@@ -75,9 +78,9 @@ private:
 	static LRESULT CALLBACK SubclassProc_ED(HWND hWnd, UINT uMsg, WPARAM wParam,
 		LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 
-	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 
-	void OnInitDialog(HWND hWnd);
+	BOOL OnInitDialog(HWND hWnd, HWND hFocus, LPARAM lParam) override;
 
 	void OnCmdDelete();
 

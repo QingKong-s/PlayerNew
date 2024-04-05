@@ -1,6 +1,8 @@
 ﻿#include "CWndBK.h"
 
 
+
+
 void CUILrc::ScrollProc(int iPos, int iPrevPos, LPARAM lParam)
 {
 	if (iPos == iPrevPos)
@@ -53,37 +55,85 @@ void CUILrc::DrawScrollBar()
 BOOL CUILrc::DrawItem(int idx, float& y)
 {
 	EckAssert(idx >= 0 && idx < (int)m_vItem.size());
-	const auto& Item = m_vItem[idx];
+	auto& Item = m_vItem[idx];
 	const auto fScale = App->GetOptionsMgr().LrcCurrFontScale;
 
 	y = GetItemY(idx);
 	const D2D1_RECT_F rc{ 0,y,Item.cx,y + Item.cy };
 
-	D2D1_MATRIX_3X2_F mat;
-	m_pDC->GetTransform(&mat);
+	D2D1_MATRIX_3X2_F mat0;
+	m_pDC->GetTransform(&mat0);
+	auto mat = mat0 * D2D1::Matrix3x2F::Translation(0, y);
+
+	if (!Item.bCacheValid)
+	{
+		ID2D1PathGeometry* pPathGeometry;
+		eck::GetTextLayoutPathGeometry(Item.pLayout, m_pDC, 0.f, 0.f, pPathGeometry);
+		float xDpi, yDpi;
+		m_pDC->GetDpi(&xDpi, &yDpi);
+
+		ID2D1GeometryRealization* pGr = NULL;
+		m_pDC1->CreateFilledGeometryRealization(
+			pPathGeometry,
+			D2D1::ComputeFlatteningTolerance(
+				D2D1::Matrix3x2F::Identity(), xDpi, yDpi, fScale),
+			&pGr);
+
+		if (Item.pGr)
+			Item.pGr->Release();
+		Item.pGr = pGr;
+		pPathGeometry->Release();
+		Item.bCacheValid = TRUE;
+	}
+
 	if (idx == m_idxPrevAnItem)
 	{
-		m_pDC->SetTransform(D2D1::Matrix3x2F::Scale(fScale + 1.f - m_fAnValue, fScale + 1.f - m_fAnValue, { 0.f,y }) * mat);
-		FillItemBkg(idx, rc);
-		m_pDC->DrawTextLayout({ 0.f,y }, Item.pLayout,
-			idx == App->GetPlayer().GetCurrLrc() ? m_pBrTextHighlight : m_pBrTextNormal);
-		m_pDC->SetTransform(mat);
+		const auto matScale = D2D1::Matrix3x2F::Scale(
+			fScale + 1.f - m_fAnValue, fScale + 1.f - m_fAnValue);
+		if (Item.bSel || idx == m_idxHot)
+		{
+			m_pDC->SetTransform(D2D1::Matrix3x2F::Scale(
+				fScale + 1.f - m_fAnValue,
+				fScale + 1.f - m_fAnValue,
+				{ 0,y }) * mat0);
+			FillItemBkg(idx, rc);
+		}
+		m_pDC->SetTransform(D2D1::Matrix3x2F::Scale(
+			fScale + 1.f - m_fAnValue,
+			fScale + 1.f - m_fAnValue) * mat);
+		m_pDC1->DrawGeometryRealization(Item.pGr,
+			m_idxPrevCurr == idx ? m_pBrTextHighlight : m_pBrTextNormal);
+		m_pDC->SetTransform(mat0);
 		return TRUE;
 	}
 
 	if (idx == m_idxCurrAnItem)
 	{
-		m_pDC->SetTransform(D2D1::Matrix3x2F::Scale(m_fAnValue, m_fAnValue, { 0.f,y }) * mat);
-		FillItemBkg(idx, rc);
-		m_pDC->DrawTextLayout({ 0.f,y }, Item.pLayout,
-			idx == App->GetPlayer().GetCurrLrc() ? m_pBrTextHighlight : m_pBrTextNormal);
-		m_pDC->SetTransform(mat);
+		const auto matScale = D2D1::Matrix3x2F::Scale(
+			m_fAnValue, m_fAnValue);
+		if (Item.bSel || idx == m_idxHot)
+		{
+			m_pDC->SetTransform(D2D1::Matrix3x2F::Scale(
+				m_fAnValue,
+				m_fAnValue,
+				{ 0,y }) * mat0);
+			FillItemBkg(idx, rc);
+		}
+		m_pDC->SetTransform(D2D1::Matrix3x2F::Scale(
+			m_fAnValue,
+			m_fAnValue) * mat);
+		m_pDC1->DrawGeometryRealization(Item.pGr,
+			m_idxPrevCurr == idx ? m_pBrTextHighlight : m_pBrTextNormal);
+
+		m_pDC->SetTransform(mat0);
 		return TRUE;
 	}
 
 	FillItemBkg(idx, rc);
-	m_pDC->DrawTextLayout({ 0.f,y }, Item.pLayout,
-		idx == App->GetPlayer().GetCurrLrc() ? m_pBrTextHighlight : m_pBrTextNormal);
+	m_pDC->SetTransform(mat);
+	m_pDC1->DrawGeometryRealization(Item.pGr,
+		m_idxPrevCurr == idx ? m_pBrTextHighlight : m_pBrTextNormal);
+	m_pDC->SetTransform(mat0);
 	return TRUE;
 }
 
@@ -384,7 +434,7 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				IDWriteTextLayout* pLayout;
 				DWRITE_TEXT_METRICS Metrics;
 				float y = 0.f;
-				const float cyPadding = GetBk()->Dpi(App->GetOptionsMgr().cyLrcPadding);
+				const float cyPadding = GetBk()->Dpi(App->GetOptionsMgr().LrcPaddingHeight);
 				EckCounter(vLrc.size(), i)
 				{
 					App->m_pDwFactory->CreateTextLayout(vLrc[i].pszLrc, vLrc[i].cchTotal,
@@ -411,9 +461,7 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_CREATE:
 	{
-		SafeRelease(m_pBrTextNormal);
-		SafeRelease(m_pBrTextHighlight);
-		SafeRelease(m_pTextFormat);
+		m_pDC->QueryInterface(&m_pDC1);
 
 		m_pDC->CreateSolidColorBrush(eck::ColorrefToD2dColorF(eck::Colorref::DeepGray), &m_pBrTextNormal);
 		m_pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_pBrTextHighlight);
@@ -440,6 +488,8 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SafeRelease(m_pBrush);
 		SafeRelease(m_pTextFormat);
 		SafeRelease(m_psv);
+		SafeRelease(m_pDC1);
+		m_vItem.clear();
 	}
 	break;
 	}

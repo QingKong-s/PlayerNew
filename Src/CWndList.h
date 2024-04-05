@@ -149,7 +149,7 @@ private:
 
 	void OnMenuOpenInExplorer();
 
-	void OnMenuDelFromList();
+	void OnMenuDel(BOOL bDelFile);
 
 	void OnMenuAddDelBookmark(int idx);
 
@@ -162,6 +162,10 @@ private:
 	void OnSearchLVNBeginDrag(NMLISTVIEW* pnmlv);
 
 	void OnENChange();
+
+	BOOL OnListLVNEndLabelEdit(NMLVDISPINFOW* pnmlvdi);
+
+	BOOL OnSearchLVNEndLabelEdit(NMLVDISPINFOW* pnmlvdi);
 public:
 	CWndList(CWndMain& Main) :m_WndMain(Main) {}
 

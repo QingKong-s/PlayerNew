@@ -68,7 +68,7 @@ PlayOpErr CPlayer::Play(int idx)
 	CreateWicBmpCover();
 	m_vLrc.clear();
 	Utils::ParseLrc(m_rsCurrFile.Data(), 0u, m_vLrc, m_vLrcLabel,
-		App->GetOptionsMgr().iLrcFileEncoding, (float)m_Bass.GetLength());
+		App->GetOptionsMgr().LrcFileEncoding, (float)m_Bass.GetLength());
 	if (!m_vLrc.size())
 		Utils::ParseLrc(m_MusicInfo.rsLrc.Data(), m_MusicInfo.rsLrc.ByteSize(), m_vLrc, m_vLrcLabel, 
 			Utils::LrcEncoding::UTF16LE, (float)m_Bass.GetLength());
@@ -149,7 +149,7 @@ PlayOpErr CPlayer::Prev()
 
 PlayOpErr CPlayer::AutoNext()
 {
-	switch (App->GetOptionsMgr().iRepeatMode)
+	switch (App->GetOptionsMgr().PlayRepeatMode)
 	{
 	case RepeatMode::AllLoop:
 		return Next();
@@ -211,7 +211,9 @@ void CPlayer::Sort(SortFlags uFlags, int idxBegin, int idxEnd)
 		[&vList](int idx1, int idx2)->bool
 		{
 			return StrCmpLogicalW(vList[idx1].rsFile.Data() , vList[idx2].rsFile.Data()) < 0;
-		}
+		},
+		{},
+
 	};
 
 	m_List.m_SortParam.uCurrSortFlags = uFlags;
@@ -249,13 +251,14 @@ void CPlayer::Sort(SortFlags uFlags, int idxBegin, int idxEnd)
 		else
 			idxRealLaterPlay = m_idxLaterPlay;
 
-	const int cElem = idxEnd - idxBegin + 1;
-	int* pidxSortMapping = (int*)_malloca(cElem * sizeof(int));
-	EckAssert(pidxSortMapping);
+	int* pidxSortMapping = (int*)_malloca(cItems * sizeof(int));
+	EckCheckMem(pidxSortMapping);
 	for (int i = idxBegin; i <= idxEnd; ++i)
 		pidxSortMapping[i - idxBegin] = i;
 
-	std::sort(std::execution::par_unseq, pidxSortMapping, pidxSortMapping + cItems, pfnSort[CPlayList::Sf2FnIdx(uFlags)]);
+	std::sort(std::execution::par_unseq, 
+		pidxSortMapping, pidxSortMapping + cItems, 
+		pfnSort[CPlayList::Sf2FnIdx(uFlags)]);
 
 	using ItList = std::vector<PLAYLISTUNIT>::iterator;
 
@@ -267,14 +270,14 @@ void CPlayer::Sort(SortFlags uFlags, int idxBegin, int idxEnd)
 
 	if (idxRealCurr >= 0)
 	{
-		auto pNewPos = std::find(std::execution::par_unseq, pidxSortMapping, pidxSortMapping + cElem, idxRealCurr);
-		if (pNewPos != pidxSortMapping + cElem)
+		auto pNewPos = std::find(std::execution::par_unseq, pidxSortMapping, pidxSortMapping + cItems, idxRealCurr);
+		if (pNewPos != pidxSortMapping + cItems)
 			m_idxCurrFile = (int)(pNewPos - pidxSortMapping);
 	}
 	if (idxRealLaterPlay >= 0)
 	{
-		auto pNewPos = std::find(std::execution::par_unseq, pidxSortMapping, pidxSortMapping + cElem, idxRealLaterPlay);
-		if (pNewPos != pidxSortMapping + cElem)
+		auto pNewPos = std::find(std::execution::par_unseq, pidxSortMapping, pidxSortMapping + cItems, idxRealLaterPlay);
+		if (pNewPos != pidxSortMapping + cItems)
 			m_idxLaterPlay = (int)(pNewPos - pidxSortMapping);
 	}
 
@@ -290,7 +293,7 @@ void CPlayer::Search(PCWSTR pszKeyWord)
 	EckCounter(cItems, i)
 	{
 		auto& Item = m_List.At(i);
-		if (wcsstr(Item.rsName.Data(), pszKeyWord))
+		if (StrStrIW(Item.rsName.Data(), pszKeyWord))
 			m_vSearchingResult.emplace_back(i);
 	}
 }

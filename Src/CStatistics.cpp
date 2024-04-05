@@ -4,7 +4,7 @@ int CStatistics::LoadDataBase(PCWSTR pszFileName)
 {
 	if (m_pDb)
 		sqlite3_close(m_pDb);
-	const int iRet = sqlite3_open16(pszFileName, &m_pDb);
+	const int iRet = sqlite3_open(eck::StrW2X(pszFileName, -1, CP_UTF8).Data(), &m_pDb);
 	if (iRet != SQLITE_OK)
 	{
 		sqlite3_close(m_pDb);
@@ -59,16 +59,8 @@ int CStatistics::IncPlayCount(const eck::CRefStrW& rsSong)
 void CStatistics::IncPlayCount(const std::vector<eck::CRefStrW>& vArtist)
 {
 	using namespace eck::Literals;
-
-	std::vector<eck::CRefStrA> vSqlU8(vArtist.size());
-
 	EckCounter(vArtist.size(), i)
 	{
-		auto a = L"INSERT INTO "_rs + m_rsTableArtist +
-			L" VALUES(\"" + vArtist[i] + L"\", 1, 0) "
-			L"ON CONFLICT(Name) DO UPDATE " +
-			L"SET PlayCount = PlayCount + 1 "
-			L"WHERE Name = \"" + vArtist[i] + L"\"";
 		sqlite3_exec(m_pDb,
 			eck::StrW2X(
 				L"INSERT INTO "_rs + m_rsTableArtist +

@@ -5,8 +5,6 @@
 #include <functional>
 
 //////////////////////////////////旧版本的播放列表文件//////////////////////////////////
-#pragma pack(push)
-#pragma pack(4)
 struct LISTFILEHEADER_0	// 播放列表文件头
 {
 	CHAR cHeader[4];	// 文件起始标记，ASCII字符串"QKPL"
@@ -15,8 +13,9 @@ struct LISTFILEHEADER_0	// 播放列表文件头
 	DWORD dwReserved;	// 保留，必须为0
 };
 
-#define QKLFVER_1				0
-#define QKLFVER_2				1
+constexpr inline int
+QKLFVER_1 = 0,
+QKLFVER_2 = 1;
 
 struct LISTFILEITEM_0	// 播放列表文件项目头
 {
@@ -25,13 +24,16 @@ struct LISTFILEITEM_0	// 播放列表文件项目头
 	DWORD dwReserved2;	// 保留，必须为0
 };
 
-#define QKLIF_INVALID			0x00000001// 项目无效
-#define QKLIF_IGNORED			0x00000002// 忽略
-#define QKLIF_BOOKMARK			0x00000004// 有书签
-#define QKLIF_DRAGMARK_CURRFILE	0x00000008// 仅在拖放时有效，现行播放标志，还原索引用
-#define QKLIF_TIME				0x00000010// 仅在存档或读取文件时有效，已有时长字符串
-#define QKLIF_DRAGMARK_PLLATER	0x00000020// 仅在拖放时有效，稍后播放标志，还原索引用
-#pragma pack(pop)
+enum
+{
+	QKLIF_INVALID = 0x00000001,	// 项目无效
+	QKLIF_IGNORED = 0x00000002,	// 忽略
+	QKLIF_BOOKMARK = 0x00000004,// 有书签
+	QKLIF_DUMMY1 = 0x00000008,	// 
+	QKLIF_TIME = 0x00000010,	// 有时长字符串
+	QKLIF_DUMMY2 = 0x00000020,	// 
+};
+
 /*
 * LISTFILEHEADER_0
 * {
@@ -48,7 +50,6 @@ struct LISTFILEITEM_0	// 播放列表文件项目头
 */
 
 //////////////////////////////////新版本的播放列表文件//////////////////////////////////
-#pragma pack(push, 4)
 constexpr inline int
 PNLFVER_0 = 0,
 PNBMVER_0 = 0;
@@ -85,7 +86,7 @@ struct BOOKMARKITEM		// 书签信息项目头
 	int cchName;		// 书签名称长度，不包括结尾的\0
 	// WCHAR szName[];
 };
-#pragma pack(pop)
+
 /*
 * LISTFILEHEADER_1
 * {
@@ -110,26 +111,20 @@ private:
 public:
 	using FItemProcessor = std::function<BOOL(const LISTFILEITEM_1* pItem, PCWSTR pszName, PCWSTR pszFile, PCWSTR pszTime)>;
 	using FBookmarkProcessor = std::function<BOOL(const BOOKMARKITEM* pItem, PCWSTR pszName)>;
-
-	CPlayListFileReader() = default;
+	ECK_DISABLE_COPY_MOVE_DEF_CONS(CPlayListFileReader)
+public:
 	CPlayListFileReader(PCWSTR pszFile)
 	{
 		Open(pszFile);
 	}
 
-	CPlayListFileReader(const CPlayListFileReader&) = delete;
-	CPlayListFileReader(CPlayListFileReader&&) = delete;
-	CPlayListFileReader& operator=(const CPlayListFileReader&) = delete;
-	CPlayListFileReader& operator=(CPlayListFileReader&&) = delete;
-	~CPlayListFileReader() = default;
-
 	BOOL Open(PCWSTR pszFile);
 
 	int GetItemCount();
 
-	void For(FItemProcessor fnProcessor);
+	void For(const FItemProcessor& fnProcessor);
 
-	void ForBookmark(FBookmarkProcessor fnProcessor);
+	void ForBookmark(const FBookmarkProcessor& fnProcessor);
 };
 
 
@@ -141,17 +136,12 @@ private:
 	LISTFILEHEADER_1 m_Header{ {'P','N','P','L'},PNLFVER_0 };
 	BOOKMARKHEADER m_BmHeader{ PNBMVER_0 };
 public:
-	CPlayListFileWriter() = default;
+	ECK_DISABLE_COPY_MOVE_DEF_CONS(CPlayListFileWriter)
+public:
 	CPlayListFileWriter(PCWSTR pszFile)
 	{
 		Open(pszFile);
 	}
-
-	CPlayListFileWriter(const CPlayListFileWriter&) = delete;
-	CPlayListFileWriter(CPlayListFileWriter&&) = delete;
-	CPlayListFileWriter& operator=(const CPlayListFileWriter&) = delete;
-	CPlayListFileWriter& operator=(CPlayListFileWriter&&) = delete;
-	~CPlayListFileWriter() = default;
 
 	BOOL Open(PCWSTR pszFile);
 

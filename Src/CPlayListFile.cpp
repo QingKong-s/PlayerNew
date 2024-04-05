@@ -35,7 +35,7 @@ int CPlayListFileReader::GetItemCount()
 	}
 }
 
-void CPlayListFileReader::For(FItemProcessor fnProcessor)
+void CPlayListFileReader::For(const FItemProcessor& fnProcessor)
 {
 	eck::CMemReader r{ NULL };
 	PCWSTR pszName, pszFile, pszTime;
@@ -118,7 +118,7 @@ void CPlayListFileReader::For(FItemProcessor fnProcessor)
 		EckDbgBreak();
 }
 
-void CPlayListFileReader::ForBookmark(FBookmarkProcessor fnProcessor)
+void CPlayListFileReader::ForBookmark(const FBookmarkProcessor& fnProcessor)
 {
 	eck::CMemReader r{ NULL };
 	PCWSTR pszName;

@@ -34,7 +34,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	auto iEckRet = eck::Init(hInstance);
 	if (iEckRet != eck::InitStatus::Ok)
 	{
-		
 		CApp::ShowError(NULL, (DWORD)iEckRet, CApp::ErrSrc::None,
 			L"eck::Init调用失败", eck::InitStatusToString(iEckRet));
 		return 0;
@@ -58,12 +57,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	App->m_pWndMain = pWnd;
 
 	auto& opt = App->GetOptionsMgr();
-	opt.vListPath.push_back(L"D:\\test");
-	opt.vListPath.push_back(L"D:\\test - 副本");
-	opt.cyLrcPadding = 10.f;
+	opt.ListFilePath.push_back(L"D:\\test");
+	opt.ListFilePath.push_back(L"D:\\test - 副本");
+	opt.LrcPaddingHeight = 10.f;
 	opt.LrcFont.rsFontName = L"微软雅黑";
 	opt.LrcFont.iWeight = 400;
-	opt.LrcFont.fFontSize = 30;
+	opt.LrcFont.fFontSize = 26;
 
 	opt.DtLrcFontMain = {L"微软雅黑", 400, 40.f };
 

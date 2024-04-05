@@ -4,23 +4,22 @@ BOOL CDlgListFile::OnInitDialog(HWND hDlg, HWND hFocus, LPARAM lParam)
 {
 	UpdateDpiInit(eck::GetDpi(hDlg));
 	m_hFont = eck::EzFont(L"微软雅黑", 9, 400, FALSE, FALSE, FALSE, m_hWnd);
-	m_EDFile.Create(NULL, WS_TABSTOP | WS_GROUP | WS_CHILD | WS_VISIBLE |
-		ES_AUTOHSCROLL | (m_pParam->uType == Type::Load ? ES_READONLY : 0), 0,
+	m_EDFile.Create(NULL, WS_TABSTOP | WS_GROUP | WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL, 0,
 		m_Ds.iMargin, m_Ds.iMargin, 0, 0, hDlg, IDC_ED_FILE);
-	m_EDFile.SetFrameType(1);
-	m_EDFile.SetClr(2, GetSysColor(COLOR_WINDOW));
+	m_EDFile.SetFrameType(5);
 
-	m_LVFile.Create(NULL, WS_TABSTOP | WS_CHILD | LVS_REPORT | LVS_SHOWSELALWAYS | LVS_SINGLESEL, 0,
+	m_LVFile.Create(NULL, 
+		WS_TABSTOP | WS_CHILD | LVS_REPORT | LVS_SHOWSELALWAYS | LVS_SINGLESEL, 
+		WS_EX_CLIENTEDGE,
 		m_Ds.iMargin, m_Ds.iMargin + m_Ds.cyEdit + m_Ds.iGap, 0, 0, hDlg, IDC_LV_FILE);
 	constexpr DWORD dwExLVStyle = LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER;
 	eck::LVSetItemHeight(m_LVFile.HWnd, m_Ds.cyLVItem);
 	m_LVFile.SetLVExtendStyle(dwExLVStyle);
-	m_LVFile.SetExplorerTheme();
 	m_LVFile.EnableGroupView(TRUE);
 	m_LVFile.InsertColumn(L"文件名", 0, m_Ds.cxColumn1);
 	m_LVFile.InsertColumn(L"修改时间", 1, m_Ds.cxColumn2);
 
-	auto& vPath = App->GetOptionsMgr().vListPath;
+	auto& vPath = App->GetOptionsMgr().ListFilePath;
 
 	LVGROUP lvg;
 	lvg.cbSize = sizeof(LVGROUP);
@@ -132,9 +131,15 @@ void CDlgListFile::OnDpiChanged(HWND hWnd, int xDpi, int yDpi, RECT* pRect)
 void CDlgListFile::OnOk(HWND hCtrl)
 {
 	m_pParam->rsRetFile = m_EDFile.GetText();
-	if (!m_pParam->rsRetFile.Size())
+	if (m_pParam->rsRetFile.IsEmpty())
 	{
-		Utils::MsgBox(L"未选定的文件", NULL, L"错误", 1, (HICON)TD_ERROR_ICON, m_hWnd);
+		Utils::MsgBox(L"未指定文件", NULL, L"错误", 1, (HICON)TD_ERROR_ICON, m_hWnd);
+		return;
+	}
+	else if (m_pParam->uType == Type::Load && !PathFileExistsW(m_pParam->rsRetFile.Data()))
+	{
+		m_pParam->rsRetFile.Clear();
+		Utils::MsgBox(L"指定的文件不存在", NULL, L"错误", 1, (HICON)TD_ERROR_ICON, m_hWnd);
 		return;
 	}
 	EndDlg(TRUE);

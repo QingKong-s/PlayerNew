@@ -61,12 +61,12 @@ void CApp::LoadRes()
 
 CApp::~CApp()
 {
-	m_pD2dFactory->Release();
-	m_pDwFactory->Release();
-	m_pWicFactory->Release();
-	m_pD2dDevice->Release();
-	m_pDxgiDevice->Release();
-	m_pDxgiFactory->Release();
+	//m_pD2dFactory->Release();
+	//m_pDwFactory->Release();
+	//m_pWicFactory->Release();
+	//m_pD2dDevice->Release();
+	//m_pDxgiDevice->Release();
+	//m_pDxgiFactory->Release();
 }
 
 void CApp::Init(HINSTANCE hInstance)
@@ -77,61 +77,12 @@ void CApp::Init(HINSTANCE hInstance)
 	m_cfListDrag = (CLIPFORMAT)RegisterClipboardFormatW(L"PlayerNew.CBFmt.ListDrag");
 	EckAssert(m_cfListDrag);
 
-	HRESULT hr;
-#ifndef NDEBUG
-	D2D1_FACTORY_OPTIONS D2DFactoryOptions;
-	D2DFactoryOptions.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
-	hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory1), &D2DFactoryOptions, (void**)&m_pD2dFactory);
-#else
-	hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, IID_PPV_ARGS(&m_pD2dFactory));
-#endif // !NDEBUG
-	if (FAILED(hr))
-	{
-	}
-	//////////////创建DWrite工厂
-	hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown**)&m_pDwFactory);
-	if (FAILED(hr))
-	{
-	}
-	//////////////创建DXGI工厂
-	constexpr D3D_FEATURE_LEVEL uFeatureLevel[]
-	{
-		D3D_FEATURE_LEVEL_11_1,
-		D3D_FEATURE_LEVEL_11_0,
-		D3D_FEATURE_LEVEL_10_1,
-		D3D_FEATURE_LEVEL_10_0,
-		D3D_FEATURE_LEVEL_9_3,
-		D3D_FEATURE_LEVEL_9_2,
-		D3D_FEATURE_LEVEL_9_1
-	};
-	ID3D11Device* pD3DDevice;
-	hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_BGRA_SUPPORT
-#ifndef NDEBUG
-		| D3D11_CREATE_DEVICE_DEBUG
-#endif // !NDEBUG
-		, uFeatureLevel, ARRAYSIZE(uFeatureLevel), D3D11_SDK_VERSION, & pD3DDevice, NULL, NULL);
-	if (FAILED(hr))
-	{
-		EckDbgBreak();
-	}
-	pD3DDevice->QueryInterface(IID_PPV_ARGS(&m_pDxgiDevice));
-	pD3DDevice->Release();
-
-	IDXGIAdapter* pDXGIAdapter;
-	m_pDxgiDevice->GetAdapter(&pDXGIAdapter);
-	//m_pDxgiDevice->SetMaximumFrameLatency(1);
-	pDXGIAdapter->GetParent(IID_PPV_ARGS(&m_pDxgiFactory));
-	pDXGIAdapter->Release();
-	//////////////创建DXGI设备
-	hr = m_pD2dFactory->CreateDevice(m_pDxgiDevice, &m_pD2dDevice);
-	if (FAILED(hr))
-	{
-	}
-	//////////////创建WIC工厂
-	hr = CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&m_pWicFactory));
-	if (FAILED(hr))
-	{
-	}
+	m_pD2dFactory = eck::g_pD2dFactory;
+	m_pDwFactory = eck::g_pDwFactory;
+	m_pWicFactory = eck::g_pWicFactory;
+	m_pD2dDevice = eck::g_pD2dDevice;
+	m_pDxgiDevice = eck::g_pDxgiDevice;
+	m_pDxgiFactory = eck::g_pDxgiFactory;
 
 	LoadRes();
 }

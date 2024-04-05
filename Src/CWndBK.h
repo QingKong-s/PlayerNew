@@ -461,6 +461,8 @@ template <class FwdIt, class Ty, class Pr>
 
 	return UFirst;
 }
+
+
 // 滚动歌词
 class CUILrc final :public CUIElem
 {
@@ -472,6 +474,8 @@ private:
 		float cy = 0.f;
 		float cx = 0.f;
 		BITBOOL bSel : 1 = FALSE;
+		BITBOOL bCacheValid : 1 = FALSE;
+		ID2D1GeometryRealization* pGr = NULL;
 
 		ITEM() = default;
 		ITEM(const ITEM& x) = delete;
@@ -480,6 +484,7 @@ private:
 		{
 			memcpy(this, &x, sizeof(*this));
 			x.pLayout = NULL;
+			x.pGr = NULL;
 		}
 		ITEM& operator=(ITEM&& x) noexcept
 		{
@@ -487,19 +492,24 @@ private:
 				pLayout->Release();
 			memcpy(this, &x, sizeof(*this));
 			x.pLayout = NULL;
+			x.pGr = NULL;
 		}
 		~ITEM()
 		{
 			if (pLayout)
 				pLayout->Release();
+			if (pGr)
+				pGr->Release();
 		}
 	};
-
+private:
 	ID2D1SolidColorBrush* m_pBrTextNormal = NULL;
 	ID2D1SolidColorBrush* m_pBrTextHighlight = NULL;
 	ID2D1SolidColorBrush* m_pBrush = NULL;
 
 	IDWriteTextFormat* m_pTextFormat = NULL;
+
+	ID2D1DeviceContext1* m_pDC1 = NULL;
 
 	eck::CInertialScrollView* m_psv = NULL;
 

@@ -114,7 +114,7 @@ LRESULT CTBList::OnNotifyMsg(HWND hParent, UINT uMsg, WPARAM wParam, LPARAM lPar
 	{
 		const int idx = LOWORD(wParam) - TBCID_BEGIN;
 		EckAssert(idx >= 0 && idx < ARRAYSIZE(c_idxIcon));
-		if (idx == 1 || idx == 4)
+		if (idx == 1 || idx == 5)
 		{
 			bProcessed = TRUE;
             m_uBTFlags[idx] = 1;

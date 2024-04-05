@@ -6,6 +6,29 @@ void CDlgBookmark::UpdateDpiInit(int iDpi)
 {
 	m_iDpi = iDpi;
 	eck::UpdateDpiSize(m_Ds, iDpi);
+
+	const int
+		cxIcon = eck::DpiScale(c_cxBtnIcon, iDpi),
+		cyIcon = eck::DpiScale(c_cyBtnIcon, iDpi);
+	HIMAGELIST hIml = ImageList_Create(cxIcon, cyIcon, ILC_COLOR32, 0, 2);
+	HICON hIcon;
+	auto pBmp = App->ScaleImageForButton(IIDX_Cross, iDpi);
+	hIcon = eck::CreateHICON(pBmp);
+	ImageList_AddIcon(hIml, hIcon);
+	pBmp->Release();
+	DestroyIcon(hIcon);
+
+	pBmp = App->ScaleImageForButton(IIDX_Locate, iDpi);
+	hIcon = eck::CreateHICON(pBmp);
+	ImageList_AddIcon(hIml, hIcon);
+	pBmp->Release();
+	DestroyIcon(hIcon);
+
+	m_TBOp.SetImageList(hIml);
+	std::swap(m_hIml, hIml);
+	ImageList_Destroy(hIml);
+
+	m_TBOp.SetButtonSize(m_Ds.cxTB, m_Ds.cyTB);
 }
 
 void CDlgBookmark::UpdateDpi(int iDpi)
@@ -44,7 +67,7 @@ LRESULT CDlgBookmark::SubclassProc_LV(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	}
 	return DefSubclassProc(hWnd, uMsg, wParam, lParam);
 }
-
+// XXX : 项目编辑
 LRESULT CDlgBookmark::SubclassProc_ED(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
 	auto p = (CDlgBookmark*)dwRefData;
@@ -65,72 +88,63 @@ LRESULT CDlgBookmark::SubclassProc_ED(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	return DefSubclassProc(hWnd, uMsg, wParam, lParam);
 }
 
-LRESULT CDlgBookmark::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CDlgBookmark::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	auto p = (CDlgBookmark*)GetWindowLongPtrW(hWnd, eck::CDialogNew::OcbPtr1);
 	switch (uMsg)
 	{
 	case WM_NOTIFY:
 	{
-		if (((NMHDR*)lParam)->hwndFrom == p->m_LVBookmark.GetHWND())
+		if (((NMHDR*)lParam)->hwndFrom == m_LVBookmark.GetHWND())
 			switch (((NMHDR*)lParam)->code)
 			{
 			case NM_CUSTOMDRAW:
-				return p->OnLVNCustomDraw((NMLVCUSTOMDRAW*)lParam);
+				return OnLVNCustomDraw((NMLVCUSTOMDRAW*)lParam);
 			case NM_DBLCLK:
-				p->OnLVNDbLClick((NMITEMACTIVATE*)lParam);
+				OnLVNDbLClick((NMITEMACTIVATE*)lParam);
 				return 0;
 			}
 	}
 	break;
 	case WM_SIZE:
-		return HANDLE_WM_SIZE(hWnd, wParam, lParam, p->OnSize);
+		return HANDLE_WM_SIZE(hWnd, wParam, lParam, OnSize);
 	case WM_COMMAND:
-		if ((HWND)lParam == p->m_TBOp.GetHWND() && HIWORD(wParam) == BN_CLICKED)
+		if ((HWND)lParam == m_TBOp.GetHWND() && HIWORD(wParam) == BN_CLICKED)
 			switch (LOWORD(wParam))
 			{
 			case TBCID_DELETE:
-				p->OnCmdDelete();
+				OnCmdDelete();
 				return 0;
 			case TBCID_JUMP:
-				p->OnCmdJump();
+				OnCmdJump();
 				return 0;
 			}
-		else if (HIWORD(wParam) == BN_CLICKED && LOWORD(wParam) == IDCANCEL)
-			PostQuitMessage(0);
-		break;
-	case WM_INITDIALOG:
-		p = (CDlgBookmark*)lParam;
-		SetWindowLongPtrW(hWnd, eck::CDialogNew::OcbPtr1, (LONG_PTR)p);
-		p->OnInitDialog(hWnd);
 		break;
 	case WM_TIMER:
 		if (wParam == IDT_LVCLICKDELAY)
 		{
 			KillTimer(hWnd, IDT_LVCLICKDELAY);
-			p->EnterEditing(p->m_idxLBtnDown, p->m_idxSubLBtnDown);
+			EnterEditing(m_idxLBtnDown, m_idxSubLBtnDown);
 			return 0;
 		}
 		break;
-	case WM_CLOSE:
-		PostQuitMessage(0);
-		return 0;
 	}
-	return DefDlgProcW(hWnd, uMsg, wParam, lParam);
+	return __super::OnMsg(hWnd, uMsg, wParam, lParam);
 }
 
-void CDlgBookmark::OnInitDialog(HWND hWnd)
+BOOL CDlgBookmark::OnInitDialog(HWND hWnd, HWND hFocus, LPARAM lParam)
 {
+	m_TBOp.Create(NULL, WS_TABSTOP | WS_GROUP |
+		TBSTYLE_LIST | TBSTYLE_TRANSPARENT | TBSTYLE_WRAPABLE |
+		CCS_NORESIZE | CCS_NOPARENTALIGN | CCS_NODIVIDER, 0, 0, 0, 0, 0, hWnd, IDC_TB_OP);
+
 	UpdateDpiInit(eck::GetDpi(hWnd));
 	m_hFont = eck::EzFont(L"微软雅黑", 9);
 
-	m_TBOp.Create(NULL, WS_TABSTOP | WS_GROUP | TBSTYLE_LIST | TBSTYLE_TRANSPARENT | TBSTYLE_WRAPABLE |
-		CCS_NORESIZE | CCS_NOPARENTALIGN | CCS_NODIVIDER, 0, 0, 0, 0, 0, hWnd, IDC_TB_OP);
 	m_TBOp.SetButtonStructSize();
 	TBBUTTON TBBtns[]
 	{
 		{0,TBCID_DELETE,TBSTATE_ENABLED,0,{},0,(INT_PTR)L"删除"},
-		{0,TBCID_JUMP,TBSTATE_ENABLED,0,{},0,(INT_PTR)L"跳转"},
+		{1,TBCID_JUMP,TBSTATE_ENABLED,0,{},0,(INT_PTR)L"跳转"},
 	};
 	m_TBOp.AddButtons(ARRAYSIZE(TBBtns), TBBtns);
 	m_TBOp.Show(SW_SHOWNOACTIVATE);
@@ -174,6 +188,9 @@ void CDlgBookmark::OnInitDialog(HWND hWnd)
 	RECT rc;
 	GetClientRect(hWnd, &rc);
 	SendMsg(WM_SIZE, 0, MAKELPARAM(rc.right, rc.bottom));
+
+	SetFocus(m_LVBookmark.HWnd);
+	return FALSE;
 }
 
 void CDlgBookmark::OnCmdJump()
@@ -241,6 +258,7 @@ void CDlgBookmark::OnSize(HWND hWnd, UINT uState, int cx, int cy)
 		cy - (m_Ds.cyTB + m_Ds.iMargin * 2),
 		SWP_NOZORDER | SWP_NOACTIVATE);
 	EndDeferWindowPos(hDwp);
+	m_TBOp.SetButtonSize(m_Ds.cxTB, m_Ds.cyTB);
 }
 
 void CDlgBookmark::OnLVLBtnDown(HWND hWnd, BOOL bDoubleClick, int x, int y, UINT uKeyFlags)
@@ -359,49 +377,12 @@ void CDlgBookmark::OnCmdDelete()
 
 INT_PTR CDlgBookmark::DlgBox(HWND hParent, void* pData)
 {
-	const HWND hOwner = PreModal(hParent);
-	BOOL bNeedEnableOwner;
-	if (hOwner && hOwner != GetDesktopWindow() && IsWindowEnabled(hOwner))
-	{
-		bNeedEnableOwner = TRUE;
-		EnableWindow(hOwner, FALSE);
-	}
-	else
-		bNeedEnableOwner = FALSE;
-
-	RECT rc;
-	if (hParent)
-		GetWindowRect(hParent, &rc);
-	else
-		GetWindowRect(GetDesktopWindow(), &rc);
-
 	m_pParam = (PARAM*)pData;
 
 	const int iDpi = eck::GetDpi(hParent);
 	const int cx = eck::DpiScale(450, iDpi);
 	const int cy = eck::DpiScale(400, iDpi);
 
-	m_hWnd = CreateWindowExW(0, eck::WCN_DLG, L"书签管理", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-		rc.left + (rc.right - rc.left - cx) / 2, rc.top, cx, cy,
-		hOwner, NULL, eck::g_hInstance, pData);
-	eck::SetWindowProc(m_hWnd, WndProc);
-	SendMsg(WM_INITDIALOG, 0, (LPARAM)this);
-
-	MSG msg;
-	while (GetMessageW(&msg, NULL, 0, 0))
-	{
-		if (!IsDialogMessageW(m_hWnd, &msg))
-		{
-			TranslateMessage(&msg);
-			DispatchMessageW(&msg);
-		}
-	}
-
-	if (bNeedEnableOwner)
-		EnableWindow(hOwner, TRUE);
-	if (hParent)
-		SetActiveWindow(hParent);
-	PostModal();
-	Destroy();
-	return 0;
+	return IntCreateModalDlg(0, eck::WCN_DLG, L"书签管理", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+		0, 0, cx, cy, hParent, NULL, eck::g_hInstance, pData, eck::DLGNCF_CENTERPARENT);
 }

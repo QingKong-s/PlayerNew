@@ -148,9 +148,14 @@
     <ClInclude Include="CWndGenSharePic.h">
       <Filter>窗体</Filter>
     </ClInclude>
-    <ClInclude Include="CStatistics.h" />
     <ClInclude Include="sqlite3.h">
       <Filter>Sqlite</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgStatViewer.h">
+      <Filter>对话框</Filter>
+    </ClInclude>
+    <ClInclude Include="CStatistics.h">
+      <Filter>程序</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -292,7 +297,12 @@
     <ClCompile Include="CWndGenSharePic.cpp">
       <Filter>窗体</Filter>
     </ClCompile>
-    <ClCompile Include="CStatistics.cpp" />
+    <ClCompile Include="CDlgStatViewer.cpp">
+      <Filter>对话框</Filter>
+    </ClCompile>
+    <ClCompile Include="CStatistics.cpp">
+      <Filter>程序</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PlayerNew.rc">

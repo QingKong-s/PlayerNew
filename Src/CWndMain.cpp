@@ -410,7 +410,7 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 			{
 			case PCT_PLAYNEW:
 			{
-				if (m_Lrc.IsValid() && m_Lrc.IsBkVisible())
+				if (m_Lrc.IsValid())
 				{
 					m_Lrc.InvalidateCache();
 					m_Lrc.Draw();
@@ -423,13 +423,7 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 					m_List.m_LVList.RedrawItem((int)i1);
 				m_List.m_LVList.RedrawItem(App->GetPlayer().GetCurrFile());
 			}
-			break;
-			case PCT_STOP:
-				m_List.m_LVList.RedrawItem((int)i1);
-				break;
-			case PCT_REMOVE_LATER_PLAY:
-				m_List.m_LVList.RedrawItem((int)i1);
-				break;
+			[[fallthrough]];
 			case PCT_PLAY_OR_PAUSE:
 			{
 				if (m_Lrc.IsValid() && m_Lrc.IsBkVisible())
@@ -445,10 +439,16 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 				tb.iId = IDTBB_PLAY;
 				tb.hIcon = hi;
 				wcscpy(tb.szTip, App->GetPlayer().IsPlaying() ? L"暂停" : L"播放");
-				auto hr =m_pTbList->ThumbBarUpdateButtons(m_TbGhost.HWnd, 1, &tb);
+				auto hr = m_pTbList->ThumbBarUpdateButtons(m_TbGhost.HWnd, 1, &tb);
 				DestroyIcon(hi);
 			}
 			break;
+			case PCT_STOP:
+				m_List.m_LVList.RedrawItem((int)i1);
+				break;
+			case PCT_REMOVE_LATER_PLAY:
+				m_List.m_LVList.RedrawItem((int)i1);
+				break;
 			}
 			m_BK.OnPlayingControl(uType);
 		});
