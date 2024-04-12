@@ -9,14 +9,16 @@
 
 struct PLAYLISTUNIT
 {
-	eck::CRefStrW rsName;
-	eck::CRefStrW rsTime;
-	eck::CRefStrW rsFile;
+	eck::CRefStrW rsName{};		// 名称
+	eck::CRefStrW rsFile{};		// 文件路径
 
-	int idxSortMapping;
+	eck::CRefStrW rsTitle{};	// 标题
+	eck::CRefStrW rsArtist{};	// 艺术家
+	eck::CRefStrW rsAlbum{};	// 唱片集
+	eck::CRefStrW rsGenre{};	// 流派
 
-	BITBOOL bIgnore : 1;
-	BITBOOL bBookmark : 1;
+	PLUPUREDATA s{};
+	int idxSortMapping{ -1 };	// 【排序时用】映射到的项
 };
 
 struct BOOKMAEKLISTUNIT
@@ -65,7 +67,33 @@ private:
 		return LOWORD(u) - 1;
 	}
 public:
-	int Insert(int idxPos, const LISTFILEITEM_1& Info, PCWSTR pszName, PCWSTR pszTime, PCWSTR pszFile);
+	EckInline int Insert(int idxPos, const PLAYLISTUNIT& e)
+	{
+		if (idxPos < 0)
+		{
+			m_vList.emplace_back(e);
+			idxPos = (int)m_vList.size() - 1;
+		}
+		else
+			m_vList.emplace(m_vList.begin() + idxPos, e);
+		if (e.rsName.IsEmpty())
+			m_vList[idxPos].rsName = eck::GetFileNameFromPath(e.rsFile.Data(), e.rsFile.Size());
+		return idxPos;
+	}
+
+	EckInline int Insert(int idxPos, PLAYLISTUNIT&& e)
+	{
+		if (idxPos < 0)
+		{
+			m_vList.emplace_back(std::move(e));
+			idxPos = (int)m_vList.size() - 1;
+		}
+		else
+			m_vList.emplace(m_vList.begin() + idxPos, std::move(e));
+		if (m_vList[idxPos].rsName.IsEmpty())
+			m_vList[idxPos].rsName = eck::GetFileNameFromPath(m_vList[idxPos].rsFile.Data(), m_vList[idxPos].rsFile.Size());
+		return idxPos;
+	}
 
 	void InsertBookmark(int idxItem, PCWSTR pszName, int cchName, COLORREF crColor);
 
@@ -122,5 +150,6 @@ public:
 	PNInline auto& GetBookmark() { return m_hmBookmark; }
 
 	PNInline BOOL IsSorting() { return m_bSort; }
-};
 
+	void UpdateItemInfo(int idx);
+};

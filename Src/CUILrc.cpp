@@ -1,8 +1,5 @@
 ﻿#include "CWndBK.h"
 
-
-
-
 void CUILrc::ScrollProc(int iPos, int iPrevPos, LPARAM lParam)
 {
 	if (iPos == iPrevPos)
@@ -10,7 +7,7 @@ void CUILrc::ScrollProc(int iPos, int iPrevPos, LPARAM lParam)
 	auto p = (CUILrc*)lParam;
 
 	if (!p->m_AnEnlarge.IsEnd())
-		p->m_fAnValue = p->m_AnEnlarge.Tick(p->m_psv->GetCurrTickInterval());
+		p->m_fAnValue = p->m_AnEnlarge.Tick((float)p->m_psv->GetCurrTickInterval());
 	else
 		p->m_bEnlarging = FALSE;
 
@@ -44,13 +41,13 @@ void CUILrc::CalcTopItem()
 	m_idxTop = (int)std::distance(m_vItem.begin(), it);
 }
 
-void CUILrc::DrawScrollBar()
-{
-	D2D1_RECT_F rc;
-	GetSBThumbRect(rc);
-	m_pBrush->SetColor(eck::ColorrefToD2dColorF(eck::Colorref::DeepGray, 0.6f));
-	m_pDC->FillRectangle(rc, m_pBrush);
-}
+//void CUILrc::DrawScrollBar()
+//{
+//	D2D1_RECT_F rc;
+//	GetSBThumbRect(rc);
+//	m_pBrush->SetColor(eck::ColorrefToD2dColorF(eck::Colorref::DeepGray, 0.6f));
+//	m_pDC->FillRectangle(rc, m_pBrush);
+//}
 
 BOOL CUILrc::DrawItem(int idx, float& y)
 {
@@ -171,7 +168,7 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				if (y > GetViewHeightF())
 					break;
 			}
-			DrawScrollBar();
+			//DrawScrollBar();
 		}
 		else
 		{
@@ -409,9 +406,30 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 	return 0;
 
+	case WM_NOTIFY:
+	{
+		if ((Dui::CElem*)wParam == &m_SB)
+		{
+			switch (((Dui::DUINMHDR*)lParam)->uCode)
+			{
+			case Dui::EE_VSCROLL:
+				CalcTopItem();
+				InvalidateRect();
+				return TRUE;
+			}
+		}
+	}
+	return 0;
+
 	case WM_SIZE:
 	{
-		m_psv->SetViewSize(GetViewHeight());
+		RECT rc;
+		rc.left = GetViewWidth() - m_SB.GetViewWidth();
+		rc.top = 0;
+		rc.right = rc.left + m_SB.GetViewWidth();
+		rc.bottom = rc.top + GetViewHeight();
+		m_SB.SetRect(rc);
+		//m_psv->SetViewSize(GetViewHeight());
 	}
 	break;
 
@@ -461,6 +479,10 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_CREATE:
 	{
+		m_SB.Create(NULL, Dui::DES_VISIBLE, 0,
+			0, 0, GetWnd()->GetDs().CommSBCxy, GetViewHeight(),
+			this, GetWnd());
+
 		m_pDC->QueryInterface(&m_pDC1);
 
 		m_pDC->CreateSolidColorBrush(eck::ColorrefToD2dColorF(eck::Colorref::DeepGray), &m_pBrTextNormal);
@@ -471,11 +493,11 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			(DWRITE_FONT_WEIGHT)Font.iWeight, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
 			GetBk()->Dpi(Font.fFontSize), L"zh-cn", &m_pTextFormat);
 
-		m_psv = new eck::CInertialScrollView{};
+		m_psv = m_SB.GetScrollView();
+		m_psv->AddRef();
 		m_psv->SetMinThumbSize(GetBk()->GetDpiSize().cxyMinSBThumb);
 		m_psv->SetCallBack(ScrollProc, (LPARAM)this);
 		m_psv->SetDelta(GetBk()->GetDpiSize().ScrollDelta);
-		GetWnd()->RegisterTimeLine(m_psv);
 
 		GetBk()->RegisterTimerElem(this);
 	}

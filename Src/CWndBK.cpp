@@ -56,6 +56,8 @@ BOOL CWndBK::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	pDC->CreateBitmapFromWicBitmap(App->GetWicRes()[IIDX_Gear], &m_pBmpIcon[ICIDX_Options]);
 	pDC->CreateBitmapFromWicBitmap(App->GetWicRes()[IIDX_Info], &m_pBmpIcon[ICIDX_About]);
 	pDC->CreateBitmapFromWicBitmap(App->GetWicRes()[IIDX_Pause], &m_pBmpIcon[ICIDX_Pause]);
+
+	SetupElem();
 	return TRUE;
 }
 
@@ -95,6 +97,33 @@ void CWndBK::OnDestroy(HWND hWnd)
 	SafeRelease(m_pBmpAlbum);
 	for (auto pBmp : m_pBmpIcon)
 		pBmp->Release();
+	for (auto pElem : m_vAllElems)
+		delete pElem;
+	m_vAllElems.clear();
+	m_vElemsWantTimer.clear();
+}
+
+void CWndBK::SetupElem()
+{
+	const auto palbum = new CUIAlbum{};
+	palbum->Create(NULL, Dui::DES_VISIBLE, 0,
+		10, 10, 400, 500, NULL, this);
+	m_vAllElems.push_back(palbum);
+
+	const auto plrc = new CUILrc{};
+	plrc->Create(NULL, Dui::DES_VISIBLE, 0,
+		0, 0, 800, 730, NULL, this);
+	m_vAllElems.push_back(plrc);
+
+	const auto ppb = new CUIProgressBar{};
+	ppb->Create(NULL, Dui::DES_VISIBLE, 0,
+		70, 730, 800, 70, NULL, this);
+	m_vAllElems.push_back(ppb);
+
+	const auto ppc = new CUIPlayingCtrl{};
+	ppc->Create(NULL, Dui::DES_VISIBLE, 0,
+		70, 800, 800, 80, NULL, this);
+	m_vAllElems.push_back(ppc);
 }
 
 LRESULT CWndBK::OnElemEvent(Dui::CElem* pElem, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -216,14 +245,15 @@ LRESULT CWndBK::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			auto uTickRet = App->GetPlayer().Tick();
 			auto& LrcWnd = App->GetMainWnd()->m_Lrc;
-			if (App->GetOptionsMgr().DtLrcShow &&
-				LrcWnd.IsValid() &&
-				((uTickRet & TKC_LRCPOSUPDATED) ||
-					LrcWnd.IsCacheLayoutTooLong()))
+			if (LrcWnd.IsValid())
 			{
 				if (uTickRet & TKC_LRCPOSUPDATED)
+				{
 					LrcWnd.UpdateBrush();
-				LrcWnd.Draw();
+					LrcWnd.Draw();
+				}
+				else if (LrcWnd.IsCacheLayoutTooLong())
+					LrcWnd.Draw();
 			}
 		}
 		break;
@@ -243,7 +273,7 @@ LRESULT CWndBK::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_CREATE:
 	{
 		const auto lResult = __super::OnMsg(hWnd, uMsg, wParam, lParam);
-		return HANDLE_WM_CREATE(hWnd, wParam, lParam, OnCreate);
+		HANDLE_WM_CREATE(hWnd, wParam, lParam, OnCreate);
 		return lResult;
 	}
 
@@ -252,8 +282,12 @@ LRESULT CWndBK::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		return 0;
 
 	case WM_DESTROY:
+	{
+		const auto lResult = __super::OnMsg(hWnd, uMsg, wParam, lParam);
 		HANDLE_WM_DESTROY(hWnd, wParam, lParam, OnDestroy);
-		break;
+		return lResult;
+	}
+
 	}
 
 	return __super::OnMsg(hWnd, uMsg, wParam, lParam);

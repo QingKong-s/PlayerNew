@@ -3,6 +3,7 @@
 #include "COptionsMgr.h"
 #include "CWndBK.h"
 #include "CWndMain.h"
+#include "CDlgProgress.h"
 
 HRESULT CPlayer::CreateWicBmpCover()
 {
@@ -114,7 +115,7 @@ PlayOpErr CPlayer::Next()
 		if (idx >= cItems)
 			idx = 0;
 
-		if (!m_List.At(idx).bIgnore)
+		if (!m_List.At(idx).s.bIgnore)
 		{
 			Play(idx);
 			return PlayOpErr::Ok;
@@ -137,7 +138,7 @@ PlayOpErr CPlayer::Prev()
 		if (idx < 0)
 			idx = cItems - 1;
 
-		if (!m_List.At(idx).bIgnore)
+		if (!m_List.At(idx).s.bIgnore)
 		{
 			Play(idx);
 			return PlayOpErr::Ok;
@@ -204,10 +205,10 @@ void CPlayer::Sort(SortFlags uFlags, int idxBegin, int idxEnd)
 		{
 			return StrCmpLogicalW(vList[idx1].rsName.Data() , vList[idx2].rsName.Data()) < 0;
 		},
-		[&vList](int idx1, int idx2)->bool
-		{
-			return StrCmpLogicalW(vList[idx1].rsTime.Data() , vList[idx2].rsTime.Data()) < 0;
-		},
+		//[&vList](int idx1, int idx2)->bool
+		//{
+		//	return StrCmpLogicalW(vList[idx1].rsTime.Data() , vList[idx2].rsTime.Data()) < 0;
+		//},
 		[&vList](int idx1, int idx2)->bool
 		{
 			return StrCmpLogicalW(vList[idx1].rsFile.Data() , vList[idx2].rsFile.Data()) < 0;
@@ -395,7 +396,8 @@ TICKCHANGING CPlayer::Tick()
 		//	else if (m_fPos >= m_vLrc[m_idxCurrLrc].fTime)
 		//		goto EndFindLrc;
 		//}
-		auto it = std::lower_bound(m_vLrc.begin(), m_vLrc.end(), m_fPos, [](const Utils::LRCINFO& Item, float fPos)->bool
+		auto it = std::lower_bound(m_vLrc.begin(), m_vLrc.end(), m_fPos, 
+			[](const Utils::LRCINFO& Item, float fPos)->bool
 			{
 				return Item.fTime < fPos;
 			});
@@ -465,4 +467,19 @@ BOOL CPlayer::RemoveFx(int idx)
 		}
 		return TRUE;
 	}
+}
+
+void CPlayer::EndAddOperation(BOOL bSort)
+{
+	if (m_cItemNeedUpdated > 10)
+	{
+		CDlgProgress Dlg{};
+		Dlg.DlgBox(App->GetMainWnd()->HWnd);
+	}
+	else
+	{
+		EckCounter(GetList().GetCount(), i)
+			GetList().UpdateItemInfo(i);
+	}
+	EndSortProtect(bSort);
 }

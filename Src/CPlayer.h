@@ -72,9 +72,19 @@ private:
 
 	CStatistics m_Stat{};
 
-	void ApplyPrevEffect()
-	{
+	int m_cItemNeedUpdated = -1;
+	BOOL m_bUpdateInfoThreadActive = FALSE;
 
+	EckInline void ApplyPrevEffect()
+	{
+		EckCounter(FXI_MAX, i)
+		{
+			if (m_FxMgr.IsValid(i))
+			{
+				m_FxMgr.GetHFx(i) = 0;
+				SetFx(i);
+			}
+		}
 	}
 
 	HRESULT CreateWicBmpCover();
@@ -154,9 +164,14 @@ public:
 	/// <param name="pszTime"></param>
 	/// <param name="pszFile"></param>
 	/// <returns>新项的LV索引</returns>
-	PNInline int Insert(int idxPos, const LISTFILEITEM_1& Info, PCWSTR pszName, PCWSTR pszTime, PCWSTR pszFile)
+	PNInline int Insert(int idxPos, const LISTFILEITEM_1& Info, 
+		PCWSTR pszName, PCWSTR pszFile, PCWSTR pszTitle,
+		PCWSTR pszArtist, PCWSTR pszAlbum, PCWSTR pszGenre)
 	{
-		const int idx = m_List.Insert(idxPos, Info, pszName, pszTime, pszFile);
+		if (Info.s.bNeedUpdated)
+			++m_cItemNeedUpdated;
+		const int idx = m_List.Insert(idxPos,
+			PLAYLISTUNIT{ pszName, pszFile, pszTitle, pszArtist, pszAlbum, pszGenre,Info.s });
 		if (m_idxCurrFile >= idx)
 			++m_idxCurrFile;
 		if (m_idxLaterPlay >= idx)
@@ -310,4 +325,12 @@ public:
 	HFX SetFx(int idx);
 
 	BOOL RemoveFx(int idx);
+
+	PNInline BOOL BeginAddOperation()
+	{
+		m_cItemNeedUpdated = 0;
+		return BeginSortProtect();
+	}
+
+	void EndAddOperation(BOOL bSort);
 };

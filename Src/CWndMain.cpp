@@ -156,6 +156,7 @@ public:
 
 		const DROPFILES* pdf;
 		LISTFILEITEM_1 Info{};
+		Info.s.bNeedUpdated = TRUE;
 		PCWSTR pszTemp;
 		PCSTR pszTempA;
 		eck::CRefStrW rsTemp{};
@@ -247,14 +248,15 @@ public:
 				eck::CMemReader r(pData, GlobalSize(sm.hGlobal));
 				r.SkipPointer(pdf);
 
-				const BOOL bSort = Player.BeginSortProtect();
+				const BOOL bSort = Player.BeginAddOperation();
 				if (pdf->fWide)
 				{
 					pszTemp = (PCWSTR)r.m_pMem;
 					while (*pszTemp != L'\0')
 					{
 						Info.cchFile = (int)wcslen(pszTemp);
-						Player.Insert(lvhti.iItem, Info, NULL, NULL, pszTemp);
+						Player.Insert(lvhti.iItem, Info, NULL, pszTemp, 
+							NULL, NULL, NULL, NULL);
 						r += eck::Cch2Cb(Info.cchFile);
 						pszTemp = (PCWSTR)r.m_pMem;
 					}
@@ -267,12 +269,13 @@ public:
 						const int cchA = (int)strlen(pszTempA);
 						rsTemp = eck::StrX2W(pszTempA, cchA);
 						Info.cchFile = rsTemp.Size();
-						Player.Insert(lvhti.iItem, Info, NULL, NULL, rsTemp.Data());
+						Player.Insert(lvhti.iItem, Info, NULL, rsTemp.Data(),
+							NULL, NULL, NULL, NULL);
 						r += (UINT)(cchA + 1);
 						pszTempA = (PCSTR)r.m_pMem;
 					}
 				}
-				Player.EndSortProtect(bSort);
+				Player.EndAddOperation(bSort);
 				LV.SetItemCount(Player.GetList().GetCount());
 
 				GlobalUnlock(sm.hGlobal);
@@ -320,7 +323,7 @@ void CWndMain::InitBK()
 	//prb->SetImg(m_BK.m_pBmpIcon[CWndBK::ICIDX_Options]);
 	//prb->SetImgSize(m_BK.m_Ds.cxIcon, m_BK.m_Ds.cyIcon);
 
-	auto plrc = new CUILrc{};
+	/*auto plrc = new CUILrc{};
 	plrc->Create(NULL, Dui::DES_VISIBLE, 0,
 		0, 0, 800, 730, NULL, &m_BK);
 
@@ -330,7 +333,7 @@ void CWndMain::InitBK()
 
 	auto ppc = new CUIPlayingCtrl{};
 	ppc->Create(NULL, Dui::DES_VISIBLE, 0,
-		70, 800, 800, 80, NULL, &m_BK);
+		70, 800, 800, 80, NULL, &m_BK);*/
 
 	//auto pw = new CUIWaves{};
 	//pw->Create(NULL, Dui::DES_VISIBLE, 0,
@@ -416,31 +419,22 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 					m_Lrc.Draw();
 				}
 				DwmInvalidateIconicBitmaps(m_TbGhost.HWnd);
-				//m_TbGhost.SendMsg(WM_DWMSENDICONICTHUMBNAIL, 0, MAKELPARAM(120, 120));
 				m_TbGhost.InvalidateLivePreviewCache();
 				m_TbGhost.InvalidateThumbnailCache();
+				m_TbGhost.SetIconicThumbnail();
 				if (i1 >= 0)
 					m_List.m_LVList.RedrawItem((int)i1);
-				m_List.m_LVList.RedrawItem(App->GetPlayer().GetCurrFile());
+				auto& Player = App->GetPlayer();
+				m_List.m_LVList.RedrawItem(Player.GetCurrFile());
+				UpdateTaskbarPlayBtn();
+				SetText((Player.GetList().At(Player.GetCurrFile()).rsName+L" | PlayerNew").Data());
 			}
-			[[fallthrough]];
+			break;
 			case PCT_PLAY_OR_PAUSE:
 			{
 				if (m_Lrc.IsValid() && m_Lrc.IsBkVisible())
 					m_Lrc.Draw();
-				const auto pBmp = App->ScaleImageForButton(
-					App->GetPlayer().IsPlaying() ? IIDX_PauseSolid : IIDX_TriangleSolid,
-					m_iDpi);
-				const auto hi = eck::CreateHICON(pBmp);
-				pBmp->Release();
-
-				THUMBBUTTON tb;
-				tb.dwMask = THB_ICON | THB_TOOLTIP;
-				tb.iId = IDTBB_PLAY;
-				tb.hIcon = hi;
-				wcscpy(tb.szTip, App->GetPlayer().IsPlaying() ? L"暂停" : L"播放");
-				auto hr = m_pTbList->ThumbBarUpdateButtons(m_TbGhost.HWnd, 1, &tb);
-				DestroyIcon(hi);
+				UpdateTaskbarPlayBtn();
 			}
 			break;
 			case PCT_STOP:
@@ -486,6 +480,23 @@ void CWndMain::OnDestroy()
 void CWndMain::OnDpiChanged(HWND hWnd, int xDpi, int yDpi, RECT* pRect)
 {
 	UpdateDpi(xDpi);
+}
+
+void CWndMain::UpdateTaskbarPlayBtn()
+{
+	const auto pBmp = App->ScaleImageForButton(
+		App->GetPlayer().IsPlaying() ? IIDX_PauseSolid : IIDX_TriangleSolid,
+		m_iDpi);
+	const auto hi = eck::CreateHICON(pBmp);
+	pBmp->Release();
+
+	THUMBBUTTON tb;
+	tb.dwMask = THB_ICON | THB_TOOLTIP;
+	tb.iId = IDTBB_PLAY;
+	tb.hIcon = hi;
+	wcscpy(tb.szTip, App->GetPlayer().IsPlaying() ? L"暂停" : L"播放");
+	auto hr = m_pTbList->ThumbBarUpdateButtons(m_TbGhost.HWnd, 1, &tb);
+	DestroyIcon(hi);
 }
 
 ATOM CWndMain::RegisterWndClass()

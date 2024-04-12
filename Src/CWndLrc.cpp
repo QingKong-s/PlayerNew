@@ -1,10 +1,11 @@
 ﻿#include "CWndLrc.h"
 
 #include "COptionsMgr.h"
+#include "CWndMain.h"
 
 void CWndLrc::ReSizeRenderStuff(int cx, int cy)
 {
-	InvalidateCache();
+	ReleaseTextCache();
 	m_DC.Create(m_hWnd, cx, cy);
 
 	constexpr D2D1_RENDER_TARGET_PROPERTIES DcRtProp
@@ -164,7 +165,7 @@ float CWndLrc::DrawLrcLine(int idxLrc, float y, BOOL bSecondLine)
 		cyOld = Cache.size.height;
 		Cache.size = { tm.width,tm.height };
 		//-----------重建画刷
-		if (Cache.pBr || !eck::FloatEqual(cyOld, tm.height))
+		if (!Cache.pBr || !eck::FloatEqual(cyOld, tm.height))
 		{
 			SafeRelease(Cache.pBr);
 			ReCreateBrush(tm.height, 0.f, bHiLight, &Cache.pBr, NULL);
@@ -197,7 +198,7 @@ float CWndLrc::DrawLrcLine(int idxLrc, float y, BOOL bSecondLine)
 			cyOld = Cache.size.height;
 			Cache.sizeTrans = { tm.width,tm.height };
 			//-----------重建画刷
-			if (Cache.pBrTrans || !eck::FloatEqual(cyOld, tm.height))
+			if (!Cache.pBrTrans || !eck::FloatEqual(cyOld, tm.height))
 			{
 				SafeRelease(Cache.pBrTrans);
 				ReCreateBrush(0.f, tm.height, bHiLight, NULL, &Cache.pBrTrans);
@@ -262,7 +263,7 @@ float CWndLrc::DrawLrcLine(int idxLrc, float y, BOOL bSecondLine)
 		m_pDC1->GetTransform(&mat0);
 		m_pDC1->SetTransform(D2D1::Matrix3x2F::Translation(xStart + dx, yNew));
 		m_pDC1->DrawGeometryRealization(Cache.pGrSTrans, m_pBrTextBorder);
-		m_pDC1->DrawGeometryRealization(Cache.pGrFTrans, Cache.pBr);
+		m_pDC1->DrawGeometryRealization(Cache.pGrFTrans, Cache.pBrTrans);
 		m_pDC1->SetTransform(mat0);
 
 		cy += Cache.sizeTrans.height;
@@ -327,7 +328,7 @@ void CWndLrc::DrawStaticLine(int idxFake, float y)
 		Cache.size = { tm.width,tm.height };
 		m_pTfMain->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
 		//-----------重建画刷
-		if (Cache.pBr || !eck::FloatEqual(cyOld, tm.height))
+		if (!Cache.pBr || !eck::FloatEqual(cyOld, tm.height))
 		{
 			SafeRelease(Cache.pBr);
 			ReCreateBrush(tm.height, 0.f, FALSE, &Cache.pBr, NULL);
@@ -394,10 +395,8 @@ void CWndLrc::ReCreateBrush(float cyTextMain, float cyTextTrans, BOOL bHiLight,
 	if(ppBrMain)
 	{
 		const auto& Font = App->GetOptionsMgr().DtLrcFontMain;
-		Stops[0].color = eck::ARGBToD2dColorF(
-			bHiLight ? Font.argbHiLightGra[0] : Font.argbNormalGra[0]);
-		Stops[1].color = eck::ARGBToD2dColorF(
-			bHiLight ? Font.argbHiLightGra[1] : Font.argbNormalGra[1]);
+		Stops[0].color = eck::ARGBToD2dColorF(bHiLight ? Font.argbHiLightGra[0] : Font.argbNormalGra[0]);
+		Stops[1].color = eck::ARGBToD2dColorF(bHiLight ? Font.argbHiLightGra[1] : Font.argbNormalGra[1]);
 		m_pRT->CreateGradientStopCollection(Stops, 2, &pStopCollection);
 		EckAssert(pStopCollection);
 
@@ -420,6 +419,22 @@ void CWndLrc::ReCreateBrush(float cyTextMain, float cyTextTrans, BOOL bHiLight,
 		pStopCollection->Release();
 		*ppBrTrans = pBrush;
 	}
+}
+
+void CWndLrc::ReleaseTextCache()
+{
+	for (auto& e : m_TextCache)
+	{
+		SafeRelease(e.pLayout);
+		SafeRelease(e.pLayoutTrans);
+		SafeRelease(e.pGrF);
+		SafeRelease(e.pGrS);
+		SafeRelease(e.pGrFTrans);
+		SafeRelease(e.pGrSTrans);
+		SafeRelease(e.pBr);
+		SafeRelease(e.pBrTrans);
+	}
+	InvalidateCache();
 }
 
 LRESULT CWndLrc::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -600,22 +615,52 @@ LRESULT CWndLrc::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SafeRelease(m_pRT);
 		SafeRelease(m_pDC1);
 		m_DC.Destroy();
-		for (auto& e : m_TextCache)
-		{
-			SafeRelease(e.pLayout);
-			SafeRelease(e.pLayoutTrans);
-			SafeRelease(e.pGrF);
-			SafeRelease(e.pGrS);
-			SafeRelease(e.pGrFTrans);
-			SafeRelease(e.pGrSTrans);
-			SafeRelease(e.pBr);
-			SafeRelease(e.pBrTrans);
-		}
-		InvalidateCache();
+		ReleaseTextCache();
+
+		auto& om = App->GetOptionsMgr();
+		om.DtLrcWndPos.FromHWND(hWnd);
+		om.DtLrcShow = FALSE;
 	}
 	break;
 	}
 	return __super::OnMsg(hWnd, uMsg, wParam, lParam);
+}
+
+HWND CWndLrc::Create()
+{
+	const HWND hMain = App->GetMainWnd()->GetHWND();
+	const auto& MinSize = App->GetOptionsMgr().DtLrcMinSize;
+	auto& pos = App->GetOptionsMgr().DtLrcWndPos;
+	if (pos.EnsureVisible() == eck::WPSEV_ERROR)
+	{
+		const int iDpi = eck::GetDpi(hMain);
+		pos.cx = eck::DpiScale(MinSize.cx, iDpi);
+		pos.cy = eck::DpiScale(MinSize.cy, iDpi);
+
+		const auto hMon = MonitorFromWindow(hMain, MONITOR_DEFAULTTONULL);
+		if (hMon)
+		{
+			eck::CWindowPosSetting posMain;
+			posMain.FromHWND(hMain);
+			MONITORINFO mi;
+			mi.cbSize = sizeof(mi);
+			GetMonitorInfoW(hMon, &mi);
+			RECT rc, rcMain;
+			GetWindowRect(hMain, &rcMain);
+			eck::IntersectRect(rc, rcMain, mi.rcMonitor);
+			if (eck::IsRectEmpty(rc))
+				goto OrgPoint;
+			pos.x = rc .left+ (rc.right- rc.left- pos.cx) / 2;
+			pos.y = rc.bottom - pos.cy;
+		}
+		else
+		{
+		OrgPoint:
+			pos.x = pos.y = 0;
+		}
+	}
+	return Create(L"PlayerNew桌面歌词", 0, 0,
+		pos.x, pos.y, pos.cx, pos.cy, NULL, NULL);
 }
 
 void CWndLrc::UpdateTextBrush()
@@ -643,17 +688,9 @@ void CWndLrc::DoCmd(int idx)
 		Lock(!m_bLocked);
 		break;
 	case IDLBT_CLOSE:
-		ShowWnd(FALSE);
+		Destroy();
 		break;
 	}
-}
-
-void CWndLrc::ShowWnd(BOOL bShow)
-{
-	if (m_bShow == bShow)
-		return;
-	m_bShow = bShow;
-	Show(bShow ? SW_SHOWNOACTIVATE : SW_HIDE);
 }
 
 void CWndLrc::Lock(BOOL bLock)
@@ -822,7 +859,8 @@ void CLrcBtnBox::MouseEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (int idx; (idx = HitTest(ECK_GET_PT_LPARAM(lParam))) >= 0)
 		{
 			m_Wnd.DoCmd(idx);
-			m_Wnd.Draw();
+			if (m_Wnd.IsValid())
+				m_Wnd.Draw();
 		}
 	}
 	break;

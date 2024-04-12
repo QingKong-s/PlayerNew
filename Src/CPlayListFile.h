@@ -61,16 +61,40 @@ struct LISTFILEHEADER_1	// 播放列表文件头
 	int cItems;			// 项目数
 };
 
+struct PLUPUREDATA// 结构稳定，不能修改
+{
+	UINT uSecTime{};		// 【文件】时长
+	UINT uSecPlayed{};		// 【统计】播放总时间
+	UINT cPlayed{};			// 【统计】播放次数
+	UINT cLoop{};			// 【统计】循环次数
+	ULONGLONG ftLastPlayed{};	// 【统计】上次播放时间
+	ULONGLONG ftModified{};	// 【文件】修改时间
+	ULONGLONG ftCreated{};	// 【文件】创建时间
+	USHORT usYear{};		// 【元数据】年代
+	USHORT usBitrate{};		// 【元数据】比特率
+	BYTE byRating{};		// 【元数据】分级
+	BYTE bIgnore : 1{};		// 项目被忽略
+	BYTE bBookmark : 1{};	// 项目含书签
+	BYTE bNeedUpdated : 1{};// 信息需要更新
+};
+
 struct LISTFILEITEM_1	// 播放列表文件项目头
 {
-	int cchName;		// 名称长度，不包括结尾的\0
-	int cchTime;		// 时间长度，不包括结尾的\0
-	int cchFile;		// 文件名长度，不包括结尾的\0
-	BITBOOL bIgnore : 1;
-	BITBOOL bBookmark : 1;
+	// 下列长度均不包含结尾NULL
+	int cchName;	// 名称长度
+	int cchFile;	// 文件名长度
+	int cchTitle;	// 标题长度
+	int cchArtist;	// 艺术家长度
+	int cchAlbum;	// 专辑名长度
+	int cchGenre;	// 流派长度
+
+	PLUPUREDATA s;
 	// WCHAR szName[];
 	// WCHAR szFile[];
-	// WCHAR szTime[];
+	// WCHAR szTitle[];
+	// WCHAR szArtist[];
+	// WCHAR szAlbum[];
+	// WCHAR szGenre[];
 };
 
 struct BOOKMARKHEADER	// 书签信息头
@@ -109,7 +133,9 @@ private:
 	LISTFILEHEADER_0* m_pHeader0 = NULL;
 	LISTFILEHEADER_1* m_pHeader1 = NULL;
 public:
-	using FItemProcessor = std::function<BOOL(const LISTFILEITEM_1* pItem, PCWSTR pszName, PCWSTR pszFile, PCWSTR pszTime)>;
+	using FItemProcessor = std::function<BOOL(const LISTFILEITEM_1* pItem,
+		PCWSTR pszName, PCWSTR pszFile, PCWSTR pszTitle,
+		PCWSTR pszArtist, PCWSTR pszAlbum, PCWSTR pszGenre)>;
 	using FBookmarkProcessor = std::function<BOOL(const BOOKMARKITEM* pItem, PCWSTR pszName)>;
 	ECK_DISABLE_COPY_MOVE_DEF_CONS(CPlayListFileReader)
 public:
@@ -145,7 +171,9 @@ public:
 
 	BOOL Open(PCWSTR pszFile);
 
-	void PushBack(const LISTFILEITEM_1& Item, PCWSTR pszName, PCWSTR pszFile, PCWSTR pszTime);
+	void PushBack(const LISTFILEITEM_1& Item,
+		PCWSTR pszName, PCWSTR pszFile, PCWSTR pszTitle,
+		PCWSTR pszArtist, PCWSTR pszAlbum, PCWSTR pszGenre);
 
 	void BeginBookMark();
 

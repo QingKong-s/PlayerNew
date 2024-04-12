@@ -157,6 +157,9 @@
     <ClInclude Include="CStatistics.h">
       <Filter>程序</Filter>
     </ClInclude>
+    <ClInclude Include="CDlgProgress.h">
+      <Filter>对话框</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CDlgBookmark.cpp">
@@ -302,6 +305,9 @@
     </ClCompile>
     <ClCompile Include="CStatistics.cpp">
       <Filter>程序</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgProgress.cpp">
+      <Filter>对话框</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

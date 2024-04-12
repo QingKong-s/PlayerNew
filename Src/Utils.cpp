@@ -148,7 +148,7 @@ public:
 			m_rbUnsyncRestore.DupStream(m_r, m_cbFrame);
 			m_rbUnsyncRestore.ReplaceSubBin({ 0xFF, 0x00 }, { 0xFF });// 恢复不同步处理
 			return
-			{ 
+			{
 				eck::CMemReader(m_rbUnsyncRestore.Data(), m_rbUnsyncRestore.Size()),
 				(DWORD)m_rbUnsyncRestore.Size()
 			};
@@ -165,6 +165,7 @@ public:
 
 BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 {
+	mi = {};
 	eck::CFile File;
 	if (File.Open(pszFile, eck::FCD_ONLYEXISTING, GENERIC_READ, FILE_SHARE_READ) == INVALID_HANDLE_VALUE)
 	{
@@ -246,28 +247,28 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 				continue;
 			}
 
-			if (memcmp(pFrame->ID, "TIT2", 4) == 0)// 标题
+			/* */if ((mi.uFlags & MIF_TITLE) && memcmp(pFrame->ID, "TIT2", 4) == 0)// 标题
 			{
 				CID3v2Frame f(r, pFrame, cbUnit, bUnsync);
 				auto [r2, cb] = f.Begin();
 				mi.rsTitle = GetID3v2_ProcString(r2, cb);
 				f.End();
 			}
-			else if (memcmp(pFrame->ID, "TPE1", 4) == 0)// 作者
+			else if ((mi.uFlags & MIF_ARTIST) && memcmp(pFrame->ID, "TPE1", 4) == 0)// 作者
 			{
 				CID3v2Frame f(r, pFrame, cbUnit, bUnsync);
 				auto [r2, cb] = f.Begin();
 				mi.rsArtist = GetID3v2_ProcString(r2, cb);
 				f.End();
 			}
-			else if (memcmp(pFrame->ID, "TALB", 4) == 0)// 专辑
+			else if ((mi.uFlags & MIF_ALBUM) && memcmp(pFrame->ID, "TALB", 4) == 0)// 专辑
 			{
 				CID3v2Frame f(r, pFrame, cbUnit, bUnsync);
 				auto [r2, cb] = f.Begin();
 				mi.rsAlbum = GetID3v2_ProcString(r2, cb);
 				f.End();
 			}
-			else if (memcmp(pFrame->ID, "USLT", 4) == 0)// 不同步歌词
+			else if ((mi.uFlags & MIF_LRC) && memcmp(pFrame->ID, "USLT", 4) == 0)// 不同步歌词
 			{
 				/*
 				<帧头>（帧标识为USLT）
@@ -298,7 +299,7 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 
 				f.End();
 			}
-			else if (memcmp(pFrame->ID, "COMM", 4) == 0)// 备注
+			else if ((mi.uFlags & MIF_COMMENT) && memcmp(pFrame->ID, "COMM", 4) == 0)// 备注
 			{
 				/*
 				<帧头>（帧标识为COMM）
@@ -326,10 +327,10 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 				cb -= (t + 4);
 				// 此时pFrame指向备注字符串
 				mi.rsComment = GetID3v2_ProcString(r2, cb, byEncodeType);
-				
+
 				f.End();
 			}
-			else if (memcmp(pFrame->ID, "APIC", 4) == 0)// 图片
+			else if ((mi.uFlags & MIF_COVER) && memcmp(pFrame->ID, "APIC", 4) == 0)// 图片
 			{
 				/*
 				<帧头>（帧标识为APIC）
@@ -361,6 +362,13 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 
 				mi.rbCover.DupStream(r2, cb);
 
+				f.End();
+			}
+			else if ((mi.uFlags & MIF_GENRE) && memcmp(pFrame->ID, "TCON", 4) == 0)// 流派
+			{
+				CID3v2Frame f(r, pFrame, cbUnit, bUnsync);
+				auto [r2, cb] = f.Begin();
+				mi.rsGenre = GetID3v2_ProcString(r2, cb);
 				f.End();
 			}
 			else
@@ -398,36 +406,43 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 					if (iPos != eck::INVALID_STR_POS)
 					{
 						const int cch = t - iPos;
-						if (rsLabel.Find(L"TITLE") > 0)
+						/* */if ((mi.uFlags & MIF_TITLE) && rsLabel.Find(L"TITLE") >= 0)
 							mi.rsTitle.DupString(rsLabel.Data() + iPos, cch);
-						else if (rsLabel.Find(L"ALBUM") > 0)
-							mi.rsAlbum.DupString(rsLabel.Data() + iPos, cch);
-						else if (rsLabel.Find(L"ARTIST") > 0)
+						else if ((mi.uFlags & MIF_ARTIST) && rsLabel.Find(L"ARTIST") >= 0)
 							mi.rsArtist.DupString(rsLabel.Data() + iPos, cch);
-						else if (rsLabel.Find(L"DESCRIPTION") > 0)
-							mi.rsComment.DupString(rsLabel.Data() + iPos, cch);
-						else if (rsLabel.Find(L"LYRICS") > 0)
+						else if ((mi.uFlags & MIF_ALBUM) && rsLabel.Find(L"ALBUM") >= 0)
+							mi.rsAlbum.DupString(rsLabel.Data() + iPos, cch);
+						else if ((mi.uFlags & MIF_LRC) && rsLabel.Find(L"LYRICS") >= 0)
 							mi.rsLrc.DupString(rsLabel.Data() + iPos, cch);
+						else if ((mi.uFlags & MIF_COMMENT) && rsLabel.Find(L"DESCRIPTION") >= 0)
+							mi.rsComment.DupString(rsLabel.Data() + iPos, cch);
+						else if ((mi.uFlags & MIF_GENRE) && rsLabel.Find(L"GENRE") >= 0)
+							mi.rsGenre.DupString(rsLabel.Data() + iPos, cch);
 					}
 				}
 			}
 			break;
 			case 6:// 图片（大端序）
 			{
-				File += 4;// 跳过图片类型
+				if (mi.uFlags & MIF_COVER)
+				{
+					File += 4;// 跳过图片类型
 
-				File >> t;// MIME类型字符串长度
-				t = eck::ReverseInteger(t);// 大端序字节到整数，下同
-				File += t;// 跳过MIME类型字符串
+					File >> t;// MIME类型字符串长度
+					t = eck::ReverseInteger(t);// 大端序字节到整数，下同
+					File += t;// 跳过MIME类型字符串
 
-				File >> t;// 描述字符串长度
-				t = eck::ReverseInteger(t);
-				File += (t + 16);// 跳过描述字符串、宽度、高度、色深、索引图颜色数
+					File >> t;// 描述字符串长度
+					t = eck::ReverseInteger(t);
+					File += (t + 16);// 跳过描述字符串、宽度、高度、色深、索引图颜色数
 
-				File >> t;// 图片数据长度
-				t = eck::ReverseInteger(t);// 图片数据长度
+					File >> t;// 图片数据长度
+					t = eck::ReverseInteger(t);// 图片数据长度
 
-				mi.rbCover = File.ReadBin(t);
+					mi.rbCover = File.ReadBin(t);
+				}
+				else
+					File += cbBlock;
 			}
 			break;
 			default:
@@ -549,7 +564,7 @@ BOOL ParseLrc_IsTimeLabelLegal(PCWSTR pszLabel, int cchLabel, int* pposFirstDiv,
 	return TRUE;
 }
 
-BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<LRCLABEL>& Label, 
+BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<LRCLABEL>& Label,
 	LrcEncoding uTextEncoding, float fTotalTime)
 {
 	Result.clear();
@@ -1002,7 +1017,7 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 			{
 				e.pszLrc = (PWSTR)malloc(eck::Cch2Cb(0));
 #pragma warning (suppress: 6011)// 解引用NULL
-				*e.pszLrc = L'\0';
+				* e.pszLrc = L'\0';
 			}
 		}
 		auto& f = Result.back();
@@ -1011,7 +1026,7 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 		{
 			f.pszLrc = (PWSTR)malloc(eck::Cch2Cb(0));
 #pragma warning (suppress: 6011)// 解引用NULL
-			*f.pszLrc = L'\0';
+			* f.pszLrc = L'\0';
 		}
 	}
 #pragma endregion

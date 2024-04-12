@@ -11,6 +11,8 @@ private:
 	CWndMain& m_WndMain;
 	HBITMAP m_hbmLivePreviewCache = NULL;// 实时预览位图缓存
 	HBITMAP m_hbmThumbnailCache = NULL;// 缩略图位图缓存
+
+	UINT m_cxPrev = 0u, m_cyPrev = 0u;
 public:
 	static ATOM RegisterWndClass() { return eck::EzRegisterWndClass(WCN_TBGHOST, 0); }
 
@@ -48,4 +50,6 @@ public:
 			m_hbmThumbnailCache = NULL;
 		}
 	}
+
+	void SetIconicThumbnail(UINT cxMax = UINT_MAX, UINT cyMax = UINT_MAX);
 };

@@ -38,8 +38,8 @@ int CPlayListFileReader::GetItemCount()
 void CPlayListFileReader::For(const FItemProcessor& fnProcessor)
 {
 	eck::CMemReader r{ NULL };
-	PCWSTR pszName, pszFile, pszTime;
-	if (m_pHeader1)
+	PCWSTR pszName, pszFile, pszTitle, pszArtist, pszAlbum, pszGenre;
+	if (m_pHeader1) ECKLIKELY
 	{
 #ifdef _DEBUG
 		r.SetPtr(m_pHeader1, m_File.GetFile().GetSize32());
@@ -53,14 +53,20 @@ void CPlayListFileReader::For(const FItemProcessor& fnProcessor)
 		{
 			r.SkipPointer(pItem);
 
-			pszName = (PCWSTR)r.m_pMem;
-			r += ((pItem->cchName + 1) * sizeof(WCHAR));
-			pszFile = (PCWSTR)r.m_pMem;
-			r += ((pItem->cchFile + 1) * sizeof(WCHAR));
-			pszTime = (PCWSTR)r.m_pMem;
-			r += ((pItem->cchTime + 1) * sizeof(WCHAR));
-
-			fnProcessor(pItem, pszName, pszFile, pszTime);
+			pszName = (PCWSTR)r.Data();
+			r += eck::Cch2Cb(pItem->cchName);
+			pszFile = (PCWSTR)r.Data();
+			r += eck::Cch2Cb(pItem->cchFile);
+			pszTitle = (PCWSTR)r.Data();
+			r += eck::Cch2Cb(pItem->cchTitle);
+			pszArtist = (PCWSTR)r.Data();
+			r += eck::Cch2Cb(pItem->cchArtist);
+			pszAlbum = (PCWSTR)r.Data();
+			r += eck::Cch2Cb(pItem->cchAlbum);
+			pszGenre = (PCWSTR)r.Data();
+			r += eck::Cch2Cb(pItem->cchGenre);
+			fnProcessor(pItem, pszName, pszFile, pszTitle,
+				pszArtist, pszAlbum, pszGenre);
 		}
 	}
 	else if (m_pHeader0)
@@ -71,12 +77,13 @@ void CPlayListFileReader::For(const FItemProcessor& fnProcessor)
 		r.SetPtr(m_pHeader0, 0);
 #endif
 		r += sizeof(LISTFILEHEADER_0);
-		LISTFILEITEM_1 Item1;
+		LISTFILEITEM_1 Item1{};
+		Item1.s.bNeedUpdated = TRUE;
 		const LISTFILEITEM_0* pItem;
 		EckCounter(m_pHeader0->iCount, i)
 		{
 			r.SkipPointer(pItem);
-			Item1.bIgnore = eck::IsBitSet(pItem->uFlags, QKLIF_IGNORED);
+			Item1.s.bIgnore = eck::IsBitSet(pItem->uFlags, QKLIF_IGNORED);
 
 			pszName = (PCWSTR)r.m_pMem;
 			Item1.cchName = (int)wcslen(pszName);
@@ -88,7 +95,7 @@ void CPlayListFileReader::For(const FItemProcessor& fnProcessor)
 
 			if (eck::IsBitSet(pItem->uFlags, QKLIF_BOOKMARK))
 			{
-				Item1.bBookmark = TRUE;
+				Item1.s.bBookmark = TRUE;
 				r += sizeof(COLORREF);
 				r += ((wcslen((PCWSTR)r.m_pMem) + 1) * sizeof(WCHAR));
 				r += ((wcslen((PCWSTR)r.m_pMem) + 1) * sizeof(WCHAR));
@@ -96,22 +103,13 @@ void CPlayListFileReader::For(const FItemProcessor& fnProcessor)
 			else
 			{
 				r += sizeof(COLORREF) + sizeof(WCHAR) * 2;
-				Item1.bBookmark = FALSE;
+				Item1.s.bBookmark = FALSE;
 			}
 
 			if (m_pHeader0->dwVer == QKLFVER_2)
-			{
-				pszTime = (PCWSTR)r.m_pMem;
-				Item1.cchTime = (int)wcslen(pszTime);
-				r += ((Item1.cchTime + 1) * sizeof(WCHAR));
-			}
-			else
-			{
-				Item1.cchTime = 0;
-				pszTime = NULL;
-			}
+				r += (((int)wcslen((PCWSTR)r.Data()) + 1) * sizeof(WCHAR));
 
-			fnProcessor(&Item1, pszName, pszFile, pszTime);
+			fnProcessor(&Item1, pszName, pszFile, NULL, NULL, NULL, NULL);
 		}
 	}
 	else
@@ -196,14 +194,28 @@ BOOL CPlayListFileWriter::Open(PCWSTR pszFile)
 	return TRUE;
 }
 
-void CPlayListFileWriter::PushBack(const LISTFILEITEM_1& Item, PCWSTR pszName, PCWSTR pszFile, PCWSTR pszTime)
+void CPlayListFileWriter::PushBack(const LISTFILEITEM_1& Item, 
+	PCWSTR pszName, PCWSTR pszFile, PCWSTR pszTitle,
+	PCWSTR pszArtist, PCWSTR pszAlbum, PCWSTR pszGenre)
 {
 	++m_Header.cItems;
 	m_File << Item;
 	m_File.Write(pszName, (DWORD)eck::Cch2Cb(Item.cchName));
 	m_File.Write(pszFile, (DWORD)eck::Cch2Cb(Item.cchFile));
-	if (Item.cchTime)
-		m_File.Write(pszTime, (DWORD)eck::Cch2Cb(Item.cchTime));
+	if (Item.cchTitle)
+		m_File.Write(pszTitle, (DWORD)eck::Cch2Cb(Item.cchTitle));
+	else
+		m_File.Write(L"\0", (DWORD)eck::Cch2Cb(0));
+	if (Item.cchArtist)
+		m_File.Write(pszArtist, (DWORD)eck::Cch2Cb(Item.cchArtist));
+	else
+		m_File.Write(L"\0", (DWORD)eck::Cch2Cb(0));
+	if (Item.cchAlbum)
+		m_File.Write(pszAlbum, (DWORD)eck::Cch2Cb(Item.cchAlbum));
+	else
+		m_File.Write(L"\0", (DWORD)eck::Cch2Cb(0));
+	if (Item.cchGenre)
+		m_File.Write(pszGenre, (DWORD)eck::Cch2Cb(Item.cchGenre));
 	else
 		m_File.Write(L"\0", (DWORD)eck::Cch2Cb(0));
 }

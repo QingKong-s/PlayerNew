@@ -291,12 +291,13 @@ void CWndList::OnMenuAddFile()
 	auto& Player = App->GetPlayer();
 	auto& List = Player.GetList();
 	LISTFILEITEM_1 Info{};
+	Info.s.bNeedUpdated = TRUE;
 	List.Reserve(List.GetCount() + cItems);
 	int idx = m_LVList.GetCurrSel();
 	if (idx < 0)
 		idx = m_LVList.GetItemCount();
 	const int idxBegin = idx;
-	const BOOL bSort = Player.BeginSortProtect();
+	const BOOL bSort = Player.BeginAddOperation();
 	EckCounter(cItems, i)
 	{
 		psia->GetItemAt(i, &psi);
@@ -304,13 +305,13 @@ void CWndList::OnMenuAddFile()
 		if (pszFile)
 		{
 			Info.cchFile = (int)wcslen(pszFile);
-			Player.Insert(idx, Info, NULL, NULL, pszFile);
+			Player.Insert(idx, Info, NULL, pszFile, NULL, NULL, NULL, NULL);
 			++idx;
 			CoTaskMemFree(pszFile);
 		}
 		psi->Release();
 	}
-	Player.EndSortProtect(bSort);
+	Player.EndAddOperation(bSort);
 	psia->Release();
 	pfod->Release();
 	m_LVList.SetItemCount(List.GetCount());
@@ -368,13 +369,14 @@ void CWndList::OnMenuAddDir()
 
 	int cchFileName;
 	LISTFILEITEM_1 Info{};
+	Info.s.bNeedUpdated = TRUE;
 	auto& Player = App->GetPlayer();
 
 	int idx = m_LVList.GetCurrSel();
 	if (idx < 0)
 		idx = m_LVList.GetItemCount();
 	const int idxBegin = idx;
-	const BOOL bSort = Player.BeginSortProtect();
+	const BOOL bSort = Player.BeginAddOperation();
 	for (auto pszExt : c_szExt)
 	{
 		wcscpy(pszFindingPattern + cchPath, pszExt);
@@ -388,13 +390,13 @@ void CWndList::OnMenuAddDir()
 			wcscpy(pszTemp + cchPath + 1, wfd.cFileName);
 
 			Info.cchFile = cchPath + cchFileName + 1;
-			Player.Insert(idx, Info, NULL, NULL, pszTemp);
+			Player.Insert(idx, Info, NULL, pszTemp, NULL, NULL, NULL, NULL);
 			++idx;
 
 		} while (FindNextFileW(hFind, &wfd));
 		FindClose(hFind);
 	}
-	Player.EndSortProtect(bSort);
+	Player.EndAddOperation(bSort);
 	CoTaskMemFree(pszPath);
 	_freea(pszTemp);
 	_freea(pszFindingPattern);
@@ -419,9 +421,13 @@ void CWndList::OnCmdLoadList()
 
 		Player.Delete(-1);
 		List.Reserve(ListFile.GetItemCount());
-		ListFile.For([&Player](const LISTFILEITEM_1* pItem, PCWSTR pszName, PCWSTR pszFile, PCWSTR pszTime)->BOOL
+		const auto bSort = Player.BeginAddOperation();
+		ListFile.For([&Player](const LISTFILEITEM_1* pItem, 
+			PCWSTR pszName, PCWSTR pszFile, PCWSTR pszTitle,
+			PCWSTR pszArtist, PCWSTR pszAlbum, PCWSTR pszGenre)->BOOL
 			{
-				Player.Insert(-1, *pItem, pszName, pszTime, pszFile);
+				Player.Insert(-1, *pItem, 
+					pszName, pszFile, pszTitle, pszArtist, pszAlbum, pszGenre);
 				return TRUE;
 			});
 		ListFile.ForBookmark([&List](const BOOKMARKITEM* pItem, PCWSTR pszName)->BOOL
@@ -429,7 +435,7 @@ void CWndList::OnCmdLoadList()
 				List.InsertBookmark(pItem->idxItem, pszName, pItem->cchName, pItem->cr);
 				return TRUE;
 			});
-
+		Player.EndAddOperation(bSort);
 		m_LVList.SetItemCount(List.GetCount());
 	}
 }
@@ -453,11 +459,15 @@ void CWndList::OnCmdSaveList()
 		{
 			auto& x = List.AtAbs(i);
 			Info.cchName = x.rsName.Size();
-			Info.cchTime = x.rsTime.Size();
 			Info.cchFile = x.rsFile.Size();
-			Info.bBookmark = x.bBookmark;
-			Info.bIgnore = x.bIgnore;
-			ListFile.PushBack(Info, x.rsName.Data(), x.rsFile.Data(), x.rsTime.Data());
+			Info.cchTitle = x.rsTitle.Size();
+			Info.cchArtist = x.rsArtist.Size();
+			Info.cchAlbum = x.rsAlbum.Size();
+			Info.cchGenre = x.rsGenre.Size();
+
+			Info.s = x.s;
+			ListFile.PushBack(Info, x.rsName.Data(), x.rsFile.Data(),
+				x.rsTitle.Data(), x.rsArtist.Data(), x.rsAlbum.Data(), x.rsGenre.Data());
 		}
 		ListFile.BeginBookMark();
 		BOOKMARKITEM BmInfo{};
@@ -571,7 +581,7 @@ BOOL CWndList::OnListLVNRClick(NMITEMACTIVATE* pnmia)
 			OnMenuDel(TRUE);
 		break;
 	case IDMI_IGNORE:
-		ECKBOOLNOT(List.At(idx).bIgnore);
+		ECKBOOLNOT(List.At(idx).s.bIgnore);
 		m_LVList.RedrawItem(idx);
 		break;
 	case IDMI_RENAME:// TODO : 替换默认编辑控件
@@ -586,7 +596,7 @@ BOOL CWndList::OnListLVNRClick(NMITEMACTIVATE* pnmia)
 	{
 		for (int i = idx; i >= 0; --i)
 		{
-			if (List.At(i).bBookmark)
+			if (List.At(i).s.bBookmark)
 			{
 				EnsureVisibleBookmark(i);
 				break;
@@ -598,7 +608,7 @@ BOOL CWndList::OnListLVNRClick(NMITEMACTIVATE* pnmia)
 	{
 		for (int i = idx; i < m_LVList.GetItemCount(); ++i)
 		{
-			if (List.At(i).bBookmark)
+			if (List.At(i).s.bBookmark)
 			{
 				EnsureVisibleBookmark(i);
 				break;
@@ -739,7 +749,7 @@ void CWndList::OnMenuAddDelBookmark(int idx)
 {
 	auto& List = App->GetPlayer().GetList();
 	auto& Item = List.At(idx);
-	if (Item.bBookmark)
+	if (Item.s.bBookmark)
 	{
 		if (Utils::MsgBox(L"确定要删除书签吗？", NULL, L"询问", 2, (HICON)TD_INFORMATION_ICON, m_hWnd) == Utils::MBBID_1)
 		{
@@ -1095,7 +1105,6 @@ void CWndList::PlayListItem(int idx)
 			if (it != vResult.end())
 				m_LVSearch.RedrawItem((int)std::distance(vResult.begin(), it));
 		}
-		m_WndMain.SetText(Player.GetList().At(idx).rsName.Data());
 	}
 	else
 		CPlayer::ShowPlayErr(m_hWnd, uRet);

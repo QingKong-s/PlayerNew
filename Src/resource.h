@@ -9,6 +9,7 @@
 #define IDR_BIN_COMPILETIME             133
 #define IDI_ICON1                       136
 #define IDI_MAIN                        136
+#define IDD_PROGRESS                    137
 #define IDD_EQ                          179
 #define IDD_EFFECT                      190
 #define IDD_SBV                         191
@@ -41,10 +42,13 @@
 #define IDC_LK_OPENGITHUB               1009
 #define IDC_RB_QUADWAVE                 1009
 #define IDC_ST_PNVER                    1010
+#define IDC_LK_AUTHOR2                  1011
+#define IDC_LK_THANKS                   1011
 #define IDC_ST_TEMPOTIP                 1015
 #define IDC_ST_SPEEDTIP                 1016
 #define IDC_ST_PANTIP                   1017
 #define IDC_ST_PITCHTIP                 1018
+#define IDC_PROGRESS1                   1019
 #define IDOK2                           1032
 #define IDC_BT_CANCEL                   1034
 #define IDC_BT_OK                       1036
@@ -191,9 +195,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        137
+#define _APS_NEXT_RESOURCE_VALUE        138
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1019
+#define _APS_NEXT_CONTROL_VALUE         1020
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

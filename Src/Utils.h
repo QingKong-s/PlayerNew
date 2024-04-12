@@ -23,14 +23,29 @@ using eck::SafeRelease;
 
 UTILS_NAMESPACE_BEGIN
 #pragma region MusicInfo
+enum :UINT
+{
+    MIF_TITLE = 1u << 0,
+    MIF_ARTIST = 1u << 1,
+    MIF_ALBUM = 1u << 2,
+    MIF_COMMENT = 1u << 3,
+    MIF_LRC = 1u << 4,
+    MIF_COVER = 1u << 5,
+    MIF_GENRE = 1u << 6,
+
+    MIF_ALL = MIF_TITLE | MIF_ARTIST | MIF_ALBUM | MIF_COMMENT | MIF_LRC | MIF_COVER | MIF_GENRE
+};
+
 struct MUSICINFO
 {
+    UINT uFlags{ MIF_ALL };
 	eck::CRefStrW rsTitle{};
 	eck::CRefStrW rsArtist{};
 	eck::CRefStrW rsAlbum{};
 	eck::CRefStrW rsComment{};
 	eck::CRefStrW rsLrc{};
     eck::CRefBin rbCover{};
+    eck::CRefStrW rsGenre{};
 };
 
 
@@ -175,11 +190,6 @@ struct LRCLABEL
 {
     eck::CRefStrW rsKey{};
     eck::CRefStrW rsValue{};
-
-    LRCLABEL(PCWSTR pszKey, PCWSTR pszValue)
-        :rsKey(pszKey), rsValue(pszValue)
-    {
-	}
 };
 
 /// <summary>

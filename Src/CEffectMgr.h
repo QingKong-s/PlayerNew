@@ -236,7 +236,7 @@ struct CEffectMgr
 
 	PNInline HFX& GetHFx(int idx)
 	{
-		EckAssert(idx >= 0 && idx < FXI_MAX && idx != FXI_PARAMEQ);
+		EckAssert(idx >= 0 && idx < FXI_MAX);
 		return hFx[idx];
 	}
 

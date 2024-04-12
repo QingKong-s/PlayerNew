@@ -7,6 +7,7 @@
 #include "eck\DuiBase.h"
 #include "eck\CDuiCircleButton.h"
 #include "eck\CDuiTrackBar.h"
+#include "eck\CDuiScrollBar.h"
 #include "eck\CInertialScrollView.h"
 #include "eck\CMenu.h"
 
@@ -133,6 +134,7 @@ private:
 	D2D1_RECT_F m_rcfClient{};
 
 	std::vector<CUIElem*> m_vElemsWantTimer{};
+	std::vector<CUIElem*> m_vAllElems{};
 
 	UINT m_uMsgCUIButton = 0;// (uCode, pElem)
 
@@ -198,12 +200,13 @@ private:
 	void OnSize(HWND hWnd, UINT state, int cx, int cy);
 
 	void OnDestroy(HWND hWnd);
+
+	void SetupElem();
 public:
 	enum
 	{
 		IDT_PGS = 101,
 	};
-
 
 	static ATOM RegisterWndClass();
 
@@ -511,6 +514,7 @@ private:
 
 	ID2D1DeviceContext1* m_pDC1 = NULL;
 
+	Dui::CScrollBar m_SB{};
 	eck::CInertialScrollView* m_psv = NULL;
 
 	int m_idxTop = -1;
@@ -581,7 +585,7 @@ private:
 
 	BOOL DrawItem(int idx, float& y);
 
-	void DrawScrollBar();
+	//void DrawScrollBar();
 
 	void GetSBThumbRect(D2D1_RECT_F& rc)
 	{

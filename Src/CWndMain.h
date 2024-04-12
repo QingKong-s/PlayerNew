@@ -73,21 +73,6 @@ private:
 		;
 	ECK_DS_END_VAR(m_Ds);
 
-	std::vector<eck::CRefStrW> m_vStr{};
-
-	struct GROUP
-	{
-		eck::CRefStrW rs{};
-		std::vector<Utils::MUSICINFO*> Items{};
-		ID2D1Bitmap1* pBmp = NULL;
-
-		GROUP(const eck::CRefStrW& rs_) :rs{ rs_ }, Items{}, pBmp{}
-		{
-		}
-	};
-	std::vector<GROUP> m_vGroup{};
-	std::vector<Utils::MUSICINFO*> m_vItem;
-
 	void UpdateDpi(int iDpi);
 
 	void InitBK();
@@ -99,6 +84,8 @@ private:
 	void OnDestroy();
 
 	void OnDpiChanged(HWND hWnd, int xDpi, int yDpi, RECT* pRect);
+
+	void UpdateTaskbarPlayBtn();
 public:
 	static UINT s_uMsgTaskbarButtonCreated;
 	
@@ -125,6 +112,7 @@ public:
 		{
 			m_pTbList->HrInit();
 			SetupTaskbarStuff();
+			m_TbGhost.SetIconicThumbnail();
 		}
 
 		return hWnd;
@@ -136,8 +124,7 @@ public:
 			if (m_Lrc.IsValid())
 				SetForegroundWindow(m_Lrc.HWnd);
 			else
-				m_Lrc.Create(NULL, 0, 0,
-					700, 1100, 1100, 400, NULL, NULL, NULL);
+				m_Lrc.Create();
 		else
 			if (m_Lrc.IsValid())
 				m_Lrc.Destroy();

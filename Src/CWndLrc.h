@@ -168,6 +168,8 @@ private:
 
 	void ReCreateBrush(float cyText, float cyTextTrans, BOOL bHiLight,
 		ID2D1LinearGradientBrush** ppBrMain, ID2D1LinearGradientBrush** ppBrTrans);
+
+	void ReleaseTextCache();
 public:
 	static ATOM RegisterWndClass() { return eck::EzRegisterWndClass(WCN_LRC); }
 
@@ -181,6 +183,8 @@ public:
 			x, y, cx, cy, NULL, NULL, App->GetHInstance(), NULL);
 	}
 
+	HWND Create();
+
 	EckInline void InvalidateCache()
 	{
 		m_TextCache[0].idxLrc = c_InvalidCacheIdx;
@@ -192,8 +196,6 @@ public:
 	void Draw();
 
 	void DoCmd(int idx);
-
-	void ShowWnd(BOOL bShow);
 
 	void Lock(BOOL bLock);
 

@@ -36,7 +36,7 @@ static void PaintLVItem(eck::CListView& LV, CWndList& WndList, PLAYLISTUNIT& Ite
 	if (iState)// 画表项框
 		DrawThemeBackground(hTheme, hDC, LVP_LISTITEM, iState, &pnmlvcd->nmcd.rc, NULL);
 
-	if (Item.bIgnore)
+	if (Item.s.bIgnore)
 		SetTextColor(hDC, GetSysColor(COLOR_GRAYTEXT));
 	else
 		SetTextColor(hDC, GetSysColor(COLOR_WINDOWTEXT));
@@ -48,7 +48,10 @@ static void PaintLVItem(eck::CListView& LV, CWndList& WndList, PLAYLISTUNIT& Ite
 		DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX | DT_NOCLIP);
 	rc.left = rc.right;
 	rc.right = pnmlvcd->nmcd.rc.right;
-	DrawTextW(hDC, Item.rsTime.Data(), Item.rsTime.Size(), &rc,
+	WCHAR szTime[eck::c_cchI32ToStrBufNoRadix2 * 2 + 10];
+	const int cchTime = swprintf(szTime, L"%02d:%02d", 
+		int(Item.s.uSecTime / 60), int(Item.s.uSecTime % 60));
+	DrawTextW(hDC, szTime, cchTime, &rc,
 		DT_SINGLELINE | DT_VCENTER | DT_CENTER | DT_END_ELLIPSIS | DT_NOPREFIX | DT_NOCLIP);
 
 	if (idx == App->GetPlayer().GetLaterPlaying())// 稍后播放
@@ -123,7 +126,7 @@ LRESULT CLVSearch::OnNotifyMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 				rcColumn1.bottom = pnmlvcd->nmcd.rc.bottom;
 
 				IntersectClipRect(hDC, rcColumn1.left, rcColumn1.top, rcColumn1.right, rcColumn1.bottom);
-				while ((pos = eck::FindStr(Item.rsName.Data(), rsKeyWord.Data(), pos)) != eck::INVALID_STR_POS)
+				while ((pos = eck::FindStrI(Item.rsName.Data(), rsKeyWord.Data(), pos)) != eck::INVALID_STR_POS)
 				{
 					if (pos)
 					{
@@ -139,12 +142,12 @@ LRESULT CLVSearch::OnNotifyMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 					{
 						const int iOldMode = SetBkMode(hDC, OPAQUE);
 						const auto crOld = SetBkColor(hDC, GetSysColor(COLOR_HIGHLIGHT));
-						const auto crOldText = ::SetTextColor(hDC, GetSysColor(COLOR_HIGHLIGHTTEXT));
-						DrawTextW(hDC, rsKeyWord.Data(), rsKeyWord.Size(), &rcBK, 
+						const auto crOldText = SetTextColor(hDC, GetSysColor(COLOR_HIGHLIGHTTEXT));
+						DrawTextW(hDC, Item.rsName.Data() + pos, rsKeyWord.Size(), &rcBK,
 							DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX | DT_NOCLIP);
 						SetBkMode(hDC, iOldMode);
 						SetBkColor(hDC, crOld);
-						::SetTextColor(hDC, crOldText);
+						SetTextColor(hDC, crOldText);
 					}
 					++pos;
 				}
@@ -236,7 +239,7 @@ LRESULT CLVPlay::OnNotifyMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 
 				PaintLVItem(*this, m_WndList, Item, pnmlvcd, m_hTheme, idx, idx);
 
-				if (Item.bBookmark)
+				if (Item.s.bBookmark)
 				{
 					const auto& bm = App->GetPlayer().GetList().AtBookmark(idx);
 					HGDIOBJ hOldPen = SelectObject(hDC, CreatePen(PS_SOLID, 1, bm.crColor));
