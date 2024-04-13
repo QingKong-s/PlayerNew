@@ -167,7 +167,6 @@ private:
 	CLIPFORMAT m_cfListDrag = 0;
 
 	IWICBitmap* m_pWicRes[IIDX__MAX]{};
-	HICON m_hIcon[IIDX__MAX]{};
 
 	static HRESULT WICCreateBitmap(IWICBitmapDecoder* pDecoder, IWICBitmap** ppBitmap);
 
@@ -184,8 +183,6 @@ public:
 	PNInline CLIPFORMAT GetListDragClipFormat() const { return m_cfListDrag; }
 
 	PNInline const auto GetWicRes() { return m_pWicRes; }
-
-	PNInline const auto GetHIconRes() { return m_hIcon; }
 
 	PNInline CWndMain* GetMainWnd() { return m_pWndMain; }
 

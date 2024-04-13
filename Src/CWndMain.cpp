@@ -427,7 +427,7 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 				auto& Player = App->GetPlayer();
 				m_List.m_LVList.RedrawItem(Player.GetCurrFile());
 				UpdateTaskbarPlayBtn();
-				SetText((Player.GetList().At(Player.GetCurrFile()).rsName+L" | PlayerNew").Data());
+				SetText(Player.GetList().At(Player.GetCurrFile()).rsName.Data());
 			}
 			break;
 			case PCT_PLAY_OR_PAUSE:
@@ -435,10 +435,14 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 				if (m_Lrc.IsValid() && m_Lrc.IsBkVisible())
 					m_Lrc.Draw();
 				UpdateTaskbarPlayBtn();
+				if (m_pTbList)
+					m_pTbList->SetProgressState(HWnd,
+						(App->GetPlayer().IsPlaying()) ? TBPF_NORMAL : TBPF_PAUSED);
 			}
 			break;
 			case PCT_STOP:
 				m_List.m_LVList.RedrawItem((int)i1);
+				m_pTbList->SetProgressValue(HWnd, 0ull, 0ull);
 				break;
 			case PCT_REMOVE_LATER_PLAY:
 				m_List.m_LVList.RedrawItem((int)i1);

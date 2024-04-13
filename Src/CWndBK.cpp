@@ -3,13 +3,6 @@
 
 #include "CDlgAbout.h"
 
-
-#define MYCLR_BTHOT				0xE6E8B1
-#define MYCLR_BTPUSHED			0xE6E843
-#define MYCLR_BTCHECKED			0xE6E88C
-
-#define BTMBKBTNCOUNT			10
-
 constexpr PCWSTR c_szBtmTip[]
 {
 	L"上一曲",
@@ -243,7 +236,9 @@ LRESULT CWndBK::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 		case IDT_PGS:
 		{
-			auto uTickRet = App->GetPlayer().Tick();
+			auto& Player = App->GetPlayer();
+			auto uTickRet = Player.Tick();
+
 			auto& LrcWnd = App->GetMainWnd()->m_Lrc;
 			if (LrcWnd.IsValid())
 			{
@@ -255,6 +250,11 @@ LRESULT CWndBK::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				else if (LrcWnd.IsCacheLayoutTooLong())
 					LrcWnd.Draw();
 			}
+
+			const auto pTL = App->GetMainWnd()->m_pTbList;
+			if (pTL)
+				pTL->SetProgressValue(App->GetMainWnd()->HWnd,
+					Player.GetPos(), Player.GetLength());
 		}
 		break;
 		}

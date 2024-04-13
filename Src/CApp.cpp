@@ -54,8 +54,6 @@ void CApp::LoadRes()
 		wcscpy(rs.Data() + cchPath, c_szResFile[i]);
 		if (FAILED(hr = WICCreateBitmap(rs.Data(), &m_pWicRes[i])))
 			ShowError(NULL, hr, ErrSrc::HResult, L"加载资源时出错", std::format(LR"("{}"加载失败)", rs.Data()).c_str());
-		else
-			m_hIcon[i] = eck::CreateHICON(m_pWicRes[i]);
 	}
 }
 
@@ -89,7 +87,6 @@ void CApp::Init(HINSTANCE hInstance)
 
 void CApp::InvertIconColor()
 {
-	return;
 	constexpr D2D1_RENDER_TARGET_PROPERTIES Prop
 	{
 		D2D1_RENDER_TARGET_TYPE_DEFAULT,
@@ -103,37 +100,37 @@ void CApp::InvertIconColor()
 
 	ID2D1DeviceContext* pDC;
 	ID2D1Effect* pEffect;
+	IWICBitmap* pNewBitmap;
 
-	for (auto pBmp : m_pWicRes)
+	UINT cx, cy;
+
+	for (auto& pBmp : m_pWicRes)
 	{
-		//App->m_pWicFactory->CreateBitmapFromSource(pBmp, WICBitmapNoCache, &pNewBmp);
-		auto hr=App->m_pD2dFactory->CreateWicBitmapRenderTarget(pBmp, &Prop, &pRT);
+		pBmp->GetSize(&cx, &cy);
+		App->m_pWicFactory->CreateBitmap(cx, cy, GUID_WICPixelFormat32bppPBGRA,
+			WICBitmapCacheOnLoad, &pNewBitmap);
+		App->m_pD2dFactory->CreateWicBitmapRenderTarget(pNewBitmap, &Prop, &pRT);
+		pRT->CreateBitmapFromWicBitmap(pBmp, &pD2dBitmap);
 
-		hr = pRT->CreateBitmapFromWicBitmap(pBmp, &pD2dBitmap);
-		hr = pRT->QueryInterface(&pDC);
-
-		hr = pDC->CreateEffect(CLSID_D2D1Invert, &pEffect);
+		pRT->QueryInterface(&pDC);
+		pDC->CreateEffect(CLSID_D2D1ColorMatrix, &pEffect);
+		EckAssert(pEffect);
 		pEffect->SetInput(0, pD2dBitmap);
-
+		auto mat = D2D1::Matrix5x4F(-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0.999, 0.999, 0.999, 0);
+		pEffect->SetValue(D2D1_COLORMATRIX_PROP_COLOR_MATRIX, mat);
 
 		pDC->BeginDraw();
-		pDC->Clear({1.f,0.f,0.f,1.f});
+		pDC->Clear({});
 		pDC->DrawImage(pEffect);
-		hr = pDC->EndDraw();
+		pDC->EndDraw();
 
-		//pRT->BeginDraw();
-
-		//pRT->DrawBitmap(pD2dBitmap, { 10,10,20,20 }, 1.f);
-		//pRT->Flush();
-		//pRT->EndDraw();
-
-		//std::swap(pBmp, pNewBmp);
+		std::swap(pBmp, pNewBitmap);
 
 		pEffect->Release();
 		pD2dBitmap->Release();
 		pDC->Release();
 		pRT->Release();
-		//pNewBmp->Release();
+		pNewBitmap->Release();
 	}
 }
 
@@ -143,10 +140,7 @@ HRESULT CApp::WICCreateBitmap(PCWSTR pszFile, IWICBitmap** ppWICBitmap)
 	IWICBitmapDecoder* pDecoder;
 	HRESULT hr = App->m_pWicFactory->CreateDecoderFromFilename(pszFile, NULL, GENERIC_READ, WICDecodeMetadataCacheOnDemand, &pDecoder);
 	if (FAILED(hr))
-	{
-		EckDbgBreak();
 		return hr;
-	}
 	return WICCreateBitmap(pDecoder, ppWICBitmap);
 }
 
@@ -156,10 +150,7 @@ HRESULT CApp::WICCreateBitmap(IStream* pStream, IWICBitmap** ppWICBitmap)
 	IWICBitmapDecoder* pDecoder;
 	HRESULT hr = App->m_pWicFactory->CreateDecoderFromStream(pStream, NULL, WICDecodeMetadataCacheOnDemand, &pDecoder);
 	if (FAILED(hr))
-	{
-		//EckDbgBreak();
 		return hr;
-	}
 	return WICCreateBitmap(pDecoder, ppWICBitmap);
 }
 
@@ -184,7 +175,7 @@ void CApp::ShowError(HWND hWnd, EckOpt(DWORD, dwErrCode), ErrSrc uSrc, PCWSTR ps
 	case CApp::ErrSrc::Win32:
 		if (!dwErrCode.has_value())
 			dwErrCode = GetLastError();
-#pragma warning(suppress: 26819)// fall through
+		[[fallthrough]];
 	case CApp::ErrSrc::HResult:
 	{
 		PWSTR pszErrMsg = NULL;
@@ -203,6 +194,6 @@ void CApp::ShowError(HWND hWnd, EckOpt(DWORD, dwErrCode), ErrSrc uSrc, PCWSTR ps
 	}
 	tdc.pszContent = sContent.c_str();
 
-	int iTemp;
-	TaskDialogIndirect(&tdc, &iTemp, &iTemp, &iTemp);
+	int dummy;
+	TaskDialogIndirect(&tdc, &dummy, &dummy, &dummy);
 }

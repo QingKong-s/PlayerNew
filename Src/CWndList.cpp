@@ -4,9 +4,7 @@
 #include "CDlgNewBookmark.h"
 #include "DragDrop.h"
 
-constexpr static PCWSTR c_szDefListName = L"当前无播放列表";
-constexpr static UINT_PTR c_uScidLVList = 20231026'01;
-constexpr static UINT_PTR c_uScidLVSearch = 20231028'01;
+constexpr static PCWSTR c_szDefListName = L"<无列表>";
 
 class CDropSourceList :public CDropSource
 {

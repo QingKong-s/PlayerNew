@@ -61,10 +61,16 @@ PlayOpErr CPlayer::Play(int idx)
 
 	Utils::GetMusicInfo(m_rsCurrFile.Data(), m_MusicInfo);
 
-	m_Stat.IncPlayCount(m_MusicInfo.rsTitle);
-	std::vector<eck::CRefStrW> vArtist{};
-	eck::SplitStr(m_MusicInfo.rsArtist.Data(), L"、", vArtist);
-	m_Stat.IncPlayCount(vArtist);
+	if (!m_MusicInfo.rsTitle.IsEmpty())
+		m_Stat.IncPlayCount(m_MusicInfo.rsTitle);
+	if (!m_MusicInfo.rsArtist.IsEmpty())
+	{
+		std::vector<eck::CRefStrW> vArtist{};
+		eck::SplitStrWithMultiChar(m_MusicInfo.rsArtist.Data(), L"、/&", vArtist);
+		for (auto& e : vArtist)
+			e.RLTrim();
+		m_Stat.IncPlayCount(vArtist);
+	}
 
 	CreateWicBmpCover();
 	m_vLrc.clear();

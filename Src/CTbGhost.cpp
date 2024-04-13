@@ -68,7 +68,7 @@ LRESULT CTbGhost::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         GpBitmap* pBitmapBK;
         GpGraphics* pGraphics;
-        GdipCreateBitmapFromScan0(rcMainClient.right, rcMainClient.bottom, 0, PixelFormat32bppARGB, NULL, &pBitmapBK);
+        GdipCreateBitmapFromScan0(rcMainClient.right, rcMainClient.bottom, 0, GpPixelFormat::PF32bppARGB, NULL, &pBitmapBK);
         GdipGetImageGraphicsContext(pBitmapBK, &pGraphics);
         GdipGraphicsClear(pGraphics, eck::ColorrefToARGB(GetSysColor(COLOR_WINDOW), 0x90));
         int rc[4]
@@ -81,10 +81,10 @@ LRESULT CTbGhost::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         GdipDrawImageRectRectI(pGraphics, pBitmap,
             rc[0],rc[1], rc[2], rc[3],
             0, 0, cx0, cy0,
-            UnitPixel, NULL, NULL, NULL);
+            GpUnit::Pixel, NULL, NULL, NULL);
         GpPen* pPen;
         const auto cxPen = eck::DpiScaleF(1.f, iDpi);
-		GdipCreatePen1(0xFF000000, cxPen, UnitPixel, &pPen);
+		GdipCreatePen1(0xFF000000, cxPen, GpUnit::Pixel, &pPen);
         GdipDrawRectangleI(pGraphics, pPen, rc[0], rc[1], rc[2], rc[3]);
         GdipSetPenColor(pPen, 0xFFFFFFFF);
         rc[0] -= 1;
@@ -208,14 +208,14 @@ void CTbGhost::SetIconicThumbnail(UINT cxMax, UINT cyMax)
 
     GpBitmap* pBitmapBK;
     GpGraphics* pGraphics;
-    GdipCreateBitmapFromScan0(cx, cy, 0, PixelFormat32bppARGB, NULL, &pBitmapBK);
+    GdipCreateBitmapFromScan0(cx, cy, 0, GpPixelFormat::PF32bppARGB, NULL, &pBitmapBK);
     GdipGetImageGraphicsContext(pBitmapBK, &pGraphics);
     GdipGraphicsClear(pGraphics, 0x00000000);
-    GdipSetInterpolationMode(pGraphics, InterpolationModeHighQuality);
+    GdipSetInterpolationMode(pGraphics, GpInterpolationMode::HighQuality);
     GdipDrawImageRectRectI(pGraphics, pBitmap,
         0, 0, cx, cy,
         0, 0, cx0, cy0,
-        UnitPixel, NULL, NULL, NULL);
+        GpUnit::Pixel, NULL, NULL, NULL);
     GdipDeleteGraphics(pGraphics);
     GdipCreateHBITMAPFromBitmap(pBitmapBK, &hBitmap, 0x00000000);
 

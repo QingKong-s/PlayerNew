@@ -35,9 +35,7 @@ BOOL CDlgAbout::OnInitDialog(HWND hDlg, HWND hCtrl, LPARAM lParam)
 		}
 	}
 
-	GdipCreateBitmapFromFile((eck::GetRunningPath() + LR"(\Img\PlayerNew.png)").Data(), &m_pGpBitmap);
-	GdipGetImageWidth(m_pGpBitmap, (UINT*)&m_cxImg);
-	GdipGetImageHeight(m_pGpBitmap, (UINT*)&m_cyImg);
+	LoadPlayNewImage();
 
 	RECT rc;
 	GetClientRect(hDlg, &rc);
@@ -46,6 +44,37 @@ BOOL CDlgAbout::OnInitDialog(HWND hDlg, HWND hCtrl, LPARAM lParam)
 
 	SetFocus(GetDlgItem(hDlg, IDOK));
 	return FALSE;
+}
+
+void CDlgAbout::LoadPlayNewImage()
+{
+	GdipDisposeImage(m_pGpBitmap);
+
+	GdipCreateBitmapFromFile((eck::GetRunningPath() + LR"(\Img\PlayerNew.png)").Data(), &m_pGpBitmap);
+	GdipGetImageWidth(m_pGpBitmap, (UINT*)&m_cxImg);
+	GdipGetImageHeight(m_pGpBitmap, (UINT*)&m_cyImg);
+
+	if (eck::ShouldAppUseDarkMode())
+	{
+		GpImageAttributes* pIA;
+		GdipCreateImageAttributes(&pIA);
+		GpColorMatrix mat{ -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0.999f, 0.999f, 0.999f, 0 };
+		GdipSetImageAttributesColorMatrix(pIA, GpColorAdjustType::Default, TRUE,
+			&mat, NULL, GpColorMatrixFlags::Default);
+
+		GpBitmap* pNewBmp;
+		GdipCreateBitmapFromScan0(m_cxImg, m_cyImg, 0, GpPixelFormat::PF32bppPARGB, NULL, &pNewBmp);
+		GpGraphics* pGraphics;
+		GdipGetImageGraphicsContext(pNewBmp, &pGraphics);
+		GdipGraphicsClear(pGraphics, 0);
+		GdipDrawImageRectRectI(pGraphics, m_pGpBitmap, 0, 0, m_cxImg, m_cyImg,
+			0, 0, m_cxImg, m_cyImg, GpUnit::Pixel, pIA, NULL, NULL);
+		std::swap(m_pGpBitmap, pNewBmp);
+
+		GdipDisposeImageAttributes(pIA);
+		GdipDeleteGraphics(pGraphics);
+		GdipDisposeImage(pNewBmp);
+	}
 }
 
 LRESULT CDlgAbout::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -61,6 +90,7 @@ LRESULT CDlgAbout::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			case IDC_LK_AUTHOR:
 			case IDC_LK_3RDPARTYLIB:
 			case IDC_LK_OPENGITHUB:
+			case IDC_LK_THANKS:
 				ShellExecuteW(NULL, L"open", ((NMLINK*)lParam)->item.szUrl, NULL, NULL, SW_SHOW);
 				return TRUE;
 			}
@@ -73,7 +103,7 @@ LRESULT CDlgAbout::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		BeginPaint(hWnd, &ps);
 		GpGraphics* pGraphics;
 		GdipCreateFromHDC(ps.hdc, &pGraphics);
-		GdipSetSmoothingMode(pGraphics, SmoothingModeHighQuality);
+		GdipSetInterpolationMode(pGraphics, GpInterpolationMode::HighQuality);
 		GdipDrawImageRectI(pGraphics, m_pGpBitmap,
 			0, 0,
 			m_cxClient,
@@ -82,6 +112,18 @@ LRESULT CDlgAbout::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		EndPaint(hWnd, &ps);
 	}
 	return TRUE;
+
+	case WM_SETTINGCHANGE:
+	{
+		if (eck::IsColorSchemeChangeMessage(lParam) && 
+			m_bDark != eck::ShouldAppUseDarkMode())
+		{
+			m_bDark = eck::ShouldAppUseDarkMode();
+			LoadPlayNewImage();
+			Redraw();
+		}
+	}
+	break;
 
 	case WM_DESTROY:
 		GdipDisposeImage(m_pGpBitmap);
