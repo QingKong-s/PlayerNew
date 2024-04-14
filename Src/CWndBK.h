@@ -140,6 +140,9 @@ private:
 
 	CDlgEffect m_DlgFx{};
 
+	std::vector<eck::ILayout*> m_vLayout{};
+	eck::ILayout* m_pLayout = NULL;
+
 	enum
 	{
 		ICIDX_Prev,
@@ -176,6 +179,8 @@ private:
 		ECK_DS_ENTRY(cxVolTrack, 170)
 		ECK_DS_ENTRY(cxyMinSBThumb, 10)
 		ECK_DS_ENTRY(ScrollDelta, 80)
+		ECK_DS_ENTRY(UIMargin, 12)
+		ECK_DS_ENTRY(UIMarginInt, 8)
 		;
 	ECK_DS_END_VAR(m_Ds);
 
@@ -584,8 +589,6 @@ private:
 	void CalcTopItem();
 
 	BOOL DrawItem(int idx, float& y);
-
-	//void DrawScrollBar();
 
 	void GetSBThumbRect(D2D1_RECT_F& rc)
 	{

@@ -14,6 +14,7 @@ LRESULT CUIAlbum::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         if (!pBk->m_pBmpAlbum)
         {
+            BkDbg_DrawElemFrame();
             EndPaint(ps);
             return 0;
         }
@@ -46,6 +47,7 @@ LRESULT CUIAlbum::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         pDC->DrawBitmap(pBk->m_pBmpAlbum, &rcF);
 
+        BkDbg_DrawElemFrame();
         EndPaint(ps);
     }
     return 0;

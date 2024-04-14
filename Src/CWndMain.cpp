@@ -382,17 +382,17 @@ void CWndMain::OnSize(HWND hWnd, UINT uState, int cx, int cy)
 	hDwp = DeferWindowPos(hDwp, m_BK.GetHWND(), NULL,
 		0,
 		0,
-		m_xSeparateBar,
+		cx - m_cxList - m_Ds.cxSeparateBar,
 		cy, SWP_NOZORDER | SWP_NOACTIVATE);
 	hDwp = DeferWindowPos(hDwp, m_SPB.GetHWND(), NULL,
-		m_xSeparateBar,
+		cx - m_cxList - m_Ds.cxSeparateBar,
 		0,
 		m_Ds.cxSeparateBar,
 		cy, SWP_NOZORDER | SWP_NOACTIVATE);
 	hDwp = DeferWindowPos(hDwp, m_List.GetHWND(), NULL,
-		m_xSeparateBar + m_Ds.cxSeparateBar,
+		cx - m_cxList,
 		0,
-		cx - m_Ds.cxSeparateBar - m_xSeparateBar,
+		m_cxList,
 		cy, SWP_NOZORDER | SWP_NOACTIVATE);
 	EndDeferWindowPos(hDwp);
 	m_TbGhost.InvalidateLivePreviewCache();
@@ -404,7 +404,7 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	DwmGetColorizationColor(&m_argbDwm, &bOpaqueBlend);
 	m_crDwm = eck::ARGBToD2dColorF(m_argbDwm);
 	m_bDarkColor = !eck::IsColorLightArgb(m_argbDwm);
-	if (m_bDarkColor)
+	if (eck::ShouldAppUseDarkMode())
 		App->InvertIconColor();
 
 	App->GetPlayer().SetPlayingCtrlCallBack([this](PLAYINGCTRLTYPE uType, INT_PTR i1, INT_PTR i2)
@@ -451,15 +451,13 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 			m_BK.OnPlayingControl(uType);
 		});
 	UpdateDpi(eck::GetDpi(hWnd));
+	RECT rc;
+	GetClientRect(hWnd, &rc);
+	m_cxList = rc.right * 37 / 100;
+
 	m_BK.Create(NULL, WS_CHILD, 0, 0, 0, 0, 0, hWnd, IDC_BK);
 	m_List.Create(L"列表", WS_CHILD | WS_CLIPCHILDREN, 0, 0, 0, 0, 0, hWnd, IDC_LIST);
 	m_SPB.Create(NULL, WS_CHILD, 0, 0, 0, 0, 0, hWnd, IDC_SPB);
-
-	RECT rc;
-	GetClientRect(hWnd, &rc);
-
-	m_xSeparateBar = rc.right * 62 / 100;
-	OnSize(hWnd, 0, rc.right, rc.bottom);
 
 	m_BK.Show(SW_SHOWNOACTIVATE);
 	m_List.Show(SW_SHOWNOACTIVATE);
@@ -537,9 +535,9 @@ LRESULT CWndMain::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (pnmhdr->hwndFrom == m_SPB.HWnd && pnmhdr->code == eck::NM_SPB_DRAGGED)
 		{
 			const auto p = (eck::NMSPBDRAGGED*)lParam;
-			m_xSeparateBar = p->xyPos;
 			RECT rc;
 			GetClientRect(hWnd, &rc);
+			m_cxList = rc.right - p->xyPos - m_Ds.cxSeparateBar;
 			OnSize(hWnd, 0, rc.right, rc.bottom);
 		}
 	}

@@ -7,6 +7,7 @@
 #include "eck\SystemHelper.h"
 
 #include <algorithm>
+#include <variant>
 
 #include <Shlwapi.h>
 #include <wincodec.h>
@@ -32,20 +33,75 @@ enum :UINT
     MIF_LRC = 1u << 4,
     MIF_COVER = 1u << 5,
     MIF_GENRE = 1u << 6,
+    MIF_DATE = 1u << 7,
 
-    MIF_ALL = MIF_TITLE | MIF_ARTIST | MIF_ALBUM | MIF_COMMENT | MIF_LRC | MIF_COVER | MIF_GENRE
+    MIF_ALL = MIF_TITLE | MIF_ARTIST | MIF_ALBUM | MIF_COMMENT | MIF_LRC | MIF_COVER | MIF_GENRE |
+                MIF_DATE
+};
+
+enum class PicType
+{
+	Invalid = -1,       // 任何无效的值
+	Begin___ = 0,       // ！起始占位
+	Other = Begin___,   // 其他
+	FileIcon32x32,      // 32×32大小文件图标（仅PNG）
+	OtherFileIcon,      // 其他图标
+	CoverFront,         // 封面
+	CoverBack,          // 封底
+	LeafletPage,        // 宣传图
+	Media,              // 实体媒介照片
+	LeadArtist,         // 艺术家照片
+    Artist,             // 演唱者照片
+    Conductor,          // 指挥者照片
+    Band,               // 乐队/剧团照片
+    Composer,           // 作曲家照片
+    Lyricist,           // 作词者照片
+    RecordingLocation,  // 录音场地照片
+    DuringRecording,    // 录音过程照片
+    DuringPerformance,  // 表演过程照片
+    MovieCapture,       // 视频截图
+    ABrightColouredFish,// 艳鱼图
+    Illustration,       // 插画
+    BandLogotype,       // 艺术家/艺术团队logo
+    PublisherLogotype,  // 发行商/工作室logo
+    End___              // ！终止占位
+};
+
+struct MUSICPIC
+{
+    PicType eType;
+    BOOL bLink;
+    eck::CRefStrW rsDesc;
+    eck::CRefStrW rsMime;
+    std::variant<eck::CRefBin, eck::CRefStrW> varPic;
 };
 
 struct MUSICINFO
 {
-    UINT uFlags{ MIF_ALL };
-	eck::CRefStrW rsTitle{};
-	eck::CRefStrW rsArtist{};
-	eck::CRefStrW rsAlbum{};
-	eck::CRefStrW rsComment{};
-	eck::CRefStrW rsLrc{};
-    eck::CRefBin rbCover{};
-    eck::CRefStrW rsGenre{};
+    UINT uFlags{ MIF_ALL };     // 掩码
+	eck::CRefStrW rsTitle{};    // 标题
+	eck::CRefStrW rsArtist{};   // 艺术家
+	eck::CRefStrW rsAlbum{};    // 专辑
+	eck::CRefStrW rsComment{};  // 备注
+	eck::CRefStrW rsLrc{};      // 歌词
+    eck::CRefStrW rsGenre{};    // 流派
+    SYSTEMTIME stDate{};        // 录制日期
+    std::vector<MUSICPIC> vImage{};// 图片
+
+    const MUSICPIC* GetMainCover() const
+    {
+        if (vImage.empty())
+            return NULL;
+        auto it = std::find_if(vImage.begin(), vImage.end(),
+            [](const MUSICPIC& e) { return e.eType == PicType::CoverFront; });
+        if (it == vImage.end())
+            it = std::find_if(vImage.begin(), vImage.end(),
+                [](const MUSICPIC& e) { return e.eType == PicType::CoverBack; });
+        if (it == vImage.end())
+            return vImage.data();
+        else
+            return &*it;
+    }
 };
 
 
@@ -120,7 +176,7 @@ enum :UINT
 	ID3V2FF_HAS_DATA_LENGTH_INDICATOR = 1u << 0,    // 含长度指示（4B，同步安全整数）
 };
 
-BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi);
+BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi, PCWSTR pszDiv = L"、");
 #pragma endregion
 
 #pragma region Lrc

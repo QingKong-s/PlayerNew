@@ -163,7 +163,7 @@ public:
 	}
 };
 
-BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
+BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi, PCWSTR pszDiv)
 {
 	mi = {};
 	eck::CFile File;
@@ -195,7 +195,7 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 		const BOOL bUnsync = (pHeader->Flags & ID3V2HF_UNSYNCHRONIZATION);
 		const PCVOID pEnd = r.Data() + cbTotal;
 		const auto pExtHeader = (const ID3v2_ExtHeader*)r.Data();
-
+		
 		if (pHeader->Ver == 3)// 2.3
 		{
 			if (pHeader->Flags & 0x20)// 有扩展头
@@ -258,7 +258,13 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 			{
 				CID3v2Frame f(r, pFrame, cbUnit, bUnsync);
 				auto [r2, cb] = f.Begin();
-				mi.rsArtist = GetID3v2_ProcString(r2, cb);
+				if (mi.rsArtist.IsEmpty())
+					mi.rsArtist = GetID3v2_ProcString(r2, cb);
+				else
+				{
+					mi.rsArtist.PushBack(pszDiv);
+					mi.rsArtist.PushBack(GetID3v2_ProcString(r2, cb));
+				}
 				f.End();
 			}
 			else if ((mi.uFlags & MIF_ALBUM) && memcmp(pFrame->ID, "TALB", 4) == 0)// 专辑
@@ -326,7 +332,7 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 
 				cb -= (t + 4);
 				// 此时pFrame指向备注字符串
-				mi.rsComment = GetID3v2_ProcString(r2, cb, byEncodeType);
+				mi.rsComment.PushBack(GetID3v2_ProcString(r2, cb, byEncodeType));
 
 				f.End();
 			}
@@ -343,12 +349,24 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 				CID3v2Frame f(r, pFrame, cbUnit, bUnsync);
 				auto [r2, cb] = f.Begin();
 
+				MUSICPIC Pic{};
+
 				BYTE byEncodeType;
 				r2 >> byEncodeType;// 读文本编码
 
+				BYTE byType;
+
 				UINT t;
 				t = (int)strlen((PCSTR)r2.Data());
-				r2 += (t + 2);// 跳过MIME类型字符串和图片类型
+				eck::CRefStrA rsMime((PCSTR)r2.Data(), t);
+				Pic.rsMime = eck::StrX2W(rsMime.Data(), rsMime.Size());
+				r2 += (t + 1);// 跳过MIME类型字符串
+
+				r2 >> byType;// 图片类型
+				if (byType < (BYTE)PicType::Begin___ || byType >= (BYTE)PicType::End___)
+					Pic.eType = PicType::Invalid;
+				else
+					Pic.eType = (PicType)byType;
 
 				cb -= (t + 3);
 
@@ -356,12 +374,17 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 					t = (int)strlen((PCSTR)r2.Data()) + 1;
 				else// UTF-16LE或UTF-16BE
 					t = ((int)wcslen((PCWSTR)r2.Data()) + 1) * sizeof(WCHAR);
+				Pic.rsDesc = GetID3v2_ProcString(r2, t, byEncodeType);
+				Pic.bLink = (Pic.rsDesc == L"-->");
 
 				r2 += t;
 				cb -= t;// 跳过描述字符串和结尾NULL
 
-				mi.rbCover.DupStream(r2, cb);
-
+				if (Pic.bLink)
+					Pic.varPic = GetID3v2_ProcString(r2, cb, byEncodeType);
+				else
+					Pic.varPic = eck::CRefBin(r2, cb);
+				mi.vImage.push_back(std::move(Pic));
 				f.End();
 			}
 			else if ((mi.uFlags & MIF_GENRE) && memcmp(pFrame->ID, "TCON", 4) == 0)// 流派
@@ -369,6 +392,30 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 				CID3v2Frame f(r, pFrame, cbUnit, bUnsync);
 				auto [r2, cb] = f.Begin();
 				mi.rsGenre = GetID3v2_ProcString(r2, cb);
+				f.End();
+			}
+			else if ((mi.uFlags & MIF_DATE) && memcmp(pFrame->ID, "TYER", 4) == 0/* && pHeader->Ver == 3*/)// 年代
+			{
+				// 该帧仅用于ID3v2.3，但考虑到许多不标准文件，在此不判断版本
+				CID3v2Frame f(r, pFrame, cbUnit, bUnsync);
+				auto [r2, cb] = f.Begin();
+				const auto rsDate = GetID3v2_ProcString(r2, cb);
+				if (rsDate.Size() == 4)
+					mi.stDate = SYSTEMTIME{ .wYear = (WORD)_wtoi(rsDate.Data()) };
+				f.End();
+			}
+			else if ((mi.uFlags & MIF_DATE) && memcmp(pFrame->ID, "TDRC", 4) == 0/* && pHeader->Ver == 4*/)// 年代
+			{
+				// 该帧仅用于ID3v2.4，但考虑到许多不标准文件，在此不判断版本
+				CID3v2Frame f(r, pFrame, cbUnit, bUnsync);
+				auto [r2, cb] = f.Begin();
+				const auto rsDate = GetID3v2_ProcString(r2, cb);
+				if (rsDate.Size() >= 4)
+				{
+					swscanf(rsDate.Data(), L"%hd-%hd-%hdT%hd:%hd:%hd",
+						&mi.stDate.wYear, &mi.stDate.wMonth, &mi.stDate.wDay,
+						&mi.stDate.wHour, &mi.stDate.wMinute, &mi.stDate.wSecond);
+				}
 				f.End();
 			}
 			else
@@ -394,7 +441,7 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 				UINT uCount;
 				File >> uCount;// 标签数量
 
-				for (UINT i = 0; i < uCount; ++i)
+				EckCounterNV(uCount)
 				{
 					File >> t;// 标签大小
 
@@ -406,18 +453,34 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 					if (iPos != eck::INVALID_STR_POS)
 					{
 						const int cch = t - iPos;
+						// 不会真有人写很多标题很多专辑很多歌词吧
 						/* */if ((mi.uFlags & MIF_TITLE) && rsLabel.Find(L"TITLE") >= 0)
 							mi.rsTitle.DupString(rsLabel.Data() + iPos, cch);
 						else if ((mi.uFlags & MIF_ARTIST) && rsLabel.Find(L"ARTIST") >= 0)
-							mi.rsArtist.DupString(rsLabel.Data() + iPos, cch);
+						{
+							if (!mi.rsAlbum.IsEmpty())
+								mi.rsAlbum.PushBack(pszDiv);
+							mi.rsAlbum.PushBack(rsLabel.Data() + iPos, cch);
+						}
 						else if ((mi.uFlags & MIF_ALBUM) && rsLabel.Find(L"ALBUM") >= 0)
 							mi.rsAlbum.DupString(rsLabel.Data() + iPos, cch);
 						else if ((mi.uFlags & MIF_LRC) && rsLabel.Find(L"LYRICS") >= 0)
 							mi.rsLrc.DupString(rsLabel.Data() + iPos, cch);
 						else if ((mi.uFlags & MIF_COMMENT) && rsLabel.Find(L"DESCRIPTION") >= 0)
-							mi.rsComment.DupString(rsLabel.Data() + iPos, cch);
+							mi.rsComment.PushBack(rsLabel.Data() + iPos, cch);
 						else if ((mi.uFlags & MIF_GENRE) && rsLabel.Find(L"GENRE") >= 0)
 							mi.rsGenre.DupString(rsLabel.Data() + iPos, cch);
+						else if ((mi.uFlags & MIF_DATE) && rsLabel.Find(L"DATE") >= 0)
+						{
+							const auto pszDate = (PWSTR)_malloca(eck::Cch2Cb(cch));
+							EckCheckMem(pszDate);
+							wmemcpy(pszDate, rsLabel.Data() + iPos, cch);
+							*(pszDate + cch) = L'\0';
+							WORD y, m{}, d{};
+							if (swscanf(pszDate, L"%hd-%hd-%hd", &y, &m, &d) >= 1)
+								mi.stDate = SYSTEMTIME{ .wYear = y,.wMonth = m,.wDay = d };
+							_freea(pszDate);
+						}
 					}
 				}
 			}
@@ -426,20 +489,43 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi)
 			{
 				if (mi.uFlags & MIF_COVER)
 				{
-					File += 4;// 跳过图片类型
+					MUSICPIC Pic{};
 
-					File >> t;// MIME类型字符串长度
-					t = eck::ReverseInteger(t);// 大端序字节到整数，下同
-					File += t;// 跳过MIME类型字符串
+					DWORD dwType;
+					File >> dwType;// 图片类型
+					if (dwType < (BYTE)PicType::Begin___ || dwType >= (BYTE)PicType::End___)
+						Pic.eType = PicType::Invalid;
+					else
+						Pic.eType = (PicType)dwType;
+
+					File >> t;// 长度
+					t = eck::ReverseInteger(t);
+					eck::CRefStrA rsMime(t);
+					File.Read(rsMime.Data(), t);// MIME类型字符串
+					Pic.rsMime = eck::StrX2W(rsMime.Data(), rsMime.Size());
 
 					File >> t;// 描述字符串长度
 					t = eck::ReverseInteger(t);
-					File += (t + 16);// 跳过描述字符串、宽度、高度、色深、索引图颜色数
+					eck::CRefStrA u8Desc(t);
+					File.Read(u8Desc.Data(), t);// MIME类型字符串
+					Pic.rsDesc = eck::StrX2W(u8Desc.Data(), u8Desc.Size(), CP_UTF8);
+
+					File += 16;// 跳过宽度、高度、色深、索引图颜色数
 
 					File >> t;// 图片数据长度
 					t = eck::ReverseInteger(t);// 图片数据长度
 
-					mi.rbCover = File.ReadBin(t);
+					Pic.bLink = (Pic.rsDesc == L"-->");
+
+					if (Pic.bLink)
+					{
+						eck::CRefStrA u8(t);
+						File.Read(u8.Data(), t);
+						Pic.varPic = eck::StrX2W(u8.Data(), u8.Size(), CP_UTF8);
+					}
+					else
+						Pic.varPic = File.ReadBin(t);
+					mi.vImage.push_back(std::move(Pic));
 				}
 				else
 					File += cbBlock;

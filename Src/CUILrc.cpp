@@ -41,14 +41,6 @@ void CUILrc::CalcTopItem()
 	m_idxTop = (int)std::distance(m_vItem.begin(), it);
 }
 
-//void CUILrc::DrawScrollBar()
-//{
-//	D2D1_RECT_F rc;
-//	GetSBThumbRect(rc);
-//	m_pBrush->SetColor(eck::ColorrefToD2dColorF(eck::Colorref::DeepGray, 0.6f));
-//	m_pDC->FillRectangle(rc, m_pBrush);
-//}
-
 BOOL CUILrc::DrawItem(int idx, float& y)
 {
 	EckAssert(idx >= 0 && idx < (int)m_vItem.size());
@@ -429,7 +421,6 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		rc.right = rc.left + m_SB.GetViewWidth();
 		rc.bottom = rc.top + GetViewHeight();
 		m_SB.SetRect(rc);
-		//m_psv->SetViewSize(GetViewHeight());
 	}
 	break;
 

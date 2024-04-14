@@ -1,7 +1,8 @@
 ﻿#include "CWndBK.h"
 #include "CWndMain.h"
-
 #include "CDlgAbout.h"
+
+#include "eck\CLinearLayout.h"
 
 constexpr PCWSTR c_szBtmTip[]
 {
@@ -79,6 +80,10 @@ void CWndBK::OnSize(HWND hWnd, UINT state, int cx, int cy)
 		EckDbgPrint(L"ID2D1DeviceContext::CreateBitmap Error");
 	}
 	UpdateStaticBmp();
+
+	const auto margin = m_Ds.UIMargin;
+	m_pLayout->LoSetPosSize(margin, margin, m_cxClient - 2 * margin, m_cyClient - 2 * margin);
+	m_pLayout->LoCommit();
 }
 
 void CWndBK::OnDestroy(HWND hWnd)
@@ -98,25 +103,40 @@ void CWndBK::OnDestroy(HWND hWnd)
 
 void CWndBK::SetupElem()
 {
-	const auto palbum = new CUIAlbum{};
-	palbum->Create(NULL, Dui::DES_VISIBLE, 0,
-		10, 10, 400, 500, NULL, this);
-	m_vAllElems.push_back(palbum);
+	const auto margin2 = m_Ds.UIMarginInt;
 
-	const auto plrc = new CUILrc{};
-	plrc->Create(NULL, Dui::DES_VISIBLE, 0,
-		0, 0, 800, 730, NULL, this);
-	m_vAllElems.push_back(plrc);
+	const auto pLayout = new eck::CLinearLayoutV{};
+	m_vLayout.push_back(pLayout);
+	const auto pLoH = new eck::CLinearLayoutH{};
+	m_vLayout.push_back(pLoH);
+
+	{
+		const auto palbum = new CUIAlbum{};
+		palbum->Create(NULL, Dui::DES_VISIBLE, 0,
+			10, 10, 400, 500, NULL, this);
+		m_vAllElems.push_back(palbum);
+		pLoH->Add(palbum, {}, eck::LLF_FIXHEIGHT | eck::LLF_FIXWIDTH);
+
+		const auto plrc = new CUILrc{};
+		plrc->Create(NULL, Dui::DES_VISIBLE, 0,
+			0, 0, 800, 730, NULL, this);
+		m_vAllElems.push_back(plrc);
+		pLoH->Add(plrc, { margin2 }, eck::LLF_FILLWIDTH | eck::LLF_FILLHEIGHT, 1);
+	}
+	pLayout->Add(pLoH, { 0,0,0,margin2 }, eck::LLF_FILLWIDTH | eck::LLF_FILLHEIGHT, 1);
 
 	const auto ppb = new CUIProgressBar{};
 	ppb->Create(NULL, Dui::DES_VISIBLE, 0,
-		70, 730, 800, 70, NULL, this);
+		70, 730, 800, 40, NULL, this);
 	m_vAllElems.push_back(ppb);
+	pLayout->Add(ppb, { 0,0,0,margin2 }, eck::LLF_FIXHEIGHT | eck::LLF_FILLWIDTH);
 
 	const auto ppc = new CUIPlayingCtrl{};
 	ppc->Create(NULL, Dui::DES_VISIBLE, 0,
 		70, 800, 800, 80, NULL, this);
 	m_vAllElems.push_back(ppc);
+	pLayout->Add(ppc, {}, eck::LLF_FIXHEIGHT | eck::LLF_FILLWIDTH);
+	m_pLayout = pLayout;
 }
 
 LRESULT CWndBK::OnElemEvent(Dui::CElem* pElem, UINT uMsg, WPARAM wParam, LPARAM lParam)

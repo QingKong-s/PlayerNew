@@ -44,7 +44,7 @@ private:
 	eck::CSplitBar m_SPB{};
 	CTbGhost m_TbGhost{ *this };
 
-	int m_xSeparateBar = 0;
+	int m_cxList = 0;
 
 	CDropTargetList* m_pDropTarget = NULL;
 	DRAGDROPINFO m_DragDropInfo{};

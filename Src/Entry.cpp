@@ -88,7 +88,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		WS_VISIBLE | WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN;
 	constexpr DWORD dwExStyle = 0u;
 
-	const int iDpi = GetDpiForSystem();
+	const int iDpi = eck::GetDpi(NULL);
 	RECT rc{ 0,0,1000 * iDpi / 96,640 * iDpi / 96 };
 	AdjustWindowRectEx(&rc, dwStyle, FALSE, dwExStyle);
 	pWnd->Create(L"", dwStyle, dwExStyle, 100, 100, rc.right, rc.bottom, NULL, 0);

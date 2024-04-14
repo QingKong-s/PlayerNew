@@ -102,6 +102,7 @@ void CPlayList::UpdateItemInfo(int idx)
 		e.rsArtist = std::move(mi.rsArtist);
 		e.rsAlbum = std::move(mi.rsAlbum);
 		e.rsGenre = std::move(mi.rsGenre);
+		e.s.usYear = mi.stDate.wYear;
 
 		CBass Bass{};
 		Bass.Open(e.rsFile.Data(), BASS_STREAM_DECODE, BASS_STREAM_DECODE, BASS_STREAM_DECODE);

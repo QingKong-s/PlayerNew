@@ -7,14 +7,22 @@
 
 HRESULT CPlayer::CreateWicBmpCover()
 {
+	HRESULT hr = E_FAIL;
 	SafeRelease(m_pWicCoverBmp);
-	auto pStream = new eck::CRefBinStream(m_MusicInfo.rbCover);
-	HRESULT hr = CApp::WICCreateBitmap(pStream, &m_pWicCoverBmp);
-	pStream->Release();
-	if (FAILED(hr))
+	const auto p = m_MusicInfo.GetMainCover();
+	if (p)
 	{
-		hr = CApp::WICCreateBitmap((eck::GetRunningPath() + LR"(\Img\DefCover.png)").Data(), &m_pWicCoverBmp);
+		if (p->bLink)
+			hr = CApp::WICCreateBitmap(std::get<1>(p->varPic).Data(), &m_pWicCoverBmp);
+		else
+		{
+			auto pStream = new eck::CStreamView(std::get<0>(p->varPic));
+			hr = CApp::WICCreateBitmap(pStream, &m_pWicCoverBmp);
+			pStream->Release();
+		}
 	}
+	if (FAILED(hr))
+		hr = CApp::WICCreateBitmap((eck::GetRunningPath() + LR"(\Img\DefCover.png)").Data(), &m_pWicCoverBmp);
 	return hr;
 }
 

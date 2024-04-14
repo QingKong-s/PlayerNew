@@ -17,9 +17,8 @@ LRESULT CTbGhost::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (!App->GetOptionsMgr().ProgShowCoverLivePreview)
 		{
         SetEmptyBitmap:
-			eck::CDib dib{};
-			dib.Create(1, 1);
-			DwmSetIconicLivePreviewBitmap(hWnd, dib.GetHBitmap(), NULL, 0);
+            eck::CDib dib{};
+            DwmSetIconicLivePreviewBitmap(hWnd, dib.Create(1, 1), NULL, 0);
 			return 0;
 		}
 
@@ -38,18 +37,22 @@ LRESULT CTbGhost::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		const UINT cxMax = rcMainClient.right - xMargin * 2;
 		const UINT cyMax = rcMainClient.bottom - yMargin * 2;
 
-		const auto& rbCover = App->GetPlayer().GetMusicInfo().rbCover;
-		const auto pStream = new eck::CStreamView(rbCover);
+        const auto pPic = App->GetPlayer().GetMusicInfo().GetMainCover();
+        if (!pPic)
+            goto SetEmptyBitmap;
 
-		HBITMAP hBitmap;
         GpBitmap* pBitmap;
-        GdipCreateBitmapFromStream(pStream, &pBitmap);
-        if (!pBitmap)
+        if (pPic->bLink)
+            GdipCreateBitmapFromFile(std::get<1>(pPic->varPic).Data(), &pBitmap);
+        else
         {
-            eck::CDib dib{};
-            DwmSetIconicLivePreviewBitmap(hWnd, dib.Create(1, 1), NULL, 0);
-            return 0;
+            const auto pStream = new eck::CStreamView(std::get<0>(pPic->varPic));
+            GdipCreateBitmapFromStream(pStream, &pBitmap);
+            pStream->Release();
         }
+
+        if (!pBitmap)
+            goto SetEmptyBitmap;
 
         UINT cx, cy, cx0, cy0;
         GdipGetImageWidth(pBitmap, &cx0);
@@ -94,6 +97,7 @@ LRESULT CTbGhost::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         GdipDrawRectangleI(pGraphics, pPen, rc[0], rc[1], rc[2], rc[3]);
 
         GdipDeleteGraphics(pGraphics);
+        HBITMAP hBitmap;
         GdipCreateHBITMAPFromBitmap(pBitmapBK, &hBitmap, 0x00000000);
 
         DwmSetIconicLivePreviewBitmap(hWnd, hBitmap, 0, 0);
@@ -101,7 +105,6 @@ LRESULT CTbGhost::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         GdipDisposeImage(pBitmap);
         GdipDisposeImage(pBitmapBK);
         m_hbmLivePreviewCache = hBitmap;
-        pStream->LeaveRelease();
     }
     return 0;
 
@@ -151,78 +154,77 @@ void CTbGhost::SetIconicThumbnail(UINT cxMax, UINT cyMax)
             return;
         }
         else
-            InvalidateThumbnailCache();
-    }
+			InvalidateThumbnailCache();
+	}
 
-    if (App->GetPlayer().GetMusicInfo().rbCover.IsEmpty())
-    {
-        const auto pOrg = App->GetWicRes()[IIDX_DefCover];
-        UINT cx, cy, cx0, cy0;
-        pOrg->GetSize(&cx0, &cy0);
-        if ((float)cxMax / (float)cyMax > (float)cx0 / (float)cy0)// y对齐
-        {
-            cy = cyMax;
-            cx = cx0 * cy / cy0;
-        }
-        else// x对齐
-        {
-            cx = cxMax;
-            cy = cx * cy0 / cx0;
-        }
-        IWICBitmap* pBmp;
-        eck::ScaleWicBitmap(pOrg, pBmp, cx, cy, WICBitmapInterpolationModeFant);
-        m_hbmThumbnailCache = eck::CreateHBITMAP(pBmp);
-        DwmSetIconicThumbnail(HWnd, m_hbmThumbnailCache, 0);
-        pBmp->Release();
-        return;
-    }
+	auto pOrg = App->GetPlayer().GetWicBmpCover();
+    if (!pOrg)
+        pOrg = App->GetWicRes()[IIDX_DefCover];
+	UINT cx, cy, cx0, cy0;
+	pOrg->GetSize(&cx0, &cy0);
+	if ((float)cxMax / (float)cyMax > (float)cx0 / (float)cy0)// y对齐
+	{
+		cy = cyMax;
+		cx = cx0 * cy / cy0;
+	}
+	else// x对齐
+	{
+		cx = cxMax;
+		cy = cx * cy0 / cx0;
+	}
+	IWICBitmap* pBmp;
+	eck::ScaleWicBitmap(pOrg, pBmp, cx, cy, WICBitmapInterpolationModeFant);
+	m_hbmThumbnailCache = eck::CreateHBITMAP(pBmp);
+	DwmSetIconicThumbnail(HWnd, m_hbmThumbnailCache, 0);
+	pBmp->Release();
+	return;
 
-    const auto& rbCover = App->GetPlayer().GetMusicInfo().rbCover;
-    const auto pStream = new eck::CStreamView(rbCover);
+	//const auto& rbCover = App->GetPlayer().GetMusicInfo().rbCover;
+	//const auto pStream = new eck::CStreamView(rbCover);
 
-    HBITMAP hBitmap;
-    GpBitmap* pBitmap;
-    GdipCreateBitmapFromStream(pStream, &pBitmap);
-    if (!pBitmap)
-    {
-        EckDbgBreak();
-        eck::CDib dib{};
-        DwmSetIconicThumbnail(HWnd, dib.Create(cxMax, cyMax), 0);
-        return;
-    }
+	//HBITMAP hBitmap;
+	//GpBitmap* pBitmap;
+	//GdipCreateBitmapFromStream(pStream, &pBitmap);
+    //if (!pBitmap)
+    //{
+    //    EckDbgBreak();
+    //    eck::CDib dib{};
+    //    DwmSetIconicThumbnail(HWnd, dib.Create(cxMax, cyMax), 0);
+    //    return;
+    //}
 
-    UINT cx, cy, cx0, cy0;
-    GdipGetImageWidth(pBitmap, &cx0);
-    GdipGetImageHeight(pBitmap, &cy0);
+    //UINT cx, cy, cx0, cy0;
+    //GdipGetImageWidth(pBitmap, &cx0);
+    //GdipGetImageHeight(pBitmap, &cy0);
 
-    if ((float)cxMax / (float)cyMax > (float)cx0 / (float)cy0)// y对齐
-    {
-        cy = cyMax;
-        cx = cx0 * cy / cy0;
-    }
-    else// x对齐
-    {
-        cx = cxMax;
-        cy = cx * cy0 / cx0;
-    }
+    //if ((float)cxMax / (float)cyMax > (float)cx0 / (float)cy0)// y对齐
+    //{
+    //    cy = cyMax;
+    //    cx = cx0 * cy / cy0;
+    //}
+    //else// x对齐
+    //{
+    //    cx = cxMax;
+    //    cy = cx * cy0 / cx0;
+    //}
 
-    GpBitmap* pBitmapBK;
-    GpGraphics* pGraphics;
-    GdipCreateBitmapFromScan0(cx, cy, 0, GpPixelFormat::PF32bppARGB, NULL, &pBitmapBK);
-    GdipGetImageGraphicsContext(pBitmapBK, &pGraphics);
-    GdipGraphicsClear(pGraphics, 0x00000000);
-    GdipSetInterpolationMode(pGraphics, GpInterpolationMode::HighQuality);
-    GdipDrawImageRectRectI(pGraphics, pBitmap,
-        0, 0, cx, cy,
-        0, 0, cx0, cy0,
-        GpUnit::Pixel, NULL, NULL, NULL);
-    GdipDeleteGraphics(pGraphics);
-    GdipCreateHBITMAPFromBitmap(pBitmapBK, &hBitmap, 0x00000000);
+    //GpBitmap* pBitmapBK;
+    //GpGraphics* pGraphics;
+    //GdipCreateBitmapFromScan0(cx, cy, 0, GpPixelFormat::PF32bppARGB, NULL, &pBitmapBK);
+    //GdipGetImageGraphicsContext(pBitmapBK, &pGraphics);
+    //GdipGraphicsClear(pGraphics, 0x00000000);
+    //GdipSetInterpolationMode(pGraphics, GpInterpolationMode::HighQuality);
+    //GdipDrawImageRectRectI(pGraphics, pBitmap,
+    //    0, 0, cx, cy,
+    //    0, 0, cx0, cy0,
+    //    GpUnit::Pixel, NULL, NULL, NULL);
+    //GdipDeleteGraphics(pGraphics);
+    //GdipCreateHBITMAPFromBitmap(pBitmapBK, &hBitmap, 0x00000000);
 
-    DwmSetIconicThumbnail(HWnd, hBitmap, 0);
+    //DwmSetIconicThumbnail(HWnd, hBitmap, 0);
 
-    GdipDisposeImage(pBitmap);
-    GdipDisposeImage(pBitmapBK);
-    m_hbmThumbnailCache = hBitmap;
-    pStream->LeaveRelease();
+    //GdipDisposeImage(pBitmap);
+    //GdipDisposeImage(pBitmapBK);
+    //m_hbmThumbnailCache = hBitmap;
+    //pStream->LeaveRelease();
 }
