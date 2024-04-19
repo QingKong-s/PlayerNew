@@ -15,9 +15,27 @@ void CUILrc::ScrollProc(int iPos, int iPrevPos, LPARAM lParam)
 	p->InvalidateRect();
 }
 
+void CUILrc::ReCreateTextFormat()
+{
+	const auto& om = App->GetOptionsMgr();
+	SafeRelease(m_pTextFormat);
+	const auto& Font = om.ScLrcFontMain;
+	App->m_pDwFactory->CreateTextFormat(Font.rsFontName.Data(), NULL,
+		(DWRITE_FONT_WEIGHT)Font.iWeight, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
+		GetBk()->Dpi(Font.fFontSize), L"zh-cn", &m_pTextFormat);
+	m_pTextFormat->SetTextAlignment((DWRITE_TEXT_ALIGNMENT)om.ScLrcAlign);
+
+	SafeRelease(m_pTextFormatTrans);
+	const auto& Font2 = App->GetOptionsMgr().ScLrcFontTranslation;
+	App->m_pDwFactory->CreateTextFormat(Font2.rsFontName.Data(), NULL,
+		(DWRITE_FONT_WEIGHT)Font2.iWeight, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
+		GetBk()->Dpi(Font2.fFontSize), L"zh-cn", &m_pTextFormatTrans);
+	m_pTextFormat->SetTextAlignment((DWRITE_TEXT_ALIGNMENT)om.ScLrcAlign);
+}
+
 void CUILrc::CalcTopItem()
 {
-	const auto fScale = App->GetOptionsMgr().LrcCurrFontScale;
+	const auto fScale = App->GetOptionsMgr().ScLrcCurrFontScale;
 	auto it = LowerBound(m_vItem.begin(), m_vItem.end(), m_psv->GetPos(),
 		[this, fScale](decltype(m_vItem)::iterator it, int iPos)
 		{
@@ -45,19 +63,43 @@ BOOL CUILrc::DrawItem(int idx, float& y)
 {
 	EckAssert(idx >= 0 && idx < (int)m_vItem.size());
 	auto& Item = m_vItem[idx];
-	const auto fScale = App->GetOptionsMgr().LrcCurrFontScale;
+	const auto fScale = App->GetOptionsMgr().ScLrcCurrFontScale;
+	const auto iAlign = App->GetOptionsMgr().ScLrcAlign;
 
 	y = GetItemY(idx);
-	const D2D1_RECT_F rc{ 0,y,Item.cx,y + Item.cy };
+	const D2D1_RECT_F rc{ Item.x,0,Item.x + Item.cx,Item.cy };
 
 	D2D1_MATRIX_3X2_F mat0;
 	m_pDC->GetTransform(&mat0);
-	auto mat = mat0 * D2D1::Matrix3x2F::Translation(0, y);
+
+	D2D1_POINT_2F ptScale{};
+	switch (iAlign)
+	{
+	case DWRITE_TEXT_ALIGNMENT_LEADING:
+
+		break;
+	case DWRITE_TEXT_ALIGNMENT_CENTER:
+		ptScale.x = GetViewWidthF() / 2.f;
+		break;
+	}
+
+	D2D1_MATRIX_3X2_F mat = mat0 * D2D1::Matrix3x2F::Translation(0, y);
 
 	if (!Item.bCacheValid)
 	{
+		const float cyPadding[]{ GetBk()->Dpi(5.f),0.f };
+
+		float x[2]{};
+		switch (iAlign)
+		{
+		case DWRITE_TEXT_ALIGNMENT_CENTER: 
+			x[0] = (GetViewWidthF() - GetViewWidthF() / fScale) / 2.f;
+			x[1] = (GetViewWidthF() - Item.cxTrans) / 2.f;
+			break;
+		}
+		
 		ID2D1PathGeometry* pPathGeometry;
-		eck::GetTextLayoutPathGeometry(Item.pLayout, m_pDC, 0.f, 0.f, pPathGeometry);
+		eck::GetTextLayoutPathGeometry(&Item.pLayout, 2, cyPadding, m_pDC, x, 0.f, pPathGeometry);
 		float xDpi, yDpi;
 		m_pDC->GetDpi(&xDpi, &yDpi);
 
@@ -77,19 +119,12 @@ BOOL CUILrc::DrawItem(int idx, float& y)
 
 	if (idx == m_idxPrevAnItem)
 	{
-		const auto matScale = D2D1::Matrix3x2F::Scale(
-			fScale + 1.f - m_fAnValue, fScale + 1.f - m_fAnValue);
-		if (Item.bSel || idx == m_idxHot)
-		{
-			m_pDC->SetTransform(D2D1::Matrix3x2F::Scale(
-				fScale + 1.f - m_fAnValue,
-				fScale + 1.f - m_fAnValue,
-				{ 0,y }) * mat0);
-			FillItemBkg(idx, rc);
-		}
 		m_pDC->SetTransform(D2D1::Matrix3x2F::Scale(
 			fScale + 1.f - m_fAnValue,
-			fScale + 1.f - m_fAnValue) * mat);
+			fScale + 1.f - m_fAnValue,
+			ptScale) * mat);
+		if (Item.bSel || idx == m_idxHot)
+			FillItemBkg(idx, rc);
 		m_pDC1->DrawGeometryRealization(Item.pGr,
 			m_idxPrevCurr == idx ? m_pBrTextHighlight : m_pBrTextNormal);
 		m_pDC->SetTransform(mat0);
@@ -98,28 +133,20 @@ BOOL CUILrc::DrawItem(int idx, float& y)
 
 	if (idx == m_idxCurrAnItem)
 	{
-		const auto matScale = D2D1::Matrix3x2F::Scale(
-			m_fAnValue, m_fAnValue);
-		if (Item.bSel || idx == m_idxHot)
-		{
-			m_pDC->SetTransform(D2D1::Matrix3x2F::Scale(
-				m_fAnValue,
-				m_fAnValue,
-				{ 0,y }) * mat0);
-			FillItemBkg(idx, rc);
-		}
 		m_pDC->SetTransform(D2D1::Matrix3x2F::Scale(
 			m_fAnValue,
-			m_fAnValue) * mat);
+			m_fAnValue,
+			ptScale) * mat);
+		if (Item.bSel || idx == m_idxHot)
+			FillItemBkg(idx, rc);
 		m_pDC1->DrawGeometryRealization(Item.pGr,
 			m_idxPrevCurr == idx ? m_pBrTextHighlight : m_pBrTextNormal);
-
 		m_pDC->SetTransform(mat0);
 		return TRUE;
 	}
 
+	m_pDC->SetTransform(mat); 
 	FillItemBkg(idx, rc);
-	m_pDC->SetTransform(mat);
 	m_pDC1->DrawGeometryRealization(Item.pGr,
 		m_idxPrevCurr == idx ? m_pBrTextHighlight : m_pBrTextNormal);
 	m_pDC->SetTransform(mat0);
@@ -160,7 +187,6 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				if (y > GetViewHeightF())
 					break;
 			}
-			//DrawScrollBar();
 		}
 		else
 		{
@@ -429,47 +455,27 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (wParam == PCT_PLAYNEW)
 		{
 			m_idxPrevCurr = -1;
-			const auto fScale = App->GetOptionsMgr().LrcCurrFontScale;
-
-			auto& Player = App->GetPlayer();
-			const auto& vLrc = Player.GetLrc();
-			const float cx = GetViewWidthF(), cy = GetViewHeightF();
-
-			m_vItem.clear();
-			if (!vLrc.empty())
-			{
-				m_vItem.resize(vLrc.size());
-				const float cxMax = cx / fScale;
-				IDWriteTextLayout* pLayout;
-				DWRITE_TEXT_METRICS Metrics;
-				float y = 0.f;
-				const float cyPadding = GetBk()->Dpi(App->GetOptionsMgr().LrcPaddingHeight);
-				EckCounter(vLrc.size(), i)
-				{
-					App->m_pDwFactory->CreateTextLayout(vLrc[i].pszLrc, vLrc[i].cchTotal,
-						m_pTextFormat, cxMax, (float)cy, &pLayout);
-					pLayout->GetMetrics(&Metrics);
-					m_vItem[i].y = y;
-					m_vItem[i].cx = Metrics.width;
-					m_vItem[i].cy = Metrics.height;
-					m_vItem[i].pLayout = pLayout;
-
-					y += (Metrics.height + cyPadding);
-				}
-
-				m_psv->SetMin(int(-cy / 2.f));
-				m_psv->SetMax(int(y - cyPadding + cy / 2.f));
-				m_psv->SetPos(m_psv->GetMin());
-				m_psv->SetPage((int)cy);
-				CalcTopItem();
-				InvalidateRect();
-			}
+			LayoutItems();
+			m_psv->SetPos(m_psv->GetMin());
+			CalcTopItem();
+			InvalidateRect();
 		}
+	}
+	return 0;
+
+	case UIEE_ONSETTINGSCHANGE:
+	{
+		ReCreateTextFormat();
+		LayoutItems();
+		CalcTopItem();
+		InvalidateRect();
 	}
 	return 0;
 
 	case WM_CREATE:
 	{
+		ReCreateTextFormat();
+
 		m_SB.Create(NULL, Dui::DES_VISIBLE, 0,
 			0, 0, GetWnd()->GetDs().CommSBCxy, GetViewHeight(),
 			this, GetWnd());
@@ -479,10 +485,6 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		m_pDC->CreateSolidColorBrush(eck::ColorrefToD2dColorF(eck::Colorref::DeepGray), &m_pBrTextNormal);
 		m_pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_pBrTextHighlight);
 		m_pDC->CreateSolidColorBrush({}, &m_pBrush);
-		const auto& Font = App->GetOptionsMgr().LrcFont;
-		App->m_pDwFactory->CreateTextFormat(Font.rsFontName.Data(), NULL,
-			(DWRITE_FONT_WEIGHT)Font.iWeight, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-			GetBk()->Dpi(Font.fFontSize), L"zh-cn", &m_pTextFormat);
 
 		m_psv = m_SB.GetScrollView();
 		m_psv->AddRef();
@@ -526,11 +528,11 @@ void CUILrc::OnTimer(UINT uTimerID)
 
 			if (m_tMouseIdle <= 0 && !m_bThumbLBtnDown && !m_bCtxMenuOpen)
 			{
-				const auto fScale = App->GetOptionsMgr().LrcCurrFontScale;
+				const auto fScale = App->GetOptionsMgr().ScLrcCurrFontScale;
 				m_bEnlarging = TRUE;
 				m_idxPrevAnItem = idxPrev;
 				m_idxCurrAnItem = m_idxPrevCurr;
-				m_AnEnlarge.Begin(1.f, fScale - 1.f, m_psv->GetDuration());
+				m_AnEnlarge.Begin(1.f, fScale - 1.f, (float)m_psv->GetDuration());
 				const auto& CurrItem = m_vItem[m_idxPrevCurr];
 				float yDest = CurrItem.y + CurrItem.cy * fScale / 2.f;
 				GetWnd()->GetCriticalSection()->Leave();
@@ -571,7 +573,7 @@ void CUILrc::OnTimer(UINT uTimerID)
 
 void CUILrc::ScrollToCurrPos()
 {
-	const auto fScale = App->GetOptionsMgr().LrcCurrFontScale;
+	const auto fScale = App->GetOptionsMgr().ScLrcCurrFontScale;
 	m_bEnlarging = TRUE;
 	m_AnEnlarge.Begin(1.f, fScale - 1.f, 400);
 	const auto& CurrItem = m_vItem[m_idxPrevCurr];
@@ -579,4 +581,62 @@ void CUILrc::ScrollToCurrPos()
 	m_psv->InterruptAnimation();
 	m_psv->SmoothScrollDelta(int((yDest - GetViewHeight() / 3) - m_psv->GetPos()));
 	GetWnd()->WakeRenderThread();
+}
+
+void CUILrc::LayoutItems()
+{
+	const auto fScale = App->GetOptionsMgr().ScLrcCurrFontScale;
+	const auto cyMainTransPadding = GetBk()->Dpi(5.f);
+
+	auto& Player = App->GetPlayer();
+	const auto& vLrc = Player.GetLrc();
+	const float cx = GetViewWidthF(), cy = GetViewHeightF();
+
+	m_vItem.clear();
+	if (!vLrc.empty())
+	{
+		m_vItem.resize(vLrc.size());
+		const float cxMax = cx / fScale;
+		DWRITE_TEXT_METRICS Metrics;
+		float y = 0.f;
+		const float cyPadding = GetBk()->Dpi(App->GetOptionsMgr().ScLrcPaddingHeight);
+		const auto iAlign = App->GetOptionsMgr().ScLrcAlign;
+
+		EckCounter(vLrc.size(), i)
+		{
+			auto& e = m_vItem[i];
+			App->m_pDwFactory->CreateTextLayout(vLrc[i].pszLrc, vLrc[i].cchLrc,
+				m_pTextFormat, cxMax, (float)cy, &e.pLayout);
+			e.pLayout->GetMetrics(&Metrics);
+			e.y = y;
+			e.cx = Metrics.width;
+			e.cy = Metrics.height;
+
+			if (vLrc[i].pszTranslation)
+			{
+				App->m_pDwFactory->CreateTextLayout(vLrc[i].pszTranslation, vLrc[i].cchTotal - vLrc[i].cchLrc,
+					m_pTextFormatTrans, cxMax, (float)cy, &e.pLayoutTrans);
+				e.pLayoutTrans->GetMetrics(&Metrics);
+				e.cxTrans = Metrics.width;
+				e.cx = std::max(e.cx, Metrics.width);
+				e.cy += (Metrics.height + cyMainTransPadding);
+			}
+
+			switch (iAlign)
+			{
+			case DWRITE_TEXT_ALIGNMENT_CENTER:
+				e.x = (cx - e.cx) / 2.f;
+				break;
+			case DWRITE_TEXT_ALIGNMENT_TRAILING:
+				e.x = cx - e.cx;
+				break;
+			}
+
+			y += (e.cy + cyPadding);
+		}
+
+		m_psv->SetMin(int(-cy / 3.f));
+		m_psv->SetMax(int(y - cyPadding + cy / 3.f * 2.f));
+		m_psv->SetPage((int)cy);
+	}
 }

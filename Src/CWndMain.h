@@ -11,13 +11,6 @@
 
 constexpr inline PCWSTR c_pszWndClassMain = L"PlayerNew.WndClass.Main";
 
-enum
-{
-	PWM_DWMCOLORCHANGED = eck::WM_USER_SAFE + 1000,
-
-};
-
-
 struct DRAGDROPINFO
 {
 	BOOL bValid;
@@ -32,10 +25,6 @@ class CWndMain : public eck::CWnd
 	friend class CWndList;
 	friend class CTbGhost;
 private:
-	IDXGISwapChain1* m_pSwapChain = NULL;
-	ID2D1DeviceContext* m_pDC = NULL;
-	ID2D1Bitmap1* m_pBmpBK = NULL;
-	ID2D1Bitmap1* m_pBmpPauseBK = NULL;
 	ITaskbarList4* m_pTbList = NULL;
 
 	CWndBK m_BK{};
@@ -135,5 +124,7 @@ public:
 	PNInline const auto& GetDwmColor() const { return m_crDwm; }
 
 	void SetupTaskbarStuff();
+
+	void SettingChanged();
 };
 inline UINT CWndMain::s_uMsgTaskbarButtonCreated = RegisterWindowMessageW(L"TaskbarButtonCreated");

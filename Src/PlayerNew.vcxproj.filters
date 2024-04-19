@@ -160,6 +160,24 @@
     <ClInclude Include="CDlgProgress.h">
       <Filter>对话框</Filter>
     </ClInclude>
+    <ClInclude Include="CDlgOptApp.h">
+      <Filter>对话框</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgOptHotKey.h">
+      <Filter>对话框</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgOptions.h">
+      <Filter>对话框</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgOptLrc.h">
+      <Filter>对话框</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgOptPlay.h">
+      <Filter>对话框</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgOptVisual.h">
+      <Filter>对话框</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CDlgBookmark.cpp">
@@ -307,6 +325,24 @@
       <Filter>程序</Filter>
     </ClCompile>
     <ClCompile Include="CDlgProgress.cpp">
+      <Filter>对话框</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgOptApp.cpp">
+      <Filter>对话框</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgOptHotKey.cpp">
+      <Filter>对话框</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgOptions.cpp">
+      <Filter>对话框</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgOptLrc.cpp">
+      <Filter>对话框</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgOptPlay.cpp">
+      <Filter>对话框</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgOptVisual.cpp">
       <Filter>对话框</Filter>
     </ClCompile>
   </ItemGroup>

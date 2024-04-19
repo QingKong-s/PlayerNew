@@ -382,7 +382,11 @@ private:
 public:
 	LRESULT OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 
-	void OnTimer(UINT uTimerID) override;
+	void OnTimer(UINT uTimerID) override
+	{
+		if (uTimerID == CWndBK::IDT_PGS)
+			InvalidateRect();
+	}
 
 	/// <summary>
 	/// 置频谱条数量
@@ -477,13 +481,18 @@ class CUILrc final :public CUIElem
 private:
 	struct ITEM
 	{
+		// 不要修改前两个字段的位置
 		IDWriteTextLayout* pLayout = NULL;
+		IDWriteTextLayout* pLayoutTrans = NULL;
+		ID2D1GeometryRealization* pGr = NULL;
+		float x = 0.f;
 		float y = 0.f;
 		float cy = 0.f;
 		float cx = 0.f;
+
+		float cxTrans = 0.f;
 		BITBOOL bSel : 1 = FALSE;
 		BITBOOL bCacheValid : 1 = FALSE;
-		ID2D1GeometryRealization* pGr = NULL;
 
 		ITEM() = default;
 		ITEM(const ITEM& x) = delete;
@@ -496,8 +505,6 @@ private:
 		}
 		ITEM& operator=(ITEM&& x) noexcept
 		{
-			if (pLayout)
-				pLayout->Release();
 			memcpy(this, &x, sizeof(*this));
 			x.pLayout = NULL;
 			x.pGr = NULL;
@@ -516,6 +523,7 @@ private:
 	ID2D1SolidColorBrush* m_pBrush = NULL;
 
 	IDWriteTextFormat* m_pTextFormat = NULL;
+	IDWriteTextFormat* m_pTextFormatTrans = NULL;
 
 	ID2D1DeviceContext1* m_pDC1 = NULL;
 
@@ -566,6 +574,8 @@ private:
 	};
 
 	static void ScrollProc(int iPos, int iPrevPos, LPARAM lParam);
+
+	void ReCreateTextFormat();
 
 	PNInline void FillItemBkg(int idx, const D2D1_RECT_F& rc)
 	{
@@ -621,31 +631,37 @@ private:
 
 	PNInline void GetItemRect(int idx, RECT& rc)
 	{
+		auto& e = m_vItem[idx];
 		const auto y = GetItemY(idx);
-		const auto fScale = App->GetOptionsMgr().LrcCurrFontScale;
-		rc.left = 0;
+		const auto fScale = App->GetOptionsMgr().ScLrcCurrFontScale;
+		rc.left = (long)e.x;
 		rc.top = (long)y;
-		
 		if (idx == m_idxPrevAnItem)
 		{
-			rc.right = (long)(m_vItem[idx].cx * (fScale + 1.f - m_fAnValue));
-			rc.bottom = (long)(y + m_vItem[idx].cy * (fScale + 1.f - m_fAnValue));
+			const auto cx = (long)(e.cx * (fScale + 1.f - m_fAnValue));
+			if (App->GetOptionsMgr().ScLrcAlign == DWRITE_TEXT_ALIGNMENT_CENTER)
+				rc.left = (GetViewWidthF() - cx) / 2.f;
+			rc.right = rc.left + cx;
+			rc.bottom = (long)(y + e.cy * (fScale + 1.f - m_fAnValue));
 		}
 		else if (idx == m_idxCurrAnItem)
 		{
-			rc.right = (long)(m_vItem[idx].cx * m_fAnValue);
-			rc.bottom = (long)(y + m_vItem[idx].cy * m_fAnValue);
+			const auto cx = (long)(e.cx * m_fAnValue);
+			if (App->GetOptionsMgr().ScLrcAlign == DWRITE_TEXT_ALIGNMENT_CENTER)
+				rc.left = (GetViewWidth() - cx) / 2.f;
+			rc.right = rc.left + cx;
+			rc.bottom = (long)(y + e.cy * m_fAnValue);
 		}
 		else ECKLIKELY
-		{ 
-			rc.right = (long)m_vItem[idx].cx;
-			rc.bottom = (long)(y + m_vItem[idx].cy);
+		{
+			rc.right = rc.left + (long)e.cx;
+			rc.bottom = (long)(y + e.cy);
 		}
 	}
 
 	PNInline float GetItemY(int idx)
 	{
-		const auto fScale = App->GetOptionsMgr().LrcCurrFontScale;
+		const auto fScale = App->GetOptionsMgr().ScLrcCurrFontScale;
 		float y = m_vItem[idx].y - m_psv->GetPos();
 		if (idx > m_idxPrevAnItem && m_idxPrevAnItem >= 0)
 			y += (m_vItem[m_idxPrevAnItem].cy * (fScale - m_fAnValue));
@@ -666,6 +682,8 @@ private:
 	}
 
 	void ScrollToCurrPos();
+
+	void LayoutItems();
 public:
 	CUILrc()
 	{

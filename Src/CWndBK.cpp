@@ -1,27 +1,9 @@
 ﻿#include "CWndBK.h"
 #include "CWndMain.h"
 #include "CDlgAbout.h"
+#include "CDlgOptions.h"
 
 #include "eck\CLinearLayout.h"
-
-constexpr PCWSTR c_szBtmTip[]
-{
-	L"上一曲",
-	L"播放/暂停",
-	L"停止",
-	L"下一曲",
-	L"歌词",
-	L"循环方式",
-	L"播放设置",
-	L"显示/隐藏播放列表",
-	L"设置",
-	L"关于",
-	L"循环方式：整体循环",
-	L"循环方式：随机播放",
-	L"循环方式：单曲播放",
-	L"循环方式：单曲循环",
-	L"循环方式：整体播放"
-};
 
 BOOL CWndBK::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 {
@@ -107,23 +89,40 @@ void CWndBK::SetupElem()
 
 	const auto pLayout = new eck::CLinearLayoutV{};
 	m_vLayout.push_back(pLayout);
-	const auto pLoH = new eck::CLinearLayoutH{};
-	m_vLayout.push_back(pLoH);
 
 	{
-		const auto palbum = new CUIAlbum{};
-		palbum->Create(NULL, Dui::DES_VISIBLE, 0,
-			10, 10, 400, 500, NULL, this);
-		m_vAllElems.push_back(palbum);
-		pLoH->Add(palbum, {}, eck::LLF_FIXHEIGHT | eck::LLF_FIXWIDTH);
+		const auto pLoH = new eck::CLinearLayoutH{};
+		m_vLayout.push_back(pLoH);
+		{
+			const auto pLoAlbumSpe = new eck::CLinearLayoutV{};
+			m_vLayout.push_back(pLoAlbumSpe);
+
+			const auto palbum = new CUIAlbum{};
+			palbum->Create(NULL, Dui::DES_VISIBLE, 0,
+				10, 10, 400, 500, NULL, this);
+			m_vAllElems.push_back(palbum);
+			pLoAlbumSpe->Add(palbum, {}, eck::LLF_FIXHEIGHT | eck::LLF_FIXWIDTH);
+
+			const auto pspe = new CUISpe{};
+			pspe->Create(NULL, Dui::DES_VISIBLE, 0,
+				0, 0, 400, 160, NULL, this);
+			pspe->SetCount(40);
+			pspe->SetGapWidth(eck::DpiScaleF(1.f, m_iDpi));
+			m_vAllElems.push_back(pspe);
+			m_vElemsWantTimer.push_back(pspe);
+			pLoAlbumSpe->Add(pspe, {}, eck::LLF_FIXHEIGHT | eck::LLF_FIXWIDTH);
+
+			pLoH->Add(pLoAlbumSpe, {}, eck::LLF_FIXHEIGHT | eck::LLF_FIXWIDTH);
+		}
 
 		const auto plrc = new CUILrc{};
 		plrc->Create(NULL, Dui::DES_VISIBLE, 0,
 			0, 0, 800, 730, NULL, this);
 		m_vAllElems.push_back(plrc);
 		pLoH->Add(plrc, { margin2 }, eck::LLF_FILLWIDTH | eck::LLF_FILLHEIGHT, 1);
+
+		pLayout->Add(pLoH, { 0,0,0,margin2 }, eck::LLF_FILLWIDTH | eck::LLF_FILLHEIGHT, 1);
 	}
-	pLayout->Add(pLoH, { 0,0,0,margin2 }, eck::LLF_FILLWIDTH | eck::LLF_FILLHEIGHT, 1);
 
 	const auto ppb = new CUIProgressBar{};
 	ppb->Create(NULL, Dui::DES_VISIBLE, 0,
@@ -148,7 +147,11 @@ LRESULT CWndBK::OnElemEvent(Dui::CElem* pElem, UINT uMsg, WPARAM wParam, LPARAM 
 		switch (pElem->GetID())
 		{
 		case IDE_BT_OPT:
-			break;
+		{
+			auto pDlg{ std::make_unique<CDlgOptions>() };
+			pDlg->DlgBox(HWnd);
+		}
+		break;
 		case IDE_BT_PLAYOPT:
 		{
 			//if (m_pVolCtrl)
@@ -290,16 +293,21 @@ LRESULT CWndBK::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_SIZE:
 		HANDLE_WM_SIZE(hWnd, wParam, lParam, OnSize);
 		break;
+
+	case PNWM_DWMCOLORCHANGED:
+		BroadcastEvent(UIEE_DWMCOLORCHANGED, 0, 0);
+		return 0;
+
+	case PNWM_SETTINGCHANGED:
+		BroadcastEvent(UIEE_ONSETTINGSCHANGE, 0, 0);
+		return 0;
+
 	case WM_CREATE:
 	{
 		const auto lResult = __super::OnMsg(hWnd, uMsg, wParam, lParam);
 		HANDLE_WM_CREATE(hWnd, wParam, lParam, OnCreate);
 		return lResult;
 	}
-
-	case PWM_DWMCOLORCHANGED:
-		BroadcastEvent(UIEE_DWMCOLORCHANGED, 0, 0);
-		return 0;
 
 	case WM_DESTROY:
 	{

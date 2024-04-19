@@ -469,7 +469,7 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 		CApp::ShowError(hWnd, hr, CApp::ErrSrc::HResult, L"注册拖放目标失败");
 	
 	InitBK();
-	m_BK.SendMsg(PWM_DWMCOLORCHANGED, 0, 0);
+	m_BK.SendMsg(PNWM_DWMCOLORCHANGED, 0, 0);
 	return TRUE;
 }
 
@@ -586,7 +586,7 @@ LRESULT CWndMain::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (m_bDarkColor != bDark)
 			App->InvertIconColor();
 		m_bDarkColor = bDark;
-		m_BK.SendMsg(PWM_DWMCOLORCHANGED, 0, 0);
+		m_BK.SendMsg(PNWM_DWMCOLORCHANGED, 0, 0);
 	}
 	return 0;
 
@@ -643,4 +643,12 @@ void CWndMain::SetupTaskbarStuff()
 	DestroyIcon(hi[0]);
 	DestroyIcon(hi[1]);
 	DestroyIcon(hi[2]);
+}
+
+void CWndMain::SettingChanged()
+{
+	m_List.SendMsg(PNWM_SETTINGCHANGED, 0, 0);
+	m_BK.SendMsg(PNWM_SETTINGCHANGED, 0, 0);
+	if (m_Lrc.IsValid())
+		m_Lrc.SendMsg(PNWM_SETTINGCHANGED, 0, 0);
 }

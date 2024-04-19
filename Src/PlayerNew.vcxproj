@@ -318,6 +318,12 @@
     <ClInclude Include="CDlgFxRotate.h" />
     <ClInclude Include="CDlgListFile.h" />
     <ClInclude Include="CDlgNewBookmark.h" />
+    <ClInclude Include="CDlgOptApp.h" />
+    <ClInclude Include="CDlgOptHotKey.h" />
+    <ClInclude Include="CDlgOptions.h" />
+    <ClInclude Include="CDlgOptLrc.h" />
+    <ClInclude Include="CDlgOptPlay.h" />
+    <ClInclude Include="CDlgOptVisual.h" />
     <ClInclude Include="CDlgProgress.h" />
     <ClInclude Include="CDlgStatViewer.h" />
     <ClInclude Include="CEffectMgr.h" />
@@ -361,6 +367,12 @@
     <ClCompile Include="CDlgFxRotate.cpp" />
     <ClCompile Include="CDlgListFile.cpp" />
     <ClCompile Include="CDlgNewBookmark.cpp" />
+    <ClCompile Include="CDlgOptApp.cpp" />
+    <ClCompile Include="CDlgOptHotKey.cpp" />
+    <ClCompile Include="CDlgOptions.cpp" />
+    <ClCompile Include="CDlgOptLrc.cpp" />
+    <ClCompile Include="CDlgOptPlay.cpp" />
+    <ClCompile Include="CDlgOptVisual.cpp" />
     <ClCompile Include="CDlgProgress.cpp" />
     <ClCompile Include="CDlgStatViewer.cpp" />
     <ClCompile Include="CEffectMgr.cpp" />

@@ -116,7 +116,7 @@ void CApp::InvertIconColor()
 		pDC->CreateEffect(CLSID_D2D1ColorMatrix, &pEffect);
 		EckAssert(pEffect);
 		pEffect->SetInput(0, pD2dBitmap);
-		auto mat = D2D1::Matrix5x4F(-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0.999, 0.999, 0.999, 0);
+		auto mat = D2D1::Matrix5x4F(-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0.999f, 0.999f, 0.999f, 0);
 		pEffect->SetValue(D2D1_COLORMATRIX_PROP_COLOR_MATRIX, mat);
 
 		pDC->BeginDraw();

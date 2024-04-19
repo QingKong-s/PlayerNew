@@ -55,12 +55,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	auto& opt = App->GetOptionsMgr();
 	opt.ListFilePath.push_back(L"D:\\test");
 	opt.ListFilePath.push_back(L"D:\\test - 副本");
-	opt.LrcPaddingHeight = 10.f;
-	opt.LrcFont.rsFontName = L"微软雅黑";
-	opt.LrcFont.iWeight = 400;
-	opt.LrcFont.fFontSize = 26;
+	opt.ScLrcPaddingHeight = 10.f;
+	opt.ScLrcFontMain = { L"微软雅黑", 400, 26.f };
+	opt.ScLrcFontTranslation = { L"微软雅黑", 400, 15.f };
+	opt.ScLrcAlign = DWRITE_TEXT_ALIGNMENT_CENTER;
 
 	opt.DtLrcFontMain = {L"微软雅黑", 400, 40.f };
+
 
 	opt.DtLrcFontMain.argbNormalGra[0] = eck::ColorrefToARGB(eck::Colorref::White);
 	opt.DtLrcFontMain.argbNormalGra[1] = eck::ColorrefToARGB(eck::Colorref::Gray);

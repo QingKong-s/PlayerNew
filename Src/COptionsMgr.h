@@ -7,6 +7,7 @@
 #include "eck\CRefStr.h"
 #include "eck\WndHelper.h"
 #include "eck\CWindowPosSetting.h"
+#include "eck\CFontPicker.h"
 
 
 struct FONTOPTIONS
@@ -33,6 +34,19 @@ struct FONTOPTIONS
 		};
 		UINT uFlags{};
 	};
+
+	operator eck::FONTPICKERINFO() const
+	{
+		return { rsFontName.Data(),(int)fFontSize,iWeight };
+	}
+
+	void FromFontPicker(eck::CFontPicker& fp)
+	{
+		eck::FONTPICKERINFO fpi{};
+		rsFontName = fp.ToInfo(fpi);
+		iWeight = fpi.iWeight;
+		fFontSize = (float)fpi.iPointSize;
+	}
 
 	static IDWriteTextFormat* CreateTextFormat(IDWriteFactory* pDWriteFactory, 
 		const FONTOPTIONS& fo, int iDpi, HRESULT* phr = NULL)
@@ -69,6 +83,12 @@ enum class RepeatMode
 	P_End
 };
 
+enum class DtLrcView
+{
+	SingleLine,
+	DoubleLine,
+};
+
 class COptionsMgr
 {
 public:
@@ -76,22 +96,38 @@ public:
 	BOOL PlaySilent{};
 
 	Utils::LrcEncoding		LrcFileEncoding{};
-	FONTOPTIONS				LrcFont{};
-	float					LrcPaddingHeight{};
-	float					LrcCurrFontScale{ 1.3f };
-	FONTOPTIONS				DtLrcFontMain{};
-	FONTOPTIONS				DtLrcFontTranslation{};
+	std::vector<eck::CRefStrW> LrcPath{};
+
 	BOOL					DtLrcBorder{ TRUE };
 	ARGB					DtLrcBorderColor{};
 	float					DtLrcBorderWidth{ 1.f };
-	int						DtLrcAlign[2]{};
-	SIZE					DtLrcMinSize{};
-	BOOL					DtLrcEnableShadow{ 1 };
+	BOOL					DtLrcEnableShadow{ TRUE };
 	float					DtLrcShadowOffset{ 1.5f };
 	BOOL					DtLrcShow{ FALSE };
+	BOOL					DtLrcSpaceLine{ FALSE };
+	eck::CRefStrW			DtLrcSpaceLineText{};
+	BOOL					DtLrcShowTranslation{ TRUE };
+	FONTOPTIONS				DtLrcFontMain{};
+	FONTOPTIONS				DtLrcFontTranslation{};
+	int						DtLrcAlign[2]{};
+	BYTE					DtLrcAlpha{ 255 };
+	SIZE					DtLrcMinSize{};
+	DtLrcView				DtLrcView{ DtLrcView::DoubleLine };
 	eck::CWindowPosSetting	DtLrcWndPos{};
 
-	BOOL ProgShowCoverLivePreview{ 1 };
+	BOOL					ScLrcAnimation{ TRUE };
+	BOOL					ScLrcAutoWrap{ FALSE };
+	BOOL					ScLrcShowTranslation{ TRUE };
+	BOOL					ScLrcSpaceLine{ FALSE };
+	eck::CRefStrW			ScLrcSpaceLineText{};
+	FONTOPTIONS				ScLrcFontMain{};
+	FONTOPTIONS				ScLrcFontTranslation{};// 不使用颜色信息
+	int						ScLrcAlign{};
+	float					ScLrcCurrFontScale{ 1.3f };
+	float					ScLrcPaddingHeight{};
+
+
+	BOOL ProgShowCoverLivePreview{ TRUE };
 
 	std::vector<eck::CRefStrW> ListFilePath{};
 

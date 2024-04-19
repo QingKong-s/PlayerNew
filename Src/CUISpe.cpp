@@ -1,4 +1,4 @@
-﻿#include "CWndBK.h"
+﻿#include "CWndMain.h"
 
 LRESULT CUISpe::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -79,6 +79,13 @@ LRESULT CUISpe::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 	break;
 
+    case UIEE_DWMCOLORCHANGED:
+    {
+        ECK_DUILOCK;
+        m_pBrBar->SetColor(App->GetMainWnd()->GetDwmColor());
+    }
+    break;
+
     case WM_CREATE:
     {
         SafeRelease(m_pBrBar);
@@ -97,6 +104,7 @@ LRESULT CUISpe::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void CUISpe::SetCount(int i)
 {
+    ECK_DUILOCK;
     if (i > 0)
     {
         // c * cxBar + (c - 1) * cxDiv = cx
