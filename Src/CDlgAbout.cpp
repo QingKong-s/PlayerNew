@@ -58,17 +58,17 @@ void CDlgAbout::LoadPlayNewImage()
 	{
 		GpImageAttributes* pIA;
 		GdipCreateImageAttributes(&pIA);
-		GpColorMatrix mat{ -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0.999f, 0.999f, 0.999f, 0 };
-		GdipSetImageAttributesColorMatrix(pIA, GpColorAdjustType::Default, TRUE,
-			&mat, NULL, GpColorMatrixFlags::Default);
+		Gdiplus::ColorMatrix mat{ -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0.999f, 0.999f, 0.999f, 0 };
+		GdipSetImageAttributesColorMatrix(pIA, Gdiplus::ColorAdjustTypeDefault, TRUE,
+			&mat, NULL, Gdiplus::ColorMatrixFlagsDefault);
 
 		GpBitmap* pNewBmp;
-		GdipCreateBitmapFromScan0(m_cxImg, m_cyImg, 0, GpPixelFormat::PF32bppPARGB, NULL, &pNewBmp);
+		GdipCreateBitmapFromScan0(m_cxImg, m_cyImg, 0, PixelFormat32bppARGB, NULL, &pNewBmp);
 		GpGraphics* pGraphics;
 		GdipGetImageGraphicsContext(pNewBmp, &pGraphics);
 		GdipGraphicsClear(pGraphics, 0);
 		GdipDrawImageRectRectI(pGraphics, m_pGpBitmap, 0, 0, m_cxImg, m_cyImg,
-			0, 0, m_cxImg, m_cyImg, GpUnit::Pixel, pIA, NULL, NULL);
+			0, 0, m_cxImg, m_cyImg, Gdiplus::UnitPixel, pIA, NULL, NULL);
 		std::swap(m_pGpBitmap, pNewBmp);
 
 		GdipDisposeImageAttributes(pIA);
@@ -103,7 +103,7 @@ LRESULT CDlgAbout::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		BeginPaint(hWnd, &ps);
 		GpGraphics* pGraphics;
 		GdipCreateFromHDC(ps.hdc, &pGraphics);
-		GdipSetInterpolationMode(pGraphics, GpInterpolationMode::HighQuality);
+		GdipSetInterpolationMode(pGraphics, Gdiplus::InterpolationModeHighQuality);
 		GdipDrawImageRectI(pGraphics, m_pGpBitmap,
 			0, 0,
 			m_cxClient,

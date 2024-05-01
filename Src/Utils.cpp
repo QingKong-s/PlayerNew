@@ -65,6 +65,84 @@ BOOL IsTextUTF8(char* str, ULONGLONG length)
 	return TRUE;
 }
 
+constexpr BYTE c_Base64DecodeTable[]
+{
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0x3e, 0xff, 0xff, 0xff, 0x3f,
+
+	0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b,
+	0x3c, 0x3d, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+
+	0xff, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
+	0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e,
+	0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16,
+	0x17, 0x18, 0x19, 0xff, 0xff, 0xff, 0xff, 0xff,
+
+	0xff, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20,
+	0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
+	0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30,
+	0x31, 0x32, 0x33, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+};
+
+eck::CRefBin Base64Decode(PCSTR psz, int cch)
+{
+	int i{}, j{};
+	size_t idxBin{}, idxText{};
+	BYTE temp[4];
+
+	eck::CRefBin rb(cch / 4 * 3 + 3);
+	while (cch-- && (psz[idxText] != '='))
+	{
+		temp[i++] = psz[idxText]; idxText++;
+		if (i == 4)
+		{
+			for (i = 0; i < 4; i++)
+				temp[i] = c_Base64DecodeTable[temp[i]];
+
+			rb[idxBin++] = (temp[0] << 2) + ((temp[1] & 0x30) >> 4);
+			rb[idxBin++] = ((temp[1] & 0xf) << 4) + ((temp[2] & 0x3c) >> 2);
+			rb[idxBin++] = ((temp[2] & 0x3) << 6) + temp[3];
+
+			i = 0;
+		}
+	}
+
+	if (i)
+	{
+		for (j = i; j < 4; j++)
+			temp[j] = 0;
+
+		for (j = 0; j < 4; j++)
+			temp[j] = c_Base64DecodeTable[temp[j]];
+
+		rb[idxBin++] = (temp[0] << 2) + ((temp[1] & 0x30) >> 4);
+		rb[idxBin++] = ((temp[1] & 0xf) << 4) + ((temp[2] & 0x3c) >> 2);
+		rb[idxBin++] = ((temp[2] & 0x3) << 6) + temp[3];
+	}
+
+	return rb;
+}
+
 /// <summary>
 /// [解析ID3v2辅助函数]按指定编码处理文本
 /// </summary>
@@ -447,40 +525,81 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi, PCWSTR pszDiv)
 
 					eck::CRefStrA u8Label(t);
 					File.Read(u8Label.Data(), t);// 读标签
-					const auto rsLabel = eck::StrX2W(u8Label.Data(), t);
-
-					const int iPos = rsLabel.Find(L"=");// 找等号
-					if (iPos != eck::INVALID_STR_POS)
+					int iPos = u8Label.Find("=");// 找等号
+					const int cchActual = u8Label.Size() - iPos;
+					++iPos;
+					/* */if ((mi.uFlags & MIF_TITLE) && u8Label.IsStartOf("TITLE"))
 					{
-						const int cch = t - iPos;
-						// 不会真有人写很多标题很多专辑很多歌词吧
-						/* */if ((mi.uFlags & MIF_TITLE) && rsLabel.Find(L"TITLE") >= 0)
-							mi.rsTitle.DupString(rsLabel.Data() + iPos, cch);
-						else if ((mi.uFlags & MIF_ARTIST) && rsLabel.Find(L"ARTIST") >= 0)
+						mi.rsTitle = eck::StrX2W(u8Label.Data() + iPos, cchActual, CP_UTF8);
+					}
+					else if ((mi.uFlags & MIF_ARTIST) && u8Label.IsStartOf("ARTIST"))
+					{
+						if (mi.rsArtist.IsEmpty())
+							mi.rsArtist = eck::StrX2W(u8Label.Data() + iPos, cchActual, CP_UTF8);
+						else
 						{
-							if (!mi.rsAlbum.IsEmpty())
-								mi.rsAlbum.PushBack(pszDiv);
-							mi.rsAlbum.PushBack(rsLabel.Data() + iPos, cch);
+							mi.rsArtist.PushBack(pszDiv);
+							mi.rsArtist.PushBack(eck::StrX2W(u8Label.Data() + iPos, cchActual, CP_UTF8));
 						}
-						else if ((mi.uFlags & MIF_ALBUM) && rsLabel.Find(L"ALBUM") >= 0)
-							mi.rsAlbum.DupString(rsLabel.Data() + iPos, cch);
-						else if ((mi.uFlags & MIF_LRC) && rsLabel.Find(L"LYRICS") >= 0)
-							mi.rsLrc.DupString(rsLabel.Data() + iPos, cch);
-						else if ((mi.uFlags & MIF_COMMENT) && rsLabel.Find(L"DESCRIPTION") >= 0)
-							mi.rsComment.PushBack(rsLabel.Data() + iPos, cch);
-						else if ((mi.uFlags & MIF_GENRE) && rsLabel.Find(L"GENRE") >= 0)
-							mi.rsGenre.DupString(rsLabel.Data() + iPos, cch);
-						else if ((mi.uFlags & MIF_DATE) && rsLabel.Find(L"DATE") >= 0)
+					}
+					else if ((mi.uFlags & MIF_ALBUM) && u8Label.IsStartOf("ALBUM"))
+						mi.rsAlbum = eck::StrX2W(u8Label.Data() + iPos, cchActual, CP_UTF8);
+					else if ((mi.uFlags & MIF_LRC) && u8Label.IsStartOf("LYRICS"))
+						mi.rsLrc = eck::StrX2W(u8Label.Data() + iPos, cchActual, CP_UTF8);
+					else if ((mi.uFlags & MIF_COMMENT) && u8Label.IsStartOf("DESCRIPTION"))
+						mi.rsComment = eck::StrX2W(u8Label.Data() + iPos, cchActual, CP_UTF8);
+					else if ((mi.uFlags & MIF_GENRE) && u8Label.IsStartOf("GENRE"))
+						mi.rsGenre = eck::StrX2W(u8Label.Data() + iPos, cchActual, CP_UTF8);
+					else if ((mi.uFlags & MIF_DATE) && u8Label.IsStartOf("DATE"))
+					{
+						WORD y, m{}, d{};
+						if (sscanf(u8Label.Data() + iPos, "%hd-%hd-%hd", &y, &m, &d) >= 1)
+							mi.stDate = SYSTEMTIME{ .wYear = y,.wMonth = m,.wDay = d };
+					}
+					else if ((mi.uFlags & MIF_COVER) && u8Label.IsStartOf("METADATA_BLOCK_PICTURE"))
+					{
+						auto rb = Base64Decode(u8Label.Data() + iPos, cchActual);
+						eck::CMemReader r(rb.Data(), rb.Size());
+						MUSICPIC Pic{};
+
+						DWORD dwType;
+						r >> dwType;// 图片类型
+						if (dwType < (BYTE)PicType::Begin___ || dwType >= (BYTE)PicType::End___)
+							Pic.eType = PicType::Invalid;
+						else
+							Pic.eType = (PicType)dwType;
+
+						r >> t;// 长度
+						t = eck::ReverseInteger(t);
+						eck::CRefStrA rsMime(t);
+						r.Read(rsMime.Data(), t);// MIME类型字符串
+						Pic.rsMime = eck::StrX2W(rsMime.Data(), rsMime.Size());
+
+						r >> t;// 描述字符串长度
+						t = eck::ReverseInteger(t);
+						eck::CRefStrA u8Desc(t);
+						r.Read(u8Desc.Data(), t);// MIME类型字符串
+						Pic.rsDesc = eck::StrX2W(u8Desc.Data(), u8Desc.Size(), CP_UTF8);
+
+						r += 16;// 跳过宽度、高度、色深、索引图颜色数
+
+						r >> t;// 图片数据长度
+						t = eck::ReverseInteger(t);// 图片数据长度
+
+						Pic.bLink = (Pic.rsMime == L"-->");
+
+						if (Pic.bLink)
 						{
-							const auto pszDate = (PWSTR)_malloca(eck::Cch2Cb(cch));
-							EckCheckMem(pszDate);
-							wmemcpy(pszDate, rsLabel.Data() + iPos, cch);
-							*(pszDate + cch) = L'\0';
-							WORD y, m{}, d{};
-							if (swscanf(pszDate, L"%hd-%hd-%hd", &y, &m, &d) >= 1)
-								mi.stDate = SYSTEMTIME{ .wYear = y,.wMonth = m,.wDay = d };
-							_freea(pszDate);
+							eck::CRefStrA u8(t);
+							r.Read(u8.Data(), t);
+							Pic.varPic = eck::StrX2W(u8.Data(), u8.Size(), CP_UTF8);
 						}
+						else
+						{
+							rb.Erase(0, r.Data() - rb.Data());
+							Pic.varPic = std::move(rb);
+						}
+						mi.vImage.push_back(std::move(Pic));
 					}
 				}
 			}
@@ -515,7 +634,7 @@ BOOL GetMusicInfo(PCWSTR pszFile, MUSICINFO& mi, PCWSTR pszDiv)
 					File >> t;// 图片数据长度
 					t = eck::ReverseInteger(t);// 图片数据长度
 
-					Pic.bLink = (Pic.rsDesc == L"-->");
+					Pic.bLink = (Pic.rsMime == L"-->");
 
 					if (Pic.bLink)
 					{

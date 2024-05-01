@@ -53,7 +53,8 @@ PlayOpErr CPlayer::Play(int idx)
 	m_Bass.Open(Item.rsFile.Data());
 	if (!m_Bass.GetHStream())
 		return PlayOpErr::BassError;
-	m_Bass.SetSync(BASS_SYNC_END | BASS_SYNC_ONETIME, 0, [](DWORD, DWORD, DWORD, PVOID)
+	m_Bass.SetSync(BASS_SYNC_END | BASS_SYNC_ONETIME, 0, 
+		[](DWORD, DWORD, DWORD, PVOID)
 		{
 			App->GetMainWnd()->PostMsg(PNWM_CHANNELENDED, 0, 0);
 		});
@@ -63,6 +64,8 @@ PlayOpErr CPlayer::Play(int idx)
 	m_idxCurrFile = idx;
 	m_Bass.TempoCreate();
 	m_Bass.Play(TRUE);
+	EckAssert(!m_ullCurrTickBegin);
+	m_ullCurrTickBegin = GetTickCount64();
 	ApplyPrevEffect();
 
 	m_ullLength = (ULONGLONG)(m_Bass.GetLength() * 1000.);
@@ -79,6 +82,10 @@ PlayOpErr CPlayer::Play(int idx)
 			e.RLTrim();
 		m_Stat.IncPlayCount(vArtist);
 	}
+	++Item.s.cPlayed;
+	SYSTEMTIME st;
+	GetLocalTime(&st);
+	eck::SystemTimeToULongLong(st, Item.s.ftLastPlayed);
 
 	CreateWicBmpCover();
 	m_vLrc.clear();
@@ -93,6 +100,12 @@ PlayOpErr CPlayer::Play(int idx)
 
 void CPlayer::Stop(BOOL bNoGap)
 {
+	if (m_idxCurrFile >= 0)
+	{
+		EckAssert(m_ullCurrTickBegin);
+		m_List.At(m_idxCurrFile).s.uSecPlayed += (UINT)(GetTickCount64() - m_ullCurrTickBegin);
+	}
+	m_ullCurrTickBegin = 0ull;
 	m_Bass.Stop();
 	m_Bass.Close();
 
@@ -179,7 +192,11 @@ PlayOpErr CPlayer::AutoNext()
 	case RepeatMode::Radom:
 		break;
 	case RepeatMode::SingleLoop:
+	{
+		auto& e = m_List.At(m_idxCurrFile);
+		++e.s.cLoop;
 		m_Bass.Play(TRUE);
+	}
 		return PlayOpErr::Ok;
 	case RepeatMode::Single:
 		Stop();
@@ -196,9 +213,14 @@ PlayOpErr CPlayer::PlayOrPause()
 	{
 	case BASS_ACTIVE_PAUSED:
 		b = m_Bass.Play();
+		EckAssert(!m_ullCurrTickBegin);
+		m_ullCurrTickBegin = GetTickCount64();
 		break;
 	case BASS_ACTIVE_PLAYING:
 		b = m_Bass.Pause();
+		EckAssert(m_ullCurrTickBegin);
+		m_List.At(m_idxCurrFile).s.uSecPlayed += (UINT)(GetTickCount64() - m_ullCurrTickBegin);
+		m_ullCurrTickBegin = 0ull;
 		break;
 	default:
 		return PlayOpErr::NoCurrPlaying;

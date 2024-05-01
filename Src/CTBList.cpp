@@ -22,13 +22,19 @@ LRESULT CTBList::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         break;
     case WM_CREATE:
         UpdateIcon(eck::GetDpi(hWnd));
-        m_hTheme = OpenThemeData(hWnd, L"ToolBar");
+        if (eck::ShouldAppUseDarkMode())
+            m_hTheme = OpenThemeData(NULL, L"ItemsView::ListView");
+        else
+            m_hTheme = OpenThemeData(hWnd, L"ToolBar");
         break;
     case WM_THEMECHANGED:
     {
         const auto lResult = __super::OnMsg(hWnd, uMsg, wParam, lParam);
         CloseThemeData(m_hTheme);
-        m_hTheme = OpenThemeData(hWnd, L"ToolBar");
+        if (eck::ShouldAppUseDarkMode())
+            m_hTheme = OpenThemeData(NULL, L"ItemsView::ListView");
+        else
+            m_hTheme = OpenThemeData(hWnd, L"ToolBar");
         SetButtonSize(m_Ds.cxToolBtn, m_Ds.cyTool);
         return lResult;
     }
@@ -61,9 +67,14 @@ LRESULT CTBList::OnNotifyMsg(HWND hParent, UINT uMsg, WPARAM wParam, LPARAM lPar
             switch (pnmtbcd->nmcd.dwDrawStage)
             {
             case CDDS_PREPAINT:
-                return CDRF_NOTIFYITEMDRAW;
+            {
+                SetDCBrushColor(pnmtbcd->nmcd.hdc, eck::GetThreadCtx()->crDefBkg);
+                FillRect(pnmtbcd->nmcd.hdc, &pnmtbcd->nmcd.rc, GetStockBrush(DC_BRUSH));
+            }
+            return CDRF_NOTIFYITEMDRAW;
             case CDDS_ITEMPREPAINT:
             {
+                const auto* const pth = eck::GetThreadCtx();
                 const int idx = (int)pnmtbcd->nmcd.dwItemSpec - TBCID_BEGIN;
                 if (idx < 0 || idx >= ARRAYSIZE(c_idxIcon))
                     return CDRF_DODEFAULT;
@@ -72,16 +83,18 @@ LRESULT CTBList::OnNotifyMsg(HWND hParent, UINT uMsg, WPARAM wParam, LPARAM lPar
                 const RECT& rc = pnmtbcd->nmcd.rc;
 
                 int iState = 0;
-                if (eck::IsBitSet(pnmtbcd->nmcd.uItemState, CDIS_SELECTED)||m_uBTFlags[idx])
+                if (eck::IsBitSet(pnmtbcd->nmcd.uItemState, CDIS_SELECTED) || m_uBTFlags[idx])
                     if (eck::IsBitSet(pnmtbcd->nmcd.uItemState, CDIS_HOT))
-                        iState = TS_HOTCHECKED;
+                        iState = LISS_HOTSELECTED;// == TS_HOTCHECKED;
                     else
-                        iState = TS_PRESSED;
+                        iState = LISS_SELECTED;// == TS_PRESSED;
                 else
                     if (eck::IsBitSet(pnmtbcd->nmcd.uItemState, CDIS_HOT))
-                        iState = TS_HOT;
+                        iState = LISS_HOT;// == TS_HOT;
                 if (iState)
-                    DrawThemeBackground(m_hTheme, hDC, TP_BUTTON, iState, &rc, NULL);
+                    DrawThemeBackground(m_hTheme, hDC,
+                        eck::ShouldAppUseDarkMode() ? LVP_LISTITEM : TP_BUTTON,
+                        iState, &rc, NULL);
 
                 constexpr static PCWSTR c_pszText[]
                 {
@@ -100,7 +113,7 @@ LRESULT CTBList::OnNotifyMsg(HWND hParent, UINT uMsg, WPARAM wParam, LPARAM lPar
                 rcText.left = x + m_Ds.cxIcon;
                 SelectObject(hDC, m_hFont);
                 SetBkMode(hDC, TRANSPARENT);
-                SetTextColor(hDC, GetSysColor(COLOR_WINDOWTEXT));
+                SetTextColor(hDC, pth->crDefText);
                 DrawTextW(hDC, c_pszText[idx], 2, &rcText, DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_NOCLIP);
             }
             return CDRF_SKIPDEFAULT;

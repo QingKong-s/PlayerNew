@@ -94,25 +94,26 @@ void CWndBK::SetupElem()
 		const auto pLoH = new eck::CLinearLayoutH{};
 		m_vLayout.push_back(pLoH);
 		{
-			const auto pLoAlbumSpe = new eck::CLinearLayoutV{};
-			m_vLayout.push_back(pLoAlbumSpe);
+			//const auto pLoAlbumSpe = new eck::CLinearLayoutV{};
+			//m_vLayout.push_back(pLoAlbumSpe);
 
 			const auto palbum = new CUIAlbum{};
 			palbum->Create(NULL, Dui::DES_VISIBLE, 0,
 				10, 10, 400, 500, NULL, this);
 			m_vAllElems.push_back(palbum);
-			pLoAlbumSpe->Add(palbum, {}, eck::LLF_FIXHEIGHT | eck::LLF_FIXWIDTH);
+			//pLoAlbumSpe->Add(palbum, {}, eck::LLF_FIXHEIGHT | eck::LLF_FIXWIDTH);
 
-			const auto pspe = new CUISpe{};
-			pspe->Create(NULL, Dui::DES_VISIBLE, 0,
-				0, 0, 400, 160, NULL, this);
-			pspe->SetCount(40);
-			pspe->SetGapWidth(eck::DpiScaleF(1.f, m_iDpi));
-			m_vAllElems.push_back(pspe);
-			m_vElemsWantTimer.push_back(pspe);
-			pLoAlbumSpe->Add(pspe, {}, eck::LLF_FIXHEIGHT | eck::LLF_FIXWIDTH);
+			//const auto pspe = new CUISpe{};
+			//pspe->Create(NULL, Dui::DES_VISIBLE, 0,
+			//	0, 0, 400, 160, NULL, this);
+			//pspe->SetCount(40);
+			//pspe->SetGapWidth(eck::DpiScaleF(1.f, m_iDpi));
+			//m_vAllElems.push_back(pspe);
+			//m_vElemsWantTimer.push_back(pspe);
+			//pLoAlbumSpe->Add(pspe, {}, eck::LLF_FIXHEIGHT | eck::LLF_FIXWIDTH);
 
-			pLoH->Add(pLoAlbumSpe, {}, eck::LLF_FIXHEIGHT | eck::LLF_FIXWIDTH);
+			//pLoH->Add(pLoAlbumSpe, {}, eck::LLF_FIXHEIGHT | eck::LLF_FIXWIDTH);
+			pLoH->Add(palbum, {}, eck::LLF_FIXHEIGHT | eck::LLF_FIXWIDTH);
 		}
 
 		const auto plrc = new CUILrc{};
@@ -409,6 +410,7 @@ void CWndBK::UpdateStaticBmp()
 		pEffect->Release();
 		pBmpScaled->Release();
 		////////////半透明遮罩
+		m_pBrWhite2->SetColor(eck::ColorrefToD2dColorF(eck::GetThreadCtx()->crDefBkg, 0.6));
 		pDC->FillRectangle(m_rcfClient, m_pBrWhite2);
 	}
 

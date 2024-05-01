@@ -525,6 +525,8 @@ private:
 	IDWriteTextFormat* m_pTextFormat = NULL;
 	IDWriteTextFormat* m_pTextFormatTrans = NULL;
 
+	ID2D1GeometryRealization* m_pGrEmptyText = NULL;
+
 	ID2D1DeviceContext1* m_pDC1 = NULL;
 
 	Dui::CScrollBar m_SB{};
@@ -544,7 +546,6 @@ private:
 
 	int m_tMouseIdle = 0;
 
-	BITBOOL m_bThumbLBtnDown : 1 = FALSE;
 	BITBOOL m_bCtxMenuOpen : 1 = FALSE;
 
 	enum
@@ -577,6 +578,8 @@ private:
 
 	void ReCreateTextFormat();
 
+	void ReCreateEmptyText();
+
 	PNInline void FillItemBkg(int idx, const D2D1_RECT_F& rc)
 	{
 		constexpr D2D1_COLOR_F crHot{ eck::ColorrefToD2dColorF(eck::Colorref::Silver,0.5f) };
@@ -600,27 +603,6 @@ private:
 
 	BOOL DrawItem(int idx, float& y);
 
-	void GetSBThumbRect(D2D1_RECT_F& rc)
-	{
-		const int cyThumb = m_psv->GetThumbSize();
-		const int yThumb = m_psv->GetThumbPos(cyThumb);
-		const float cxView = GetViewWidthF();
-		rc =
-		{
-			cxView - GetBk()->GetDpiSizeF().cxySBTrack,
-			(float)yThumb,
-			cxView,
-			(float)yThumb + cyThumb
-		};
-	}
-
-	PNInline void GetSBThumbRect(RECT& rc)
-	{
-		D2D1_RECT_F rcf;
-		GetSBThumbRect(rcf);
-		rc = eck::MakeRect(rcf);
-	}
-
 	PNInline void BeginMouseIdleDetect()
 	{
 		m_tMouseIdle = T_MOUSEIDLEMAX;
@@ -629,35 +611,7 @@ private:
 
 	int HitTest(POINT pt);
 
-	PNInline void GetItemRect(int idx, RECT& rc)
-	{
-		auto& e = m_vItem[idx];
-		const auto y = GetItemY(idx);
-		const auto fScale = App->GetOptionsMgr().ScLrcCurrFontScale;
-		rc.left = (long)e.x;
-		rc.top = (long)y;
-		if (idx == m_idxPrevAnItem)
-		{
-			const auto cx = (long)(e.cx * (fScale + 1.f - m_fAnValue));
-			if (App->GetOptionsMgr().ScLrcAlign == DWRITE_TEXT_ALIGNMENT_CENTER)
-				rc.left = (GetViewWidthF() - cx) / 2.f;
-			rc.right = rc.left + cx;
-			rc.bottom = (long)(y + e.cy * (fScale + 1.f - m_fAnValue));
-		}
-		else if (idx == m_idxCurrAnItem)
-		{
-			const auto cx = (long)(e.cx * m_fAnValue);
-			if (App->GetOptionsMgr().ScLrcAlign == DWRITE_TEXT_ALIGNMENT_CENTER)
-				rc.left = (GetViewWidth() - cx) / 2.f;
-			rc.right = rc.left + cx;
-			rc.bottom = (long)(y + e.cy * m_fAnValue);
-		}
-		else ECKLIKELY
-		{
-			rc.right = rc.left + (long)e.cx;
-			rc.bottom = (long)(y + e.cy);
-		}
-	}
+	void GetItemRect(int idx, RECT& rc);
 
 	PNInline float GetItemY(int idx)
 	{

@@ -25,7 +25,7 @@ struct LISTDRAGPARAMHEADER
 #pragma pack(pop)
 
 class CWndMain;
-class CWndList : public eck::CWnd
+class CWndList : public eck::CForm
 {
 	friend class CDropTargetList;
 	friend class CWndMain;
@@ -45,11 +45,6 @@ private:
 	HMENU m_hMenuManage = NULL;
 
 	int m_iDpi = USER_DEFAULT_SCREEN_DPI;
-
-	HTHEME m_hThemeLV = NULL;
-	HBRUSH m_hbrLaterPlaying = NULL;
-	HBRUSH m_hbrGray = NULL;
-	HBRUSH m_hbrCurrPlaying = NULL;
 
 	HICON m_hiSearch = NULL;
 
@@ -122,6 +117,10 @@ private:
 	void UpdateDpi(int iDpi);
 
 	void UpdateUISize();
+
+	BOOL AutoSaveList();
+
+	void ListSwitched();
 
 	BOOL OnCreate(HWND hWnd, CREATESTRUCTW* pcs);
 

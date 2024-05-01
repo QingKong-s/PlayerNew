@@ -4,6 +4,8 @@
 
 #include <functional>
 
+#include <lmcons.h>
+
 //////////////////////////////////旧版本的播放列表文件//////////////////////////////////
 struct LISTFILEHEADER_0	// 播放列表文件头
 {
@@ -40,7 +42,7 @@ enum
 *	LISTFILEITEM_0
 *	名称\0
 *	文件名\0
-*	opt : // 仅当具有QKLIF_BOOKMARK时
+*	[仅当具有QKLIF_BOOKMARK时] :
 *		书签颜色 : COLORREF
 *		书签名称\0
 *		书签备注\0
@@ -59,6 +61,8 @@ struct LISTFILEHEADER_1	// 播放列表文件头
 	int iVer;			// 存档文件版本，PNLFVER_常量
 	UINT ocbBookMark;	// 书签信息偏移
 	int cItems;			// 项目数
+	int cchCreator;		// 创建者署名长度
+	// WCHAR szCreator[];
 };
 
 struct PLUPUREDATA// 结构稳定，不能修改
@@ -132,6 +136,7 @@ private:
 	eck::CMappingFile m_File{};
 	LISTFILEHEADER_0* m_pHeader0 = NULL;
 	LISTFILEHEADER_1* m_pHeader1 = NULL;
+	eck::CRefStrW m_rsCreator{};
 public:
 	using FItemProcessor = std::function<BOOL(const LISTFILEITEM_1* pItem,
 		PCWSTR pszName, PCWSTR pszFile, PCWSTR pszTitle,
@@ -151,6 +156,8 @@ public:
 	void For(const FItemProcessor& fnProcessor);
 
 	void ForBookmark(const FBookmarkProcessor& fnProcessor);
+
+	const auto& GetCreatorName() const { return m_rsCreator; }
 };
 
 
@@ -158,9 +165,9 @@ class CPlayListFileWriter
 {
 private:
 	eck::CFile m_File{};
-
 	LISTFILEHEADER_1 m_Header{ {'P','N','P','L'},PNLFVER_0 };
 	BOOKMARKHEADER m_BmHeader{ PNBMVER_0 };
+	eck::CRefStrW m_rsCreator{};
 public:
 	ECK_DISABLE_COPY_MOVE_DEF_CONS(CPlayListFileWriter)
 public:
@@ -180,4 +187,19 @@ public:
 	void PushBackBookmark(const BOOKMARKITEM& Item, PCWSTR pszName);
 
 	BOOL End();
+
+	void SetCreatorName(PCWSTR pszName) { m_rsCreator = pszName; }
+
+	BOOL SetCreatorNameAsCurrUser()
+	{ 
+		m_rsCreator.ReSize(UNLEN);
+		DWORD cch = m_rsCreator.Size() + 1;
+		if (!GetUserNameW(m_rsCreator.Data(), &cch))
+		{
+			m_rsCreator.Clear();
+			return FALSE;
+		}
+		m_rsCreator.ReSize(cch - 1);
+		return TRUE;
+	}
 };

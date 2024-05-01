@@ -67,8 +67,9 @@ public:
 				}
 				else
 				{
-					FillRect(pdis->hDC, &pdis->rcItem, GetSysColorBrush(COLOR_WINDOW));
-					crOld = SetTextColor(pdis->hDC, GetSysColor(COLOR_WINDOWTEXT));
+					SetDCBrushColor(pdis->hDC, eck::GetThreadCtx()->crDefBkg);
+					FillRect(pdis->hDC, &pdis->rcItem, GetStockBrush(DC_BRUSH));
+					crOld = SetTextColor(pdis->hDC, eck::GetThreadCtx()->crDefText);
 				}
 				// 画文本
 				int iBKModeOld = SetBkMode(pdis->hDC, TRANSPARENT);

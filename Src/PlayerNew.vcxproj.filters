@@ -29,6 +29,12 @@
     <Filter Include="Sqlite">
       <UniqueIdentifier>{ae453d36-3365-4e90-a8f6-d53c576cdb71}</UniqueIdentifier>
     </Filter>
+    <Filter Include="对话框\效果">
+      <UniqueIdentifier>{9e3c280b-fd94-4d48-a31d-31a8c0d7a08d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="对话框\设置">
+      <UniqueIdentifier>{b39e7e3a-61c4-49c5-8935-65a99db3eec4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CDlgBookmark.h">
@@ -106,44 +112,8 @@
     <ClInclude Include="CLVPlay.h">
       <Filter>控件</Filter>
     </ClInclude>
-    <ClInclude Include="CDlgEffect.h">
-      <Filter>对话框</Filter>
-    </ClInclude>
-    <ClInclude Include="CDlgFxChorus.h">
-      <Filter>对话框</Filter>
-    </ClInclude>
     <ClInclude Include="CEffectMgr.h">
       <Filter>程序</Filter>
-    </ClInclude>
-    <ClInclude Include="CDlgFxCompression.h">
-      <Filter>对话框</Filter>
-    </ClInclude>
-    <ClInclude Include="CDlgFxDistortion.h">
-      <Filter>对话框</Filter>
-    </ClInclude>
-    <ClInclude Include="CDlgFxEcho.h">
-      <Filter>对话框</Filter>
-    </ClInclude>
-    <ClInclude Include="CDlgFxEQ.h">
-      <Filter>对话框</Filter>
-    </ClInclude>
-    <ClInclude Include="CDlgFxFlanger.h">
-      <Filter>对话框</Filter>
-    </ClInclude>
-    <ClInclude Include="CDlgFxGargle.h">
-      <Filter>对话框</Filter>
-    </ClInclude>
-    <ClInclude Include="CDlgFxI3DL2Reverb.h">
-      <Filter>对话框</Filter>
-    </ClInclude>
-    <ClInclude Include="CDlgFxReverb.h">
-      <Filter>对话框</Filter>
-    </ClInclude>
-    <ClInclude Include="CDlgFxRotate.h">
-      <Filter>对话框</Filter>
-    </ClInclude>
-    <ClInclude Include="CDlgFxCommon.h">
-      <Filter>对话框</Filter>
     </ClInclude>
     <ClInclude Include="CWndGenSharePic.h">
       <Filter>窗体</Filter>
@@ -160,24 +130,62 @@
     <ClInclude Include="CDlgProgress.h">
       <Filter>对话框</Filter>
     </ClInclude>
+    <ClInclude Include="CDlgEffect.h">
+      <Filter>对话框\效果</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgFxChorus.h">
+      <Filter>对话框\效果</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgFxCommon.h">
+      <Filter>对话框\效果</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgFxCompression.h">
+      <Filter>对话框\效果</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgFxDistortion.h">
+      <Filter>对话框\效果</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgFxEcho.h">
+      <Filter>对话框\效果</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgFxEQ.h">
+      <Filter>对话框\效果</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgFxFlanger.h">
+      <Filter>对话框\效果</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgFxGargle.h">
+      <Filter>对话框\效果</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgFxI3DL2Reverb.h">
+      <Filter>对话框\效果</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgFxReverb.h">
+      <Filter>对话框\效果</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgFxRotate.h">
+      <Filter>对话框\效果</Filter>
+    </ClInclude>
     <ClInclude Include="CDlgOptApp.h">
-      <Filter>对话框</Filter>
+      <Filter>对话框\设置</Filter>
     </ClInclude>
     <ClInclude Include="CDlgOptHotKey.h">
-      <Filter>对话框</Filter>
+      <Filter>对话框\设置</Filter>
     </ClInclude>
     <ClInclude Include="CDlgOptions.h">
-      <Filter>对话框</Filter>
+      <Filter>对话框\设置</Filter>
     </ClInclude>
     <ClInclude Include="CDlgOptLrc.h">
-      <Filter>对话框</Filter>
+      <Filter>对话框\设置</Filter>
     </ClInclude>
     <ClInclude Include="CDlgOptPlay.h">
-      <Filter>对话框</Filter>
+      <Filter>对话框\设置</Filter>
     </ClInclude>
     <ClInclude Include="CDlgOptVisual.h">
-      <Filter>对话框</Filter>
+      <Filter>对话框\设置</Filter>
     </ClInclude>
+    <ClInclude Include="CDlgMusicInfo.h" />
+    <ClInclude Include="CDlgMiMetaData.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CDlgBookmark.cpp">
@@ -273,47 +281,11 @@
     <ClCompile Include="CLVPlay.cpp">
       <Filter>控件</Filter>
     </ClCompile>
-    <ClCompile Include="CDlgEffect.cpp">
-      <Filter>对话框</Filter>
-    </ClCompile>
-    <ClCompile Include="CDlgFxChorus.cpp">
-      <Filter>对话框</Filter>
-    </ClCompile>
     <ClCompile Include="CEffectMgr.cpp">
       <Filter>程序</Filter>
     </ClCompile>
-    <ClCompile Include="CDlgFxCompression.cpp">
-      <Filter>对话框</Filter>
-    </ClCompile>
-    <ClCompile Include="CDlgFxDistortion.cpp">
-      <Filter>对话框</Filter>
-    </ClCompile>
-    <ClCompile Include="CDlgFxEcho.cpp">
-      <Filter>对话框</Filter>
-    </ClCompile>
-    <ClCompile Include="CDlgFxEQ.cpp">
-      <Filter>对话框</Filter>
-    </ClCompile>
-    <ClCompile Include="CDlgFxFlanger.cpp">
-      <Filter>对话框</Filter>
-    </ClCompile>
-    <ClCompile Include="CDlgFxGargle.cpp">
-      <Filter>对话框</Filter>
-    </ClCompile>
     <ClCompile Include="$(ECK_INCLUDE)\eck\ECK.cpp">
       <Filter>eck</Filter>
-    </ClCompile>
-    <ClCompile Include="CDlgFxI3DL2Reverb.cpp">
-      <Filter>对话框</Filter>
-    </ClCompile>
-    <ClCompile Include="CDlgFxReverb.cpp">
-      <Filter>对话框</Filter>
-    </ClCompile>
-    <ClCompile Include="CDlgFxRotate.cpp">
-      <Filter>对话框</Filter>
-    </ClCompile>
-    <ClCompile Include="CDlgFxCommon.cpp">
-      <Filter>对话框</Filter>
     </ClCompile>
     <ClCompile Include="CWndGenSharePic.cpp">
       <Filter>窗体</Filter>
@@ -327,24 +299,62 @@
     <ClCompile Include="CDlgProgress.cpp">
       <Filter>对话框</Filter>
     </ClCompile>
+    <ClCompile Include="CDlgEffect.cpp">
+      <Filter>对话框\效果</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgFxChorus.cpp">
+      <Filter>对话框\效果</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgFxCommon.cpp">
+      <Filter>对话框\效果</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgFxCompression.cpp">
+      <Filter>对话框\效果</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgFxDistortion.cpp">
+      <Filter>对话框\效果</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgFxEcho.cpp">
+      <Filter>对话框\效果</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgFxEQ.cpp">
+      <Filter>对话框\效果</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgFxFlanger.cpp">
+      <Filter>对话框\效果</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgFxGargle.cpp">
+      <Filter>对话框\效果</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgFxI3DL2Reverb.cpp">
+      <Filter>对话框\效果</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgFxReverb.cpp">
+      <Filter>对话框\效果</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgFxRotate.cpp">
+      <Filter>对话框\效果</Filter>
+    </ClCompile>
     <ClCompile Include="CDlgOptApp.cpp">
-      <Filter>对话框</Filter>
+      <Filter>对话框\设置</Filter>
     </ClCompile>
     <ClCompile Include="CDlgOptHotKey.cpp">
-      <Filter>对话框</Filter>
+      <Filter>对话框\设置</Filter>
     </ClCompile>
     <ClCompile Include="CDlgOptions.cpp">
-      <Filter>对话框</Filter>
+      <Filter>对话框\设置</Filter>
     </ClCompile>
     <ClCompile Include="CDlgOptLrc.cpp">
-      <Filter>对话框</Filter>
+      <Filter>对话框\设置</Filter>
     </ClCompile>
     <ClCompile Include="CDlgOptPlay.cpp">
-      <Filter>对话框</Filter>
+      <Filter>对话框\设置</Filter>
     </ClCompile>
     <ClCompile Include="CDlgOptVisual.cpp">
-      <Filter>对话框</Filter>
+      <Filter>对话框\设置</Filter>
     </ClCompile>
+    <ClCompile Include="CDlgMusicInfo.cpp" />
+    <ClCompile Include="CDlgMiMetaData.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PlayerNew.rc">

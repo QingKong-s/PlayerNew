@@ -46,7 +46,7 @@ private:
 
 	int m_iDpi = USER_DEFAULT_SCREEN_DPI;
 	ECK_DS_BEGIN(DPIS)
-		ECK_DS_ENTRY(iMargin, 10)
+		ECK_DS_ENTRY(iMargin, c_DlgMargin)
 		ECK_DS_ENTRY(cxColumn1, 300)
 		ECK_DS_ENTRY(cxColumn2, 170)
 		ECK_DS_ENTRY(cyEdit, 30)

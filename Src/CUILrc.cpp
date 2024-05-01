@@ -33,6 +33,34 @@ void CUILrc::ReCreateTextFormat()
 	m_pTextFormat->SetTextAlignment((DWRITE_TEXT_ALIGNMENT)om.ScLrcAlign);
 }
 
+void CUILrc::ReCreateEmptyText()
+{
+	SafeRelease(m_pGrEmptyText);
+
+	auto& Player = App->GetPlayer();
+	auto& rsName = Player.GetList().At(Player.GetCurrFile()).rsName;
+	IDWriteTextLayout* pLayout;
+	App->m_pDwFactory->CreateTextLayout(rsName.Data(), rsName.Size(), m_pTextFormat,
+		GetViewWidthF(), GetViewHeightF(), &pLayout);
+	if (!pLayout)
+		return;
+	pLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+	pLayout->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);
+
+	ID2D1PathGeometry* pPathGeometry;
+	eck::GetTextLayoutPathGeometry(pLayout, m_pDC, 0.f, 0.f, pPathGeometry);
+	pLayout->Release();
+	float xDpi, yDpi;
+	m_pDC->GetDpi(&xDpi, &yDpi);
+
+	m_pDC1->CreateFilledGeometryRealization(
+		pPathGeometry,
+		D2D1::ComputeFlatteningTolerance(
+			D2D1::Matrix3x2F::Identity(), xDpi, yDpi),
+		&m_pGrEmptyText);
+	pPathGeometry->Release();
+}
+
 void CUILrc::CalcTopItem()
 {
 	const auto fScale = App->GetOptionsMgr().ScLrcCurrFontScale;
@@ -75,11 +103,11 @@ BOOL CUILrc::DrawItem(int idx, float& y)
 	D2D1_POINT_2F ptScale{};
 	switch (iAlign)
 	{
-	case DWRITE_TEXT_ALIGNMENT_LEADING:
-
-		break;
 	case DWRITE_TEXT_ALIGNMENT_CENTER:
 		ptScale.x = GetViewWidthF() / 2.f;
+		break;
+	case DWRITE_TEXT_ALIGNMENT_TRAILING:
+		ptScale.x = GetViewWidthF();
 		break;
 	}
 
@@ -92,12 +120,16 @@ BOOL CUILrc::DrawItem(int idx, float& y)
 		float x[2]{};
 		switch (iAlign)
 		{
-		case DWRITE_TEXT_ALIGNMENT_CENTER: 
+		case DWRITE_TEXT_ALIGNMENT_CENTER:
 			x[0] = (GetViewWidthF() - GetViewWidthF() / fScale) / 2.f;
 			x[1] = (GetViewWidthF() - Item.cxTrans) / 2.f;
 			break;
+		case DWRITE_TEXT_ALIGNMENT_TRAILING:
+			x[0] = (GetViewWidthF() - GetViewWidthF() / fScale);
+			x[1] = (GetViewWidthF() - Item.cxTrans);
+			break;
 		}
-		
+
 		ID2D1PathGeometry* pPathGeometry;
 		eck::GetTextLayoutPathGeometry(&Item.pLayout, 2, cyPadding, m_pDC, x, 0.f, pPathGeometry);
 		float xDpi, yDpi;
@@ -145,7 +177,7 @@ BOOL CUILrc::DrawItem(int idx, float& y)
 		return TRUE;
 	}
 
-	m_pDC->SetTransform(mat); 
+	m_pDC->SetTransform(mat);
 	FillItemBkg(idx, rc);
 	m_pDC1->DrawGeometryRealization(Item.pGr,
 		m_idxPrevCurr == idx ? m_pBrTextHighlight : m_pBrTextNormal);
@@ -167,6 +199,50 @@ int CUILrc::HitTest(POINT pt)
 	return -1;
 }
 
+void CUILrc::GetItemRect(int idx, RECT& rc)
+{
+	auto& e = m_vItem[idx];
+	const auto y = GetItemY(idx);
+	const auto fScale = App->GetOptionsMgr().ScLrcCurrFontScale;
+	rc.left = (long)e.x;
+	rc.top = (long)y;
+	if (idx == m_idxPrevAnItem)
+	{
+		const auto cx = (long)(e.cx * (fScale + 1.f - m_fAnValue));
+		switch (App->GetOptionsMgr().ScLrcAlign)
+		{
+		case DWRITE_TEXT_ALIGNMENT_CENTER:
+			rc.left = (GetViewWidth() - cx) / 2;
+			break;
+		case DWRITE_TEXT_ALIGNMENT_TRAILING:
+			rc.left = GetViewWidth() - cx;
+			break;
+		}
+		rc.right = rc.left + cx;
+		rc.bottom = (long)(y + e.cy * (fScale + 1.f - m_fAnValue));
+	}
+	else if (idx == m_idxCurrAnItem)
+	{
+		const auto cx = (long)(e.cx * m_fAnValue);
+		switch (App->GetOptionsMgr().ScLrcAlign)
+		{
+		case DWRITE_TEXT_ALIGNMENT_CENTER:
+			rc.left = (GetViewWidth() - cx) / 2;
+			break;
+		case DWRITE_TEXT_ALIGNMENT_TRAILING:
+			rc.left = GetViewWidth() - cx;
+			break;
+		}
+		rc.right = rc.left + cx;
+		rc.bottom = (long)(y + e.cy * m_fAnValue);
+	}
+	else ECKLIKELY
+	{
+		rc.right = rc.left + (long)e.cx;
+		rc.bottom = (long)(y + e.cy);
+	}
+}
+
 LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	ECK_DUILOCK;
@@ -177,9 +253,13 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		Dui::ELEMPAINTSTRU ps;
 		BeginPaint(ps, wParam, lParam);
 
-		if (!m_vItem.empty())
+		if (m_vItem.empty())
 		{
-			m_pBrush->SetColor(eck::ColorrefToD2dColorF(eck::Colorref::CyanBlue, 0.5f));
+			if (m_pGrEmptyText)
+				m_pDC1->DrawGeometryRealization(m_pGrEmptyText, m_pBrTextNormal);
+		}
+		else
+		{
 			float y;
 			for (int i = m_idxTop; i < (int)m_vItem.size(); ++i)
 			{
@@ -188,13 +268,8 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 					break;
 			}
 		}
-		else
-		{
-
-		}
 
 		BkDbg_DrawElemFrame();
-
 		EndPaint(ps);
 	}
 	return 0;
@@ -206,25 +281,16 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		POINT pt ECK_GET_PT_LPARAM(lParam);
 		ClientToElem(pt);
 
-		if (m_bThumbLBtnDown)
+		int idx = HitTest(pt);
+		if (idx != m_idxHot)
 		{
-			m_psv->OnMouseMove(pt.y);
-			CalcTopItem();
-			InvalidateRect();
-		}
-		else
-		{
-			int idx = HitTest(pt);
-			if (idx != m_idxHot)
-			{
-				std::swap(idx, m_idxHot);
-				SetRedraw(FALSE);
-				if (idx >= 0)
-					InvalidateItem(idx);
-				if (m_idxHot >= 0)
-					InvalidateItem(m_idxHot);
-				SetRedraw(TRUE);
-			}
+			std::swap(idx, m_idxHot);
+			SetRedraw(FALSE);
+			if (idx >= 0)
+				InvalidateItem(idx);
+			if (m_idxHot >= 0)
+				InvalidateItem(m_idxHot);
+			SetRedraw(TRUE);
 		}
 	}
 	return 0;
@@ -261,82 +327,71 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		POINT pt ECK_GET_PT_LPARAM(lParam);
 		ClientToElem(pt);
 
-		RECT rcThumb;
-		GetSBThumbRect(rcThumb);
-		if (eck::PtInRect(rcThumb, pt))
+		int idx = HitTest(pt);
+		SetRedraw(FALSE);
+		if (GetAsyncKeyState(VK_CONTROL) & 0x8000)
 		{
-			m_bThumbLBtnDown = TRUE;
-			SetCapture();
-			m_psv->OnLButtonDown(pt.y);
+			if (idx >= 0)
+				m_idxMark = idx;
 		}
-		else
+		else if (GetAsyncKeyState(VK_SHIFT) & 0x8000)
 		{
-			int idx = HitTest(pt);
-			SetRedraw(FALSE);
-			if (GetAsyncKeyState(VK_CONTROL) & 0x8000)
+			if (m_idxMark < 0 || idx < 0)
 			{
-				if (idx >= 0)
-					m_idxMark = idx;
-			}
-			else if (GetAsyncKeyState(VK_SHIFT) & 0x8000)
-			{
-				if (m_idxMark < 0 || idx < 0)
-				{
-					SetRedraw(TRUE);
-					break;
-				}
-				const int idx0 = std::min(m_idxMark, idx);
-				const int idx1 = std::max(m_idxMark, idx);
-				int i = 0;
-				for (; i < idx0; ++i)
-				{
-					if (m_vItem[i].bSel)
-					{
-						m_vItem[i].bSel = FALSE;
-						InvalidateItem(i);
-					}
-				}
-				for (; i <= idx1; ++i)
-				{
-					if (!m_vItem[i].bSel)
-					{
-						m_vItem[i].bSel = TRUE;
-						InvalidateItem(i);
-					}
-				}
-				for (; i < (int)m_vItem.size(); ++i)
-				{
-					if (m_vItem[i].bSel)
-					{
-						m_vItem[i].bSel = FALSE;
-						InvalidateItem(i);
-					}
-				}
 				SetRedraw(TRUE);
 				break;
 			}
-			else
+			const int idx0 = std::min(m_idxMark, idx);
+			const int idx1 = std::max(m_idxMark, idx);
+			int i = 0;
+			for (; i < idx0; ++i)
 			{
-				if (idx >= 0)
-					m_idxMark = idx;
-				EckCounter((int)m_vItem.size(), i)
+				if (m_vItem[i].bSel)
 				{
-					if (m_vItem[i].bSel)
-					{
-						m_vItem[i].bSel = FALSE;
-						InvalidateItem(i);
-					}
+					m_vItem[i].bSel = FALSE;
+					InvalidateItem(i);
 				}
 			}
-
-			if (idx >= 0)
-				if (!m_vItem[idx].bSel)
+			for (; i <= idx1; ++i)
+			{
+				if (!m_vItem[i].bSel)
 				{
-					m_vItem[idx].bSel = TRUE;
-					InvalidateItem(idx);
+					m_vItem[i].bSel = TRUE;
+					InvalidateItem(i);
 				}
+			}
+			for (; i < (int)m_vItem.size(); ++i)
+			{
+				if (m_vItem[i].bSel)
+				{
+					m_vItem[i].bSel = FALSE;
+					InvalidateItem(i);
+				}
+			}
 			SetRedraw(TRUE);
+			break;
 		}
+		else
+		{
+			if (idx >= 0)
+				m_idxMark = idx;
+			EckCounter((int)m_vItem.size(), i)
+			{
+				if (m_vItem[i].bSel)
+				{
+					m_vItem[i].bSel = FALSE;
+					InvalidateItem(i);
+				}
+			}
+		}
+
+		if (idx >= 0)
+			if (!m_vItem[idx].bSel)
+			{
+				m_vItem[idx].bSel = TRUE;
+				InvalidateItem(idx);
+			}
+		SetRedraw(TRUE);
 	}
 	return 0;
 
@@ -415,12 +470,6 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		if (m_vItem.empty())
 			break;
-		if (m_bThumbLBtnDown)
-		{
-			ReleaseCapture();
-			m_bThumbLBtnDown = FALSE;
-			m_psv->OnLButtonUp();
-		}
 	}
 	return 0;
 
@@ -454,10 +503,18 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		if (wParam == PCT_PLAYNEW)
 		{
-			m_idxPrevCurr = -1;
-			LayoutItems();
-			m_psv->SetPos(m_psv->GetMin());
-			CalcTopItem();
+			if (App->GetPlayer().GetLrc().empty())
+			{
+				m_vItem.clear();
+				ReCreateEmptyText();
+			}
+			else
+			{
+				m_idxPrevCurr = -1;
+				LayoutItems();
+				m_psv->SetPos(m_psv->GetMin());
+				CalcTopItem();
+			}
 			InvalidateRect();
 		}
 	}
@@ -466,8 +523,11 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case UIEE_ONSETTINGSCHANGE:
 	{
 		ReCreateTextFormat();
-		LayoutItems();
-		CalcTopItem();
+		if (!App->GetPlayer().GetLrc().empty())
+		{
+			LayoutItems();
+			CalcTopItem();
+		}
 		InvalidateRect();
 	}
 	return 0;
@@ -482,8 +542,10 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		m_pDC->QueryInterface(&m_pDC1);
 
-		m_pDC->CreateSolidColorBrush(eck::ColorrefToD2dColorF(eck::Colorref::DeepGray), &m_pBrTextNormal);
+		m_pDC->CreateSolidColorBrush(eck::ColorrefToD2dColorF(eck::Colorref::Silver), &m_pBrTextNormal);
 		m_pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_pBrTextHighlight);
+		m_pDC->CreateSolidColorBrush(eck::ColorrefToD2dColorF(eck::Colorref::Silver), &m_pBrTextHighlight);
+		m_pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_pBrTextNormal);
 		m_pDC->CreateSolidColorBrush({}, &m_pBrush);
 
 		m_psv = m_SB.GetScrollView();
@@ -526,7 +588,7 @@ void CUILrc::OnTimer(UINT uTimerID)
 			const int idxPrev = m_idxPrevCurr;
 			m_idxPrevCurr = App->GetPlayer().GetCurrLrc();
 
-			if (m_tMouseIdle <= 0 && !m_bThumbLBtnDown && !m_bCtxMenuOpen)
+			if (m_tMouseIdle <= 0 && !m_bCtxMenuOpen)
 			{
 				const auto fScale = App->GetOptionsMgr().ScLrcCurrFontScale;
 				m_bEnlarging = TRUE;
@@ -593,50 +655,48 @@ void CUILrc::LayoutItems()
 	const float cx = GetViewWidthF(), cy = GetViewHeightF();
 
 	m_vItem.clear();
-	if (!vLrc.empty())
+
+	m_vItem.resize(vLrc.size());
+	const float cxMax = cx / fScale;
+	DWRITE_TEXT_METRICS Metrics;
+	float y = 0.f;
+	const float cyPadding = GetBk()->Dpi(App->GetOptionsMgr().ScLrcPaddingHeight);
+	const auto iAlign = App->GetOptionsMgr().ScLrcAlign;
+
+	EckCounter(vLrc.size(), i)
 	{
-		m_vItem.resize(vLrc.size());
-		const float cxMax = cx / fScale;
-		DWRITE_TEXT_METRICS Metrics;
-		float y = 0.f;
-		const float cyPadding = GetBk()->Dpi(App->GetOptionsMgr().ScLrcPaddingHeight);
-		const auto iAlign = App->GetOptionsMgr().ScLrcAlign;
+		auto& e = m_vItem[i];
+		App->m_pDwFactory->CreateTextLayout(vLrc[i].pszLrc, vLrc[i].cchLrc,
+			m_pTextFormat, cxMax, (float)cy, &e.pLayout);
+		e.pLayout->GetMetrics(&Metrics);
+		e.y = y;
+		e.cx = Metrics.width;
+		e.cy = Metrics.height;
 
-		EckCounter(vLrc.size(), i)
+		if (vLrc[i].pszTranslation)
 		{
-			auto& e = m_vItem[i];
-			App->m_pDwFactory->CreateTextLayout(vLrc[i].pszLrc, vLrc[i].cchLrc,
-				m_pTextFormat, cxMax, (float)cy, &e.pLayout);
-			e.pLayout->GetMetrics(&Metrics);
-			e.y = y;
-			e.cx = Metrics.width;
-			e.cy = Metrics.height;
-
-			if (vLrc[i].pszTranslation)
-			{
-				App->m_pDwFactory->CreateTextLayout(vLrc[i].pszTranslation, vLrc[i].cchTotal - vLrc[i].cchLrc,
-					m_pTextFormatTrans, cxMax, (float)cy, &e.pLayoutTrans);
-				e.pLayoutTrans->GetMetrics(&Metrics);
-				e.cxTrans = Metrics.width;
-				e.cx = std::max(e.cx, Metrics.width);
-				e.cy += (Metrics.height + cyMainTransPadding);
-			}
-
-			switch (iAlign)
-			{
-			case DWRITE_TEXT_ALIGNMENT_CENTER:
-				e.x = (cx - e.cx) / 2.f;
-				break;
-			case DWRITE_TEXT_ALIGNMENT_TRAILING:
-				e.x = cx - e.cx;
-				break;
-			}
-
-			y += (e.cy + cyPadding);
+			App->m_pDwFactory->CreateTextLayout(vLrc[i].pszTranslation, vLrc[i].cchTotal - vLrc[i].cchLrc,
+				m_pTextFormatTrans, cxMax, (float)cy, &e.pLayoutTrans);
+			e.pLayoutTrans->GetMetrics(&Metrics);
+			e.cxTrans = Metrics.width;
+			e.cx = std::max(e.cx, Metrics.width);
+			e.cy += (Metrics.height + cyMainTransPadding);
 		}
 
-		m_psv->SetMin(int(-cy / 3.f));
-		m_psv->SetMax(int(y - cyPadding + cy / 3.f * 2.f));
-		m_psv->SetPage((int)cy);
+		switch (iAlign)
+		{
+		case DWRITE_TEXT_ALIGNMENT_CENTER:
+			e.x = (cx - e.cx) / 2.f;
+			break;
+		case DWRITE_TEXT_ALIGNMENT_TRAILING:
+			e.x = cx - e.cx;
+			break;
+		}
+
+		y += (e.cy + cyPadding);
 	}
+
+	m_psv->SetMin(int(-cy / 3.f - m_vItem.front().cy));
+	m_psv->SetMax(int(y - cyPadding + cy / 3.f * 2.f));
+	m_psv->SetPage((int)cy);
 }

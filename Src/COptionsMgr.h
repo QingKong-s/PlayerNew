@@ -130,6 +130,7 @@ public:
 	BOOL ProgShowCoverLivePreview{ TRUE };
 
 	std::vector<eck::CRefStrW> ListFilePath{};
+	BOOL ListAutoSave{ TRUE };
 
 	int FxPage{};
 

@@ -55,7 +55,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	auto& opt = App->GetOptionsMgr();
 	opt.ListFilePath.push_back(L"D:\\test");
 	opt.ListFilePath.push_back(L"D:\\test - 副本");
-	opt.ScLrcPaddingHeight = 10.f;
+	opt.ScLrcPaddingHeight = 30.f;
 	opt.ScLrcFontMain = { L"微软雅黑", 400, 26.f };
 	opt.ScLrcFontTranslation = { L"微软雅黑", 400, 15.f };
 	opt.ScLrcAlign = DWRITE_TEXT_ALIGNMENT_CENTER;

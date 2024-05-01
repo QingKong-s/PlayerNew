@@ -71,9 +71,9 @@ LRESULT CTbGhost::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         GpBitmap* pBitmapBK;
         GpGraphics* pGraphics;
-        GdipCreateBitmapFromScan0(rcMainClient.right, rcMainClient.bottom, 0, GpPixelFormat::PF32bppARGB, NULL, &pBitmapBK);
+        GdipCreateBitmapFromScan0(rcMainClient.right, rcMainClient.bottom, 0, PixelFormat32bppARGB, NULL, &pBitmapBK);
         GdipGetImageGraphicsContext(pBitmapBK, &pGraphics);
-        GdipGraphicsClear(pGraphics, eck::ColorrefToARGB(GetSysColor(COLOR_WINDOW), 0x90));
+        GdipGraphicsClear(pGraphics, eck::ColorrefToARGB(eck::GetThreadCtx()->crDefBkg, 0x90));
         int rc[4]
         {
             (int)((cxMax - cx) / 2 + xMargin),
@@ -84,10 +84,10 @@ LRESULT CTbGhost::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         GdipDrawImageRectRectI(pGraphics, pBitmap,
             rc[0],rc[1], rc[2], rc[3],
             0, 0, cx0, cy0,
-            GpUnit::Pixel, NULL, NULL, NULL);
+            Gdiplus::UnitPixel, NULL, NULL, NULL);
         GpPen* pPen;
         const auto cxPen = eck::DpiScaleF(1.f, iDpi);
-		GdipCreatePen1(0xFF000000, cxPen, GpUnit::Pixel, &pPen);
+		GdipCreatePen1(0xFF000000, cxPen, Gdiplus::UnitPixel, &pPen);
         GdipDrawRectangleI(pGraphics, pPen, rc[0], rc[1], rc[2], rc[3]);
         GdipSetPenColor(pPen, 0xFFFFFFFF);
         rc[0] -= 1;
@@ -217,7 +217,7 @@ void CTbGhost::SetIconicThumbnail(UINT cxMax, UINT cyMax)
     //GdipDrawImageRectRectI(pGraphics, pBitmap,
     //    0, 0, cx, cy,
     //    0, 0, cx0, cy0,
-    //    GpUnit::Pixel, NULL, NULL, NULL);
+    //    Gdiplus::UnitPixel, NULL, NULL, NULL);
     //GdipDeleteGraphics(pGraphics);
     //GdipCreateHBITMAPFromBitmap(pBitmapBK, &hBitmap, 0x00000000);
 

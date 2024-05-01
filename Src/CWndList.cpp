@@ -91,6 +91,23 @@ void CWndList::UpdateUISize()
 	m_TBManage.SetButtonSize(m_Ds.cxToolBtn, m_Ds.cyTool);
 }
 
+BOOL CWndList::AutoSaveList()
+{
+	if (!App->GetOptionsMgr().ListAutoSave)
+		return TRUE;
+	auto& Player = App->GetPlayer();
+	const auto& Info = Player.GetList().GetInfo();
+	if (Info.rsFileName.IsEmpty())
+		return TRUE;
+	return Player.SaveList(Info.rsFileName.Data());
+}
+
+void CWndList::ListSwitched()
+{
+	const auto& Info = App->GetPlayer().GetList().GetInfo();
+	m_LAListName.SetText(Info.rsName.IsEmpty() ? c_szDefListName : Info.rsName.Data());
+}
+
 BOOL CWndList::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 {
 	UpdateDpiInit(eck::GetDpi(hWnd));
@@ -134,10 +151,6 @@ BOOL CWndList::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	m_hFont = eck::EzFont(L"微软雅黑", 9);
 	m_hFontListName = eck::EzFont(L"微软雅黑", 13);
 
-	m_hbrLaterPlaying = CreateSolidBrush(eck::Colorref::CyanBlue);
-	m_hbrGray = CreateSolidBrush(0xF3F3F3);
-	m_hbrCurrPlaying = CreateSolidBrush(0xE6E8B1);
-
 	m_LAListName.Create(c_szDefListName, WS_VISIBLE, 0, 0, 0, 0, 0, hWnd, IDC_LA_LIST_NAME);
 	m_LAListName.SetTransparent(TRUE);
 	m_LAListName.SetClr(0, GetSysColor(COLOR_HIGHLIGHT));
@@ -156,12 +169,12 @@ BOOL CWndList::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	m_TBManage.SetButtonStructSize();
 	TBBUTTON TBBtns[]
 	{
-		{I_IMAGENONE,TBCID_LOCATE,TBSTATE_ENABLED,0,{},0,0},
-		{I_IMAGENONE,TBCID_ADD,TBSTATE_ENABLED,0,{},0,0},
-		{I_IMAGENONE,TBCID_LOADLIST,TBSTATE_ENABLED,0,{},0,0},
-		{I_IMAGENONE,TBCID_SAVELIST,TBSTATE_ENABLED,0,{},0,0},
-		{I_IMAGENONE,TBCID_EMPTY,TBSTATE_ENABLED,0,{},0,0},
-		{I_IMAGENONE,TBCID_MANAGE,TBSTATE_ENABLED,0,{},0,0},
+		{ I_IMAGENONE,TBCID_LOCATE,		TBSTATE_ENABLED,0,{},0,0 },
+		{ I_IMAGENONE,TBCID_ADD,		TBSTATE_ENABLED,0,{},0,0 },
+		{ I_IMAGENONE,TBCID_LOADLIST,	TBSTATE_ENABLED,0,{},0,0 },
+		{ I_IMAGENONE,TBCID_SAVELIST,	TBSTATE_ENABLED,0,{},0,0 },
+		{ I_IMAGENONE,TBCID_EMPTY,		TBSTATE_ENABLED,0,{},0,0 },
+		{ I_IMAGENONE,TBCID_MANAGE,		TBSTATE_ENABLED,0,{},0,0 },
 	};
 	m_TBManage.AddButtons(ARRAYSIZE(TBBtns), TBBtns);
 	m_TBManage.Show(SW_SHOWNOACTIVATE);
@@ -175,8 +188,6 @@ BOOL CWndList::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	m_LVList.SetLVExtendStyle(dwLVExStyle);
 	m_LVList.InsertColumn(L"名称", 0, m_Ds.cxColumn1);
 	m_LVList.InsertColumn(L"时长", 1, m_Ds.cxColumn2, LVCFMT_CENTER);
-	m_LVList.SetExplorerTheme();
-	m_hThemeLV = OpenThemeData(m_LVList.GetHWND(), L"ListView");
 
 	eck::SetFontForWndAndCtrl(hWnd, m_hFont);
 	m_LAListName.SetFont(m_hFontListName);
@@ -229,14 +240,12 @@ void CWndList::OnSize(HWND hWnd, UINT state, int cx, int cy)
 
 void CWndList::OnDestroy(HWND hWnd)
 {
+	AutoSaveList();
 	DestroyMenu(m_hMenuAdd);
 	DestroyMenu(m_hMenuLV);
 	DestroyMenu(m_hMenuManage);
 	DeleteObject(m_hFont);
 	DeleteObject(m_hFontListName);
-	DeleteObject(m_hbrCurrPlaying);
-	DeleteObject(m_hbrGray);
-	DeleteObject(m_hbrLaterPlaying);
 }
 
 void CWndList::OnCmdLocate()
@@ -407,34 +416,15 @@ void CWndList::OnCmdLoadList()
 	CDlgListFile::PARAM Param{ CDlgListFile::Type::Load };
 	if (Dlg.DlgBox(m_hWnd, &Param))
 	{
+		AutoSaveList();
 		auto& Player = App->GetPlayer();
-		auto& List = Player.GetList();
-		Player.Delete(-1);
-		CPlayListFileReader ListFile{};
-		if (!ListFile.Open(Param.rsRetFile.Data()))
+		if (!Player.LoadList(Param.rsRetFile.Data()))
 		{
 			CApp::ShowError(m_hWnd, std::nullopt, CApp::ErrSrc::Win32, L"打开列表文件失败");
 			return;
 		}
-
-		Player.Delete(-1);
-		List.Reserve(ListFile.GetItemCount());
-		const auto bSort = Player.BeginAddOperation();
-		ListFile.For([&Player](const LISTFILEITEM_1* pItem, 
-			PCWSTR pszName, PCWSTR pszFile, PCWSTR pszTitle,
-			PCWSTR pszArtist, PCWSTR pszAlbum, PCWSTR pszGenre)->BOOL
-			{
-				Player.Insert(-1, *pItem, 
-					pszName, pszFile, pszTitle, pszArtist, pszAlbum, pszGenre);
-				return TRUE;
-			});
-		ListFile.ForBookmark([&List](const BOOKMARKITEM* pItem, PCWSTR pszName)->BOOL
-			{
-				List.InsertBookmark(pItem->idxItem, pszName, pItem->cchName, pItem->cr);
-				return TRUE;
-			});
-		Player.EndAddOperation(bSort);
-		m_LVList.SetItemCount(List.GetCount());
+		ListSwitched();
+		m_LVList.SetItemCount(Player.GetList().GetCount());
 	}
 }
 
@@ -445,38 +435,13 @@ void CWndList::OnCmdSaveList()
 	if (Dlg.DlgBox(m_hWnd, &Param))
 	{
 		auto& List = App->GetPlayer().GetList();
-		CPlayListFileWriter ListFile{};
-		if (!ListFile.Open(Param.rsRetFile.Data()))
-		{
+		if (!App->GetPlayer().SaveList(Param.rsRetFile.Data()))
 			CApp::ShowError(m_hWnd, std::nullopt, CApp::ErrSrc::Win32, L"保存列表文件失败");
-			return;
-		}
-
-		LISTFILEITEM_1 Info{};
-		EckCounter(List.GetCount(), i)
+		if (List.GetInfo().rsFileName.IsEmpty())
 		{
-			auto& x = List.AtAbs(i);
-			Info.cchName = x.rsName.Size();
-			Info.cchFile = x.rsFile.Size();
-			Info.cchTitle = x.rsTitle.Size();
-			Info.cchArtist = x.rsArtist.Size();
-			Info.cchAlbum = x.rsAlbum.Size();
-			Info.cchGenre = x.rsGenre.Size();
-
-			Info.s = x.s;
-			ListFile.PushBack(Info, x.rsName.Data(), x.rsFile.Data(),
-				x.rsTitle.Data(), x.rsArtist.Data(), x.rsAlbum.Data(), x.rsGenre.Data());
+			List.SetFileName(Param.rsRetFile.Data());
+			ListSwitched();
 		}
-		ListFile.BeginBookMark();
-		BOOKMARKITEM BmInfo{};
-		for (auto& x : List.GetBookmark())
-		{
-			BmInfo.idxItem = x.first;
-			BmInfo.cr = x.second.crColor;
-			BmInfo.cchName = x.second.rsName.Size();
-			ListFile.PushBackBookmark(BmInfo, x.second.rsName.Data());
-		}
-		ListFile.End();
 	}
 }
 
@@ -999,6 +964,15 @@ LRESULT CWndList::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 	}
 	break;
+	case WM_PAINT:
+	{
+		PAINTSTRUCT ps;
+		BeginPaint(hWnd, &ps);
+		SetDCBrushColor(ps.hdc, eck::GetThreadCtx()->crDefBkg);
+		FillRect(ps.hdc, &ps.rcPaint, GetStockBrush(DC_BRUSH));
+		EndPaint(hWnd, &ps);
+	}
+	return 0;
 	case WM_SIZE:
 		return HANDLE_WM_SIZE(hWnd, wParam, lParam, OnSize);
 	case WM_COMMAND:

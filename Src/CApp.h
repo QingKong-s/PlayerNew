@@ -34,6 +34,8 @@ constexpr inline PCWSTR c_szVer = L"0.1";
 constexpr inline int c_cxBtnIcon = 20;
 constexpr inline int c_cyBtnIcon = 20;
 
+constexpr inline int c_DlgMargin = 10;
+
 class CApp;
 extern CApp* App;
 
@@ -185,7 +187,7 @@ public:
 
 	PNInline CLIPFORMAT GetListDragClipFormat() const { return m_cfListDrag; }
 
-	PNInline const auto GetWicRes() { return m_pWicRes; }
+	PNInline auto GetWicRes() { return m_pWicRes; }
 
 	PNInline CWndMain* GetMainWnd() { return m_pWndMain; }
 

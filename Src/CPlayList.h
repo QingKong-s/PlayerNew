@@ -27,6 +27,13 @@ struct BOOKMAEKLISTUNIT
 	COLORREF crColor;
 };
 
+struct LISTINFO
+{
+	eck::CRefStrW rsCreator;
+	eck::CRefStrW rsFileName;
+	eck::CRefStrW rsName;
+};
+
 constexpr inline int SF_IDXPART = 17;
 enum SortFlags :UINT
 {
@@ -61,6 +68,8 @@ private:
 		int idxEnd = -1;
 	}
 	m_SortParam{};
+
+	LISTINFO m_ListInfo{};
 
 	static PNInline size_t Sf2FnIdx(SortFlags u)
 	{
@@ -152,4 +161,24 @@ public:
 	PNInline BOOL IsSorting() { return m_bSort; }
 
 	void UpdateItemInfo(int idx);
+
+	const auto& GetInfo() const { return m_ListInfo; }
+
+	BOOL Save(PCWSTR pszFile);
+
+	BOOL Load(PCWSTR pszFile);
+
+	void Clear()
+	{
+		Delete(-1);
+		m_bSort = FALSE;
+		m_SortParam = {};
+		m_ListInfo = {};
+	}
+
+	PNInline void SetFileName(PCWSTR pszFileName)
+	{
+		m_ListInfo.rsFileName = pszFileName;
+		m_ListInfo.rsName = eck::GetFileNameFromPath(pszFileName, m_ListInfo.rsFileName.Size());
+	}
 };

@@ -400,12 +400,16 @@ void CWndMain::OnSize(HWND hWnd, UINT uState, int cx, int cy)
 
 BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 {
+	eck::GetThreadCtx()->UpdateDefColor();
 	BOOL bOpaqueBlend;
 	DwmGetColorizationColor(&m_argbDwm, &bOpaqueBlend);
 	m_crDwm = eck::ARGBToD2dColorF(m_argbDwm);
 	m_bDarkColor = !eck::IsColorLightArgb(m_argbDwm);
 	if (eck::ShouldAppUseDarkMode())
+	{
 		App->InvertIconColor();
+		eck::GetThreadCtx()->SetNcDarkModeForAllTopWnd(TRUE);
+	}
 
 	App->GetPlayer().SetPlayingCtrlCallBack([this](PLAYINGCTRLTYPE uType, INT_PTR i1, INT_PTR i2)
 		{
@@ -428,6 +432,8 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 				m_List.m_LVList.RedrawItem(Player.GetCurrFile());
 				UpdateTaskbarPlayBtn();
 				SetText(Player.GetList().At(Player.GetCurrFile()).rsName.Data());
+				if (m_pTbList)
+					m_pTbList->SetProgressState(HWnd, TBPF_NORMAL);
 			}
 			break;
 			case PCT_PLAY_OR_PAUSE:
@@ -563,7 +569,20 @@ LRESULT CWndMain::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case PNWM_CHANNELENDED:
 		App->GetPlayer().AutoNext();
 		return 0;
+
+	case WM_SETTINGCHANGE:
+		if (eck::IsColorSchemeChangeMessage(lParam))
+		{
+			const auto ptc = eck::GetThreadCtx();
+			ptc->UpdateDefColor();
+			m_TbGhost.InvalidateLivePreviewCache();
+			ptc->SetNcDarkModeForAllTopWnd(eck::ShouldAppUseDarkMode());
+			ptc->SendThemeChangedToAllTopWindow();
+			App->InvertIconColor();
+		}
+		break;
 	case WM_SYSCOLORCHANGE:
+		eck::GetThreadCtx()->UpdateDefColor();
 		m_TbGhost.InvalidateLivePreviewCache();
 		eck::BroadcastChildrenMessage(hWnd, uMsg, wParam, lParam);
 		break;

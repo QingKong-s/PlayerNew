@@ -317,6 +317,8 @@
     <ClInclude Include="CDlgFxReverb.h" />
     <ClInclude Include="CDlgFxRotate.h" />
     <ClInclude Include="CDlgListFile.h" />
+    <ClInclude Include="CDlgMiMetaData.h" />
+    <ClInclude Include="CDlgMusicInfo.h" />
     <ClInclude Include="CDlgNewBookmark.h" />
     <ClInclude Include="CDlgOptApp.h" />
     <ClInclude Include="CDlgOptHotKey.h" />
@@ -366,6 +368,8 @@
     <ClCompile Include="CDlgFxReverb.cpp" />
     <ClCompile Include="CDlgFxRotate.cpp" />
     <ClCompile Include="CDlgListFile.cpp" />
+    <ClCompile Include="CDlgMiMetaData.cpp" />
+    <ClCompile Include="CDlgMusicInfo.cpp" />
     <ClCompile Include="CDlgNewBookmark.cpp" />
     <ClCompile Include="CDlgOptApp.cpp" />
     <ClCompile Include="CDlgOptHotKey.cpp" />

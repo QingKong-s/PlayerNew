@@ -75,6 +75,8 @@ private:
 	int m_cItemNeedUpdated = -1;
 	BOOL m_bUpdateInfoThreadActive = FALSE;
 
+	ULONGLONG m_ullCurrTickBegin = 0ull;
+
 	EckInline void ApplyPrevEffect()
 	{
 		EckCounter(FXI_MAX, i)
@@ -333,4 +335,28 @@ public:
 	}
 
 	void EndAddOperation(BOOL bSort);
+
+	PNInline BOOL SaveList(PCWSTR pszFile)
+	{
+		return m_List.Save(pszFile);
+	}
+
+	PNInline BOOL LoadList(PCWSTR pszFile)
+	{
+		Delete(-1);
+		const auto bSort = BeginAddOperation();
+		const auto b = m_List.Load(pszFile);
+		m_cItemNeedUpdated = 0;
+		for (const auto& e : m_List.GetList())
+			if (e.s.bNeedUpdated)
+				++m_cItemNeedUpdated;
+		EndAddOperation(bSort);
+		return b;
+	}
+
+	PNInline void RemoveList()
+	{
+		Delete(-1);
+		m_List.Clear();
+	}
 };

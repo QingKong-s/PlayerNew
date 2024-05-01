@@ -109,3 +109,65 @@ void CPlayList::UpdateItemInfo(int idx)
 		e.s.uSecTime = (UINT)Bass.GetLength();
 	}
 }
+
+BOOL CPlayList::Save(PCWSTR pszFile)
+{
+	CPlayListFileWriter ListFile{};
+	if (!ListFile.Open(pszFile))
+		return FALSE;
+
+	LISTFILEITEM_1 Info{};
+	EckCounter(GetCount(), i)
+	{
+		auto& x = AtAbs(i);
+		Info.cchName = x.rsName.Size();
+		Info.cchFile = x.rsFile.Size();
+		Info.cchTitle = x.rsTitle.Size();
+		Info.cchArtist = x.rsArtist.Size();
+		Info.cchAlbum = x.rsAlbum.Size();
+		Info.cchGenre = x.rsGenre.Size();
+
+		Info.s = x.s;
+		ListFile.PushBack(Info, x.rsName.Data(), x.rsFile.Data(),
+			x.rsTitle.Data(), x.rsArtist.Data(), x.rsAlbum.Data(), x.rsGenre.Data());
+	}
+	ListFile.BeginBookMark();
+	BOOKMARKITEM BmInfo{};
+	for (const auto& x : GetBookmark())
+	{
+		BmInfo.idxItem = x.first;
+		BmInfo.cr = x.second.crColor;
+		BmInfo.cchName = x.second.rsName.Size();
+		ListFile.PushBackBookmark(BmInfo, x.second.rsName.Data());
+	}
+	ListFile.End();
+	return TRUE;
+}
+
+BOOL CPlayList::Load(PCWSTR pszFile)
+{
+	CPlayListFileReader ListFile{};
+	if (!ListFile.Open(pszFile))
+		return FALSE;
+
+	m_ListInfo.rsCreator = ListFile.GetCreatorName();
+	SetFileName(pszFile);
+
+	Delete(-1);
+	Reserve(ListFile.GetItemCount());
+
+	ListFile.For([this](const LISTFILEITEM_1* pItem,
+		PCWSTR pszName, PCWSTR pszFile, PCWSTR pszTitle,
+		PCWSTR pszArtist, PCWSTR pszAlbum, PCWSTR pszGenre)->BOOL
+		{
+			Insert(-1,
+				PLAYLISTUNIT{ pszName,pszFile,pszTitle,pszArtist,pszAlbum,pszGenre,pItem->s });
+			return TRUE;
+		});
+	ListFile.ForBookmark([this](const BOOKMARKITEM* pItem, PCWSTR pszName)->BOOL
+		{
+			InsertBookmark(pItem->idxItem, pszName, pItem->cchName, pItem->cr);
+			return TRUE;
+		});
+	return TRUE;
+}

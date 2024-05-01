@@ -2,7 +2,7 @@
 #include "CWndList.h"
 #include "CWndMain.h"
 
-static void PaintLVItem(eck::CListView& LV, CWndList& WndList, PLAYLISTUNIT& Item,
+void CLVNew::PaintLVItem(CLVNew& LV, CWndList& WndList, PLAYLISTUNIT& Item,
 	NMLVCUSTOMDRAW* pnmlvcd, HTHEME hTheme, int idx, int idxLVItem)
 {
 	const auto hDC = pnmlvcd->nmcd.hdc;
@@ -19,7 +19,10 @@ static void PaintLVItem(eck::CListView& LV, CWndList& WndList, PLAYLISTUNIT& Ite
 			cdc.GetDC(), 0, 0, 1, 1, { AC_SRC_OVER,0,110,0 });
 	}
 	else if (idxLVItem % 2)// 交替行色
-		FillRect(hDC, &pnmlvcd->nmcd.rc, GetSysColorBrush(COLOR_3DFACE));
+	{
+		SetDCBrushColor(hDC, eck::ShouldAppUseDarkMode() ? 0x383838 : GetSysColor(COLOR_3DFACE));
+		FillRect(hDC, &pnmlvcd->nmcd.rc, GetStockBrush(DC_BRUSH));
+	}
 
 	int iState;
 	if (LV.GetItemState(idxLVItem, LVIS_SELECTED) == LVIS_SELECTED)// 选中
@@ -39,7 +42,7 @@ static void PaintLVItem(eck::CListView& LV, CWndList& WndList, PLAYLISTUNIT& Ite
 	if (Item.s.bIgnore)
 		SetTextColor(hDC, GetSysColor(COLOR_GRAYTEXT));
 	else
-		SetTextColor(hDC, GetSysColor(COLOR_WINDOWTEXT));
+		SetTextColor(hDC, LV.m_crDefText);
 
 	RECT rc = pnmlvcd->nmcd.rc;
 	rc.left += WndList.GetDs().cxLVTextSpace;

@@ -4,7 +4,15 @@
 #include "eck\CListView.h"
 
 class CWndList;
-class CLVSearch :public eck::CListView
+
+class CLVNew :public eck::CListView
+{
+protected:
+	static void PaintLVItem(CLVNew& LV, CWndList& WndList, PLAYLISTUNIT& Item,
+		NMLVCUSTOMDRAW* pnmlvcd, HTHEME hTheme, int idx, int idxLVItem);
+};
+
+class CLVSearch :public CLVNew
 {
 	CWndList& m_WndList;
 	HTHEME m_hTheme = NULL;
@@ -16,7 +24,7 @@ public:
 	LRESULT OnNotifyMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bProcessed) override;
 };
 
-class CLVPlay :public eck::CListView
+class CLVPlay :public CLVNew
 {
 private:
 	CLVSearch& m_LVSearch;
