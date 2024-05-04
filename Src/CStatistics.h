@@ -7,16 +7,15 @@ static constexpr WCHAR c_pszStatFileExt[]{ L".PNStat" };
 class CStatistics
 {
 private:
-	sqlite3* m_pDb = NULL;
+	sqlite3* m_pDb{};
 
 	eck::CRefStrW m_rsTableSong{};
 	eck::CRefStrW m_rsTableArtist{};
 
-	char* m_pszLastErrMsg = NULL;
+	eck::CRefStrW m_rsLastError{};
 public:
 	~CStatistics()
 	{
-		sqlite3_free(m_pszLastErrMsg);
 		sqlite3_close(m_pDb);
 	}
 
@@ -26,49 +25,15 @@ public:
 
 	int IncPlayCount(const eck::CRefStrW& rsSong);
 
-	int IncLoopCount(const eck::CRefStrW& rsSong)
-	{
-		using namespace eck::Literals;
-		const auto rsSql =
-			L"UPDATE "_rs +
-			m_rsTableSong +
-			L" SET LoopCount = LoopCount + 1 "
-			L"WHERE Song = \"" +
-			rsSong +
-			L"\""
-			;
+	int IncLoopCount(const eck::CRefStrW& rsSong);
 
-		sqlite3_free(m_pszLastErrMsg);
-		return sqlite3_exec(m_pDb, eck::StrW2X(rsSql, CP_UTF8).Data(), NULL, NULL, &m_pszLastErrMsg);
-	}
+	int IncPlayTime(const eck::CRefStrW& rsSong, int iSeconds);
 
-	int IncPlayTime(const eck::CRefStrW& rsSong, int iSeconds)
-	{
-		EckAssert(iSeconds >= 0);
-		using namespace eck::Literals;
-		const auto rsSql =
-			L"UPDATE "_rs +
-			m_rsTableSong +
-			L" SET PlayTime = PlayTime + " + 
-			eck::ToStr(iSeconds) +
-			L" WHERE Song = \"" +
-			rsSong +
-			L"\""
-			;
+	int IncPlayCount(const std::vector<eck::CRefStrW>& vArtist);
 
-		sqlite3_free(m_pszLastErrMsg);
-		return sqlite3_exec(m_pDb, eck::StrW2X(rsSql, CP_UTF8).Data(), NULL, NULL, &m_pszLastErrMsg);
-	}
+	int IncLoopCount(const std::vector<eck::CRefStrW>& vArtist);
 
-	void IncPlayCount(const std::vector<eck::CRefStrW>& vArtist);
+	int IncPlayTime(const std::vector<eck::CRefStrW>& vArtist, int iSeconds);
 
-	void IncPlayTime(const std::vector<eck::CRefStrW>& vArtist, int iSeconds)
-	{
-
-	}
-
-	eck::CRefStrW GetLastErrorMsg()
-	{
-		return eck::StrX2W(m_pszLastErrMsg, -1, CP_UTF8);
-	}
+	EckInline const auto& GetLastErrorMsg() const { return m_rsLastError; }
 };

@@ -67,6 +67,37 @@ enum class PicType
     End___              // ！终止占位
 };
 
+constexpr inline PCWSTR c_pszPicType[]
+{
+    L"无效图片类型",
+    L"其他",
+    L"32×32文件图标",
+    L"其他图标",
+    L"封面",
+    L"封底",
+    L"宣传图",
+    L"实体媒介照片",
+    L"艺术家照片",
+    L"演唱者照片",
+    L"指挥者照片",
+    L"乐队/剧团照片",
+    L"作曲家照片",
+    L"作词者照片",
+    L"录音场地照片",
+    L"录音过程照片",
+    L"表演过程照片",
+    L"视频截图",
+    L"艳鱼图",
+    L"插画",
+    L"艺术家/艺术团队Logo",
+    L"发行商/工作室Logo",
+};
+
+EckInline constexpr PCWSTR PicTypeToString(PicType e)
+{
+    return c_pszPicType[(int)e + 1];
+}
+
 struct MUSICPIC
 {
     PicType eType;

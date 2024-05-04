@@ -537,7 +537,7 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		ReCreateTextFormat();
 
 		m_SB.Create(NULL, Dui::DES_VISIBLE, 0,
-			0, 0, GetWnd()->GetDs().CommSBCxy, GetViewHeight(),
+			0, 0, (int)GetWnd()->GetDs().CommSBCxy, GetViewHeight(),
 			this, GetWnd());
 
 		m_pDC->QueryInterface(&m_pDC1);

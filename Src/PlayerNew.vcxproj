@@ -318,6 +318,7 @@
     <ClInclude Include="CDlgFxRotate.h" />
     <ClInclude Include="CDlgListFile.h" />
     <ClInclude Include="CDlgMiMetaData.h" />
+    <ClInclude Include="CDlgMiPicture.h" />
     <ClInclude Include="CDlgMusicInfo.h" />
     <ClInclude Include="CDlgNewBookmark.h" />
     <ClInclude Include="CDlgOptApp.h" />
@@ -369,6 +370,7 @@
     <ClCompile Include="CDlgFxRotate.cpp" />
     <ClCompile Include="CDlgListFile.cpp" />
     <ClCompile Include="CDlgMiMetaData.cpp" />
+    <ClCompile Include="CDlgMiPicture.cpp" />
     <ClCompile Include="CDlgMusicInfo.cpp" />
     <ClCompile Include="CDlgNewBookmark.cpp" />
     <ClCompile Include="CDlgOptApp.cpp" />

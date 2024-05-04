@@ -550,9 +550,9 @@ BOOL CWndList::OnListLVNRClick(NMITEMACTIVATE* pnmia)
 	case IDMI_RENAME:// TODO : 替换默认编辑控件
 		m_LVList.EditLabel(idx);
 		break;
-	case IDMI_DETAIL:
+	case IDMI_INFO:
 	{
-		// TODO : 详细信息
+		m_pDlgMusicInfo->CreateDlg(HWnd,eck::i32ToP<void*>(idx));
 	}
 	break;
 	case IDMI_PREVBOOKMARK:

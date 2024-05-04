@@ -65,6 +65,7 @@ private:
 
 	Utils::MUSICINFO m_MusicInfo{};
 	IWICBitmap* m_pWicCoverBmp = NULL;
+	std::vector<eck::CRefStrW> m_vArtist{};
 
 	FOnPlayingControl m_fnPayingCtrl{};
 
@@ -93,7 +94,7 @@ private:
 public:
 	CPlayer()
 	{
-		m_Stat.LoadDataBase((eck::GetRunningPath() + L"\\Data\\Stat.db").Data());
+		m_Stat.LoadDataBase((eck::GetRunningPath() + L"\\Data\\Stat.PNStat").Data());
 		m_Stat.InitTable();
 	}
 

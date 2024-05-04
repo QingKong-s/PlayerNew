@@ -1,6 +1,7 @@
 ﻿#include "Utils.h"
 
 #include "eck\CRefBinStream.h"
+#include "eck\CCommDlg.h"
 
 UTILS_NAMESPACE_BEGIN
 /// <summary>
@@ -1284,11 +1285,11 @@ UINT MsgBox(PCWSTR pszMainInstruction, PCWSTR pszContent, PCWSTR pszWndTitle, UI
 		tdb[2].pszButtonText = !pszButton3Title ? L"取消(&C)" : pszButton3Title;
 		break;
 	}
-	int iButton, iRadio;
-	BOOL bCheckBox;
-	TaskDialogIndirect(&tdc, &iButton, &iRadio, &bCheckBox);
+	eck::TASKDIALOGCTX Ctx{ &tdc };
+	eck::CTaskDialog td{};
+	const int iBtn = (int)td.DlgBox(hParent, &Ctx);
 	if (pbCheck)
-		*pbCheck = bCheckBox;
-	return iButton;
+		*pbCheck = Ctx.bChecked;
+	return iBtn;
 }
 UTILS_NAMESPACE_END

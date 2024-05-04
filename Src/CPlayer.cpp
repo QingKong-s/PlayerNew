@@ -53,7 +53,7 @@ PlayOpErr CPlayer::Play(int idx)
 	m_Bass.Open(Item.rsFile.Data());
 	if (!m_Bass.GetHStream())
 		return PlayOpErr::BassError;
-	m_Bass.SetSync(BASS_SYNC_END | BASS_SYNC_ONETIME, 0, 
+	m_Bass.SetSync(BASS_SYNC_END | BASS_SYNC_ONETIME, 0,
 		[](DWORD, DWORD, DWORD, PVOID)
 		{
 			App->GetMainWnd()->PostMsg(PNWM_CHANNELENDED, 0, 0);
@@ -74,13 +74,13 @@ PlayOpErr CPlayer::Play(int idx)
 
 	if (!m_MusicInfo.rsTitle.IsEmpty())
 		m_Stat.IncPlayCount(m_MusicInfo.rsTitle);
+	m_vArtist.clear();
 	if (!m_MusicInfo.rsArtist.IsEmpty())
 	{
-		std::vector<eck::CRefStrW> vArtist{};
-		eck::SplitStrWithMultiChar(m_MusicInfo.rsArtist.Data(), L"、/&", vArtist);
-		for (auto& e : vArtist)
+		eck::SplitStrWithMultiChar(m_MusicInfo.rsArtist.Data(), c_szArtistSplitter, m_vArtist);
+		for (auto& e : m_vArtist)
 			e.RLTrim();
-		m_Stat.IncPlayCount(vArtist);
+		m_Stat.IncPlayCount(m_vArtist);
 	}
 	++Item.s.cPlayed;
 	SYSTEMTIME st;
@@ -92,7 +92,7 @@ PlayOpErr CPlayer::Play(int idx)
 	Utils::ParseLrc(m_rsCurrFile.Data(), 0u, m_vLrc, m_vLrcLabel,
 		App->GetOptionsMgr().LrcFileEncoding, (float)m_Bass.GetLength());
 	if (!m_vLrc.size())
-		Utils::ParseLrc(m_MusicInfo.rsLrc.Data(), m_MusicInfo.rsLrc.ByteSize(), m_vLrc, m_vLrcLabel, 
+		Utils::ParseLrc(m_MusicInfo.rsLrc.Data(), m_MusicInfo.rsLrc.ByteSize(), m_vLrc, m_vLrcLabel,
 			Utils::LrcEncoding::UTF16LE, (float)m_Bass.GetLength());
 	m_fnPayingCtrl(PCT_PLAYNEW, idxPrev, 0);
 	return PlayOpErr::Ok;
@@ -102,8 +102,14 @@ void CPlayer::Stop(BOOL bNoGap)
 {
 	if (m_idxCurrFile >= 0)
 	{
-		EckAssert(m_ullCurrTickBegin);
-		m_List.At(m_idxCurrFile).s.uSecPlayed += (UINT)(GetTickCount64() - m_ullCurrTickBegin);
+		EckAssert(IsPlaying() ? m_ullCurrTickBegin : !m_ullCurrTickBegin);
+		if (m_ullCurrTickBegin)
+		{
+			const auto uDelta = (UINT)(GetTickCount64() - m_ullCurrTickBegin) / 1000u;
+			m_List.At(m_idxCurrFile).s.uSecPlayed += uDelta;
+			m_Stat.IncPlayTime(m_MusicInfo.rsTitle, uDelta);
+			m_Stat.IncPlayTime(m_vArtist, uDelta);
+		}
 	}
 	m_ullCurrTickBegin = 0ull;
 	m_Bass.Stop();
@@ -195,9 +201,11 @@ PlayOpErr CPlayer::AutoNext()
 	{
 		auto& e = m_List.At(m_idxCurrFile);
 		++e.s.cLoop;
+		m_Stat.IncLoopCount(m_MusicInfo.rsTitle);
+		m_Stat.IncLoopCount(m_vArtist);
 		m_Bass.Play(TRUE);
 	}
-		return PlayOpErr::Ok;
+	return PlayOpErr::Ok;
 	case RepeatMode::Single:
 		Stop();
 		return PlayOpErr::LoopTerminated;
@@ -212,16 +220,23 @@ PlayOpErr CPlayer::PlayOrPause()
 	switch (iAct)
 	{
 	case BASS_ACTIVE_PAUSED:
+	{
 		b = m_Bass.Play();
 		EckAssert(!m_ullCurrTickBegin);
 		m_ullCurrTickBegin = GetTickCount64();
-		break;
+	}
+	break;
 	case BASS_ACTIVE_PLAYING:
+	{
 		b = m_Bass.Pause();
 		EckAssert(m_ullCurrTickBegin);
-		m_List.At(m_idxCurrFile).s.uSecPlayed += (UINT)(GetTickCount64() - m_ullCurrTickBegin);
+		const auto uDelta = (UINT)(GetTickCount64() - m_ullCurrTickBegin) / 1000u;
+		m_List.At(m_idxCurrFile).s.uSecPlayed += uDelta;
+		m_Stat.IncPlayTime(m_MusicInfo.rsTitle, uDelta);
+		m_Stat.IncPlayTime(m_vArtist, uDelta);
 		m_ullCurrTickBegin = 0ull;
-		break;
+	}
+	break;
 	default:
 		return PlayOpErr::NoCurrPlaying;
 	}
@@ -293,8 +308,8 @@ void CPlayer::Sort(SortFlags uFlags, int idxBegin, int idxEnd)
 	for (int i = idxBegin; i <= idxEnd; ++i)
 		pidxSortMapping[i - idxBegin] = i;
 
-	std::sort(std::execution::par_unseq, 
-		pidxSortMapping, pidxSortMapping + cItems, 
+	std::sort(std::execution::par_unseq,
+		pidxSortMapping, pidxSortMapping + cItems,
 		pfnSort[CPlayList::Sf2FnIdx(uFlags)]);
 
 	using ItList = std::vector<PLAYLISTUNIT>::iterator;
@@ -432,7 +447,7 @@ TICKCHANGING CPlayer::Tick()
 		//	else if (m_fPos >= m_vLrc[m_idxCurrLrc].fTime)
 		//		goto EndFindLrc;
 		//}
-		auto it = std::lower_bound(m_vLrc.begin(), m_vLrc.end(), m_fPos, 
+		auto it = std::lower_bound(m_vLrc.begin(), m_vLrc.end(), m_fPos,
 			[](const Utils::LRCINFO& Item, float fPos)->bool
 			{
 				return Item.fTime < fPos;

@@ -134,6 +134,8 @@ public:
 
 	int FxPage{};
 
+	int MiPage{};
+
 	static RepeatMode NextRepeatMode(RepeatMode i)
 	{
 		auto ii = (int)i;

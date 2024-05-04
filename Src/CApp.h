@@ -30,6 +30,7 @@ constexpr inline int c_cyLVItem = 26;
 
 constexpr inline PCWSTR c_szDefMainWndText = L"PlayerNew - 未播放";
 constexpr inline PCWSTR c_szVer = L"0.1";
+constexpr inline PCWSTR c_szArtistSplitter = L"、/&";
 
 constexpr inline int c_cxBtnIcon = 20;
 constexpr inline int c_cyBtnIcon = 20;
@@ -41,13 +42,17 @@ extern CApp* App;
 
 enum
 {
-	PNWM_BEGIN  =eck::WM_USER_SAFE,
+	PNWM_BEGIN = eck::WM_USER_SAFE,
 	PNWM_PLAYINGCTRL,
 	PNWM_CHANNELENDED,
 	PNWM_SETTINGCHANGED,
 	PNWM_DWMCOLORCHANGED,
 
 	PNWM_OPTDLG_APPLY,
+
+	PNWM_MIDLG_GETIDX,		// 发送给选择夹窗口
+	PNWM_MIDLG_UPDATEIDX,	// 发送给子窗口
+	PNWM_MIDLG_INIT,		// 发送给子窗口
 };
 
 enum

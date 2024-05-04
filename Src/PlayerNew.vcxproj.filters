@@ -35,6 +35,9 @@
     <Filter Include="对话框\设置">
       <UniqueIdentifier>{b39e7e3a-61c4-49c5-8935-65a99db3eec4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="对话框\文件信息">
+      <UniqueIdentifier>{9f235a95-1078-441d-a091-2eaf3fedcecf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CDlgBookmark.h">
@@ -184,8 +187,15 @@
     <ClInclude Include="CDlgOptVisual.h">
       <Filter>对话框\设置</Filter>
     </ClInclude>
-    <ClInclude Include="CDlgMusicInfo.h" />
-    <ClInclude Include="CDlgMiMetaData.h" />
+    <ClInclude Include="CDlgMiMetaData.h">
+      <Filter>对话框\文件信息</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgMiPicture.h">
+      <Filter>对话框\文件信息</Filter>
+    </ClInclude>
+    <ClInclude Include="CDlgMusicInfo.h">
+      <Filter>对话框\文件信息</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CDlgBookmark.cpp">
@@ -353,8 +363,15 @@
     <ClCompile Include="CDlgOptVisual.cpp">
       <Filter>对话框\设置</Filter>
     </ClCompile>
-    <ClCompile Include="CDlgMusicInfo.cpp" />
-    <ClCompile Include="CDlgMiMetaData.cpp" />
+    <ClCompile Include="CDlgMiMetaData.cpp">
+      <Filter>对话框\文件信息</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgMiPicture.cpp">
+      <Filter>对话框\文件信息</Filter>
+    </ClCompile>
+    <ClCompile Include="CDlgMusicInfo.cpp">
+      <Filter>对话框\文件信息</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PlayerNew.rc">

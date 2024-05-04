@@ -3,6 +3,7 @@
 #include "CPlayList.h"
 #include "CTBList.h"
 #include "CLVPlay.h"
+#include "CDlgMusicInfo.h"
 
 #include "eck\CLabel.h"
 #include "eck\CEditExt.h"
@@ -51,6 +52,8 @@ private:
 	eck::CRefStrW m_rsCurrKeyword{};
 
 	CWndMain& m_WndMain;
+
+	CDlgMusicInfo* m_pDlgMusicInfo{ new CDlgMusicInfo{} };
 
 
 	enum// 控件ID

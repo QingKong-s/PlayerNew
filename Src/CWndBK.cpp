@@ -410,7 +410,7 @@ void CWndBK::UpdateStaticBmp()
 		pEffect->Release();
 		pBmpScaled->Release();
 		////////////半透明遮罩
-		m_pBrWhite2->SetColor(eck::ColorrefToD2dColorF(eck::GetThreadCtx()->crDefBkg, 0.6));
+		m_pBrWhite2->SetColor(eck::ColorrefToD2dColorF(eck::GetThreadCtx()->crDefBkg, 0.6f));
 		pDC->FillRectangle(m_rcfClient, m_pBrWhite2);
 	}
 
