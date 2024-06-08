@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include "CApp.h"
 #include "CPlayList.h"
-#include "CTBList.h"
 #include "CLVPlay.h"
 #include "CDlgMusicInfo.h"
 
@@ -25,6 +24,19 @@ struct LISTDRAGPARAMHEADER
 };
 #pragma pack(pop)
 
+enum// 工具条按钮ID
+{
+	TBCID_BEGIN = 200,
+	TBCID_LOCATE = TBCID_BEGIN,
+	TBCID_ADD,
+	TBCID_LOADLIST,
+	TBCID_SAVELIST,
+	TBCID_EMPTY,
+	TBCID_MANAGE,
+
+	TBBTCOUNT = 6
+};
+
 class CWndMain;
 class CWndList : public eck::CForm
 {
@@ -34,9 +46,11 @@ private:
 	eck::CLabel m_LAListName{};
 	eck::CEditExt m_EDSearch{};
 	eck::CPushButton m_BTSearch{};
-	CTBList m_TBManage{};
+	eck::CToolBar m_TBManage{};
 	CLVSearch m_LVSearch{*this};
 	CLVPlay m_LVList{ *this,m_LVSearch };
+
+	HIMAGELIST m_hIml = NULL;
 
 	HFONT m_hFont = NULL;
 	HFONT m_hFontListName = NULL;
@@ -115,6 +129,38 @@ private:
 	{
 		m_iDpi = iDpi;
 		eck::UpdateDpiSize(m_Ds, iDpi);
+
+		const int
+			cxIcon = eck::DpiScale(c_cxBtnIcon, iDpi),
+			cyIcon = eck::DpiScale(c_cyBtnIcon, iDpi);
+		HIMAGELIST hIml = ImageList_Create(cxIcon, cyIcon, ILC_COLOR32, 0, 2);
+		HICON hIcon;
+		IWICBitmap* pBmp;
+
+		constexpr static int c_idxIcon[]
+		{
+			IIDX_Locate,
+			IIDX_Plus,
+			IIDX_LoadFile,
+			IIDX_Disk,
+			IIDX_Cross,
+			IIDX_ListManage
+		};
+
+		for (auto idx : c_idxIcon)
+		{
+			pBmp = App->ScaleImageForButton(idx, iDpi);
+			hIcon = eck::CreateHICON(pBmp);
+			ImageList_AddIcon(hIml, hIcon);
+			pBmp->Release();
+			DestroyIcon(hIcon);
+		}
+
+		m_TBManage.SetImageList(hIml);
+		std::swap(m_hIml, hIml);
+		ImageList_Destroy(hIml);
+
+		m_TBManage.SetButtonSize(m_Ds.cxToolBtn, m_Ds.cyTool);
 	}
 
 	void UpdateDpi(int iDpi);
@@ -170,6 +216,8 @@ private:
 	BOOL OnSearchLVNEndLabelEdit(NMLVDISPINFOW* pnmlvdi);
 public:
 	CWndList(CWndMain& Main) :m_WndMain(Main) {}
+
+	~CWndList() { delete m_pDlgMusicInfo; }
 
 	static ATOM RegisterWndClass();
 

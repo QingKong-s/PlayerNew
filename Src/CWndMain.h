@@ -18,7 +18,7 @@ struct DRAGDROPINFO
 
 class CDropTargetList;
 
-class CWndMain : public eck::CWnd
+class CWndMain : public eck::CForm
 {
 	friend class CDropTargetList;
 	friend class CWndBK;
@@ -69,8 +69,6 @@ private:
 	void OnSize(HWND hWnd, UINT uState, int cx, int cy);
 
 	BOOL OnCreate(HWND hWnd, CREATESTRUCTW* pcs);
-
-	void OnDestroy();
 
 	void OnDpiChanged(HWND hWnd, int xDpi, int yDpi, RECT* pRect);
 

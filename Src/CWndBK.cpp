@@ -70,7 +70,6 @@ void CWndBK::OnSize(HWND hWnd, UINT state, int cx, int cy)
 
 void CWndBK::OnDestroy(HWND hWnd)
 {
-	m_vElemsWantTimer.clear();
 	m_pBrWhite->Release();
 	m_pBrWhite2->Release();
 	m_pBmpBKStatic->Release();
@@ -79,6 +78,9 @@ void CWndBK::OnDestroy(HWND hWnd)
 		pBmp->Release();
 	for (auto pElem : m_vAllElems)
 		delete pElem;
+	for (auto pLayout : m_vLayout)
+		delete pLayout;
+	m_pLayout = NULL;
 	m_vAllElems.clear();
 	m_vElemsWantTimer.clear();
 }

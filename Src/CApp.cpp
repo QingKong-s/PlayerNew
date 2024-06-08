@@ -59,6 +59,8 @@ void CApp::LoadRes()
 
 CApp::~CApp()
 {
+	for (auto& p : m_pWicRes)
+		SafeRelease(p);
 	//m_pD2dFactory->Release();
 	//m_pDwFactory->Release();
 	//m_pWicFactory->Release();
@@ -194,6 +196,6 @@ void CApp::ShowError(HWND hWnd, EckOpt(DWORD, dwErrCode), ErrSrc uSrc, PCWSTR ps
 	}
 	tdc.pszContent = sContent.c_str();
 
-	int dummy;
-	TaskDialogIndirect(&tdc, &dummy, &dummy, &dummy);
+	eck::TASKDIALOGCTX Ctx{ &tdc };
+	eck::CTaskDialog{}.DlgBox(hWnd, &Ctx);
 }

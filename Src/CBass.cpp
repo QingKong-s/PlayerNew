@@ -50,8 +50,7 @@ CBass::~CBass()
 
 DWORD CBass::Open(PCWSTR pszFile, DWORD dwFlagsHS, DWORD dwFlagsHM, DWORD dwFlagsHMIDI)
 {
-	if (m_hStream)
-		Close();
+	Close();
 	constexpr DWORD dwCommFlags = BASS_SAMPLE_FLOAT | BASS_UNICODE;
 	DWORD h = BASS_StreamCreateFile(FALSE, pszFile, 0, 0, dwCommFlags | dwFlagsHS);
 

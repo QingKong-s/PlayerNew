@@ -458,6 +458,7 @@ TICKCHANGING CPlayer::Tick()
 			m_idxCurrLrc = -1;
 		else
 			m_idxCurrLrc = (int)std::distance(m_vLrc.begin(), it - 1);
+		EckAssert(m_idxCurrLrc >= -1 && m_idxCurrLrc < (int)m_vLrc.size());
 
 		if (m_idxCurrLrc != m_idxLastLrc)
 		{

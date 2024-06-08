@@ -106,9 +106,6 @@
     <ClInclude Include="CWndLrc.h">
       <Filter>窗体</Filter>
     </ClInclude>
-    <ClInclude Include="CTBList.h">
-      <Filter>控件</Filter>
-    </ClInclude>
     <ClInclude Include="CTbGhost.h">
       <Filter>窗体</Filter>
     </ClInclude>
@@ -285,17 +282,11 @@
     <ClCompile Include="CTbGhost.cpp">
       <Filter>窗体</Filter>
     </ClCompile>
-    <ClCompile Include="CTBList.cpp">
-      <Filter>控件</Filter>
-    </ClCompile>
     <ClCompile Include="CLVPlay.cpp">
       <Filter>控件</Filter>
     </ClCompile>
     <ClCompile Include="CEffectMgr.cpp">
       <Filter>程序</Filter>
-    </ClCompile>
-    <ClCompile Include="$(ECK_INCLUDE)\eck\ECK.cpp">
-      <Filter>eck</Filter>
     </ClCompile>
     <ClCompile Include="CWndGenSharePic.cpp">
       <Filter>窗体</Filter>
@@ -371,6 +362,9 @@
     </ClCompile>
     <ClCompile Include="CDlgMusicInfo.cpp">
       <Filter>对话框\文件信息</Filter>
+    </ClCompile>
+    <ClCompile Include="MyEck.cpp">
+      <Filter>eck</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

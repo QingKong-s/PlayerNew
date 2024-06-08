@@ -100,21 +100,27 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ECK_INCLUDE)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(ECK_INCLUDE)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ECK_INCLUDE)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(ECK_INCLUDE)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win81Release|Win32'">
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ECK_INCLUDE)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(ECK_INCLUDE)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ECK_INCLUDE)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(ECK_INCLUDE)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ECK_INCLUDE)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(ECK_INCLUDE)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Win81Release|x64'">
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ECK_INCLUDE)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(ECK_INCLUDE)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -210,7 +216,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions);NOMINMAX</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions);NOMINMAX;_CRTDBG_MAP_ALLOC</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -338,7 +344,6 @@
     <ClInclude Include="CPlayList.h" />
     <ClInclude Include="CPlayListFile.h" />
     <ClInclude Include="CTbGhost.h" />
-    <ClInclude Include="CTBList.h" />
     <ClInclude Include="CWndBK.h" />
     <ClInclude Include="CWndList.h" />
     <ClInclude Include="CWndLrc.h" />
@@ -351,7 +356,6 @@
     <ClInclude Include="Utils.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="$(ECK_INCLUDE)\eck\ECK.cpp" />
     <ClCompile Include="CApp.cpp" />
     <ClCompile Include="CBass.cpp" />
     <ClCompile Include="CDlgAbout.cpp" />
@@ -390,7 +394,6 @@
     <ClCompile Include="CPlayList.cpp" />
     <ClCompile Include="CPlayListFile.cpp" />
     <ClCompile Include="CTbGhost.cpp" />
-    <ClCompile Include="CTBList.cpp" />
     <ClCompile Include="CUIProgressBar.cpp" />
     <ClCompile Include="CUIAlbum.cpp" />
     <ClCompile Include="CUIAlbumRotating.cpp" />
@@ -408,6 +411,7 @@
     <ClCompile Include="CWndMain.cpp" />
     <ClCompile Include="DragDrop.cpp" />
     <ClCompile Include="Entry.cpp" />
+    <ClCompile Include="MyEck.cpp" />
     <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <ItemGroup>

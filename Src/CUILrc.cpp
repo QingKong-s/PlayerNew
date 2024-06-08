@@ -63,6 +63,11 @@ void CUILrc::ReCreateEmptyText()
 
 void CUILrc::CalcTopItem()
 {
+	if (m_vItem.empty())
+	{
+		m_idxTop = 0;
+		return;
+	}
 	const auto fScale = App->GetOptionsMgr().ScLrcCurrFontScale;
 	auto it = LowerBound(m_vItem.begin(), m_vItem.end(), m_psv->GetPos(),
 		[this, fScale](decltype(m_vItem)::iterator it, int iPos)
@@ -490,6 +495,7 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_SIZE:
 	{
+		LayoutItems();
 		RECT rc;
 		rc.left = GetViewWidth() - m_SB.GetViewWidth();
 		rc.top = 0;
@@ -511,9 +517,9 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			else
 			{
 				m_idxPrevCurr = -1;
-				LayoutItems();
+					LayoutItems();
 				m_psv->SetPos(m_psv->GetMin());
-				CalcTopItem();
+					CalcTopItem();
 			}
 			InvalidateRect();
 		}
@@ -523,7 +529,7 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case UIEE_ONSETTINGSCHANGE:
 	{
 		ReCreateTextFormat();
-		if (!App->GetPlayer().GetLrc().empty())
+		if (!App->GetPlayer().GetLrc().empty() && GetViewWidth() > 0 && GetViewHeight() > 0)
 		{
 			LayoutItems();
 			CalcTopItem();
@@ -542,8 +548,8 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		m_pDC->QueryInterface(&m_pDC1);
 
-		m_pDC->CreateSolidColorBrush(eck::ColorrefToD2dColorF(eck::Colorref::Silver), &m_pBrTextNormal);
-		m_pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_pBrTextHighlight);
+		//m_pDC->CreateSolidColorBrush(eck::ColorrefToD2dColorF(eck::Colorref::Silver), &m_pBrTextNormal);
+		//m_pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_pBrTextHighlight);
 		m_pDC->CreateSolidColorBrush(eck::ColorrefToD2dColorF(eck::Colorref::Silver), &m_pBrTextHighlight);
 		m_pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_pBrTextNormal);
 		m_pDC->CreateSolidColorBrush({}, &m_pBrush);
@@ -566,6 +572,7 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SafeRelease(m_pTextFormat);
 		SafeRelease(m_psv);
 		SafeRelease(m_pDC1);
+		SafeRelease(m_pGrEmptyText);
 		m_vItem.clear();
 	}
 	break;
@@ -638,7 +645,7 @@ void CUILrc::ScrollToCurrPos()
 	const auto fScale = App->GetOptionsMgr().ScLrcCurrFontScale;
 	m_bEnlarging = TRUE;
 	m_AnEnlarge.Begin(1.f, fScale - 1.f, 400);
-	const auto& CurrItem = m_vItem[m_idxPrevCurr];
+	const auto& CurrItem = m_idxPrevCurr < 0 ? m_vItem.front() : m_vItem[m_idxPrevCurr];
 	float yDest = CurrItem.y + CurrItem.cy * fScale / 2.f;
 	m_psv->InterruptAnimation();
 	m_psv->SmoothScrollDelta(int((yDest - GetViewHeight() / 3) - m_psv->GetPos()));
@@ -647,14 +654,16 @@ void CUILrc::ScrollToCurrPos()
 
 void CUILrc::LayoutItems()
 {
-	const auto fScale = App->GetOptionsMgr().ScLrcCurrFontScale;
-	const auto cyMainTransPadding = GetBk()->Dpi(5.f);
-
 	auto& Player = App->GetPlayer();
 	const auto& vLrc = Player.GetLrc();
 	const float cx = GetViewWidthF(), cy = GetViewHeightF();
 
 	m_vItem.clear();
+	if (cx <= 0.f || cy <= 0.f || vLrc.empty())
+		return;
+
+	const auto fScale = App->GetOptionsMgr().ScLrcCurrFontScale;
+	const auto cyMainTransPadding = GetBk()->Dpi(5.f);
 
 	m_vItem.resize(vLrc.size());
 	const float cxMax = cx / fScale;

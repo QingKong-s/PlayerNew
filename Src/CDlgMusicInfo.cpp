@@ -24,14 +24,14 @@ BOOL CDlgMusicInfo::OnInitDialog(HWND hDlg, HWND hFocus, LPARAM lParam)
 		eck::SetFontForWndAndCtrl(pDlg->HWnd, GetFont());
 		SetParent(pDlg->HWnd, m_Tab.HWnd);
 		SetWindowPos(pDlg->HWnd, NULL,
-			-1,
-			rcTabItem.bottom,
-			rc.right - rc.left,
-			rc.bottom - rcTabItem.bottom, SWP_NOZORDER | SWP_NOACTIVATE);
+			1,
+			rcTabItem.bottom+1,
+			rc.right - rc.left-2,
+			rc.bottom - rcTabItem.bottom-3, SWP_NOZORDER | SWP_NOACTIVATE);
 		pDlg->SendMsg(PNWM_MIDLG_UPDATEIDX, m_idxCurr, 0);
 	}
-	m_Tab.SetCurSel(App->GetOptionsMgr().FxPage);
-	m_pDlg[App->GetOptionsMgr().FxPage]->Show(SW_SHOWNOACTIVATE);
+	m_Tab.SetCurSel(App->GetOptionsMgr().MiPage);
+	m_pDlg[App->GetOptionsMgr().MiPage]->Show(SW_SHOWNOACTIVATE);
 	return TRUE;
 }
 

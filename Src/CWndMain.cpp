@@ -404,8 +404,7 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	BOOL bOpaqueBlend;
 	DwmGetColorizationColor(&m_argbDwm, &bOpaqueBlend);
 	m_crDwm = eck::ARGBToD2dColorF(m_argbDwm);
-	m_bDarkColor = !eck::IsColorLightArgb(m_argbDwm);
-	if (eck::ShouldAppUseDarkMode())
+	if (m_bDarkColor = eck::ShouldAppUseDarkMode())
 	{
 		App->InvertIconColor();
 		eck::GetThreadCtx()->SetNcDarkModeForAllTopWnd(TRUE);
@@ -477,12 +476,6 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	InitBK();
 	m_BK.SendMsg(PNWM_DWMCOLORCHANGED, 0, 0);
 	return TRUE;
-}
-
-void CWndMain::OnDestroy()
-{
-	RevokeDragDrop(m_hWnd);
-	m_pDropTarget->Release();
 }
 
 void CWndMain::OnDpiChanged(HWND hWnd, int xDpi, int yDpi, RECT* pRect)
@@ -612,8 +605,10 @@ LRESULT CWndMain::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_DESTROY:
 		m_TbGhost.Destroy();
 		SafeRelease(m_pTbList);
+		SafeRelease(m_pDropTarget);
 		if (m_Lrc.IsValid())
 			m_Lrc.Destroy();
+		RevokeDragDrop(m_hWnd);
 		PostQuitMessage(0);
 		return 0;
 	}

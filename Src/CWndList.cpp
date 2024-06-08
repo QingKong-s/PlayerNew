@@ -110,7 +110,6 @@ void CWndList::ListSwitched()
 
 BOOL CWndList::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 {
-	UpdateDpiInit(eck::GetDpi(hWnd));
 #pragma region 创建菜单
 	m_hMenuAdd = CreatePopupMenu();
 	AppendMenuW(m_hMenuAdd, 0, IDMI_ADDFILE, L"添加文件...");
@@ -151,6 +150,24 @@ BOOL CWndList::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	m_hFont = eck::EzFont(L"微软雅黑", 9);
 	m_hFontListName = eck::EzFont(L"微软雅黑", 13);
 
+	m_TBManage.Create(NULL,WS_CHILD | WS_VISIBLE | 
+		TBSTYLE_LIST | TBSTYLE_TRANSPARENT | TBSTYLE_WRAPABLE |
+		CCS_NORESIZE | CCS_NOPARENTALIGN | CCS_NODIVIDER, 0,
+		0, 0, 0, 0, hWnd, IDC_TB_MANAGE);
+	m_TBManage.SetButtonStructSize();
+	TBBUTTON TBBtns[]
+	{
+		{ 0,TBCID_LOCATE,	TBSTATE_ENABLED,0,{},0,(INT_PTR)L"定位" },
+		{ 1,TBCID_ADD,		TBSTATE_ENABLED,0,{},0,(INT_PTR)L"添加" },
+		{ 2,TBCID_LOADLIST,	TBSTATE_ENABLED,0,{},0,(INT_PTR)L"读取" },
+		{ 3,TBCID_SAVELIST,	TBSTATE_ENABLED,0,{},0,(INT_PTR)L"保存" },
+		{ 4,TBCID_EMPTY,	TBSTATE_ENABLED,0,{},0,(INT_PTR)L"清空" },
+		{ 5,TBCID_MANAGE,	TBSTATE_ENABLED,0,{},0,(INT_PTR)L"管理" },
+	};
+	m_TBManage.AddButtons(ARRAYSIZE(TBBtns), TBBtns);
+
+	UpdateDpiInit(eck::GetDpi(hWnd));
+
 	m_LAListName.Create(c_szDefListName, WS_VISIBLE, 0, 0, 0, 0, 0, hWnd, IDC_LA_LIST_NAME);
 	m_LAListName.SetTransparent(TRUE);
 	m_LAListName.SetClr(0, GetSysColor(COLOR_HIGHLIGHT));
@@ -161,23 +178,6 @@ BOOL CWndList::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 
 	m_BTSearch.Create(L"搜索", WS_VISIBLE | BS_ICON, 0, 
 		0, 0, m_Ds.cySearch, m_Ds.cySearch, hWnd, IDC_BT_SEARCH);
-
-	m_TBManage.Create(NULL,
-		TBSTYLE_LIST | TBSTYLE_TRANSPARENT | TBSTYLE_WRAPABLE |
-		CCS_NORESIZE | CCS_NOPARENTALIGN | CCS_NODIVIDER, 0,
-		0, 0, 0, 0, hWnd, IDC_TB_MANAGE);
-	m_TBManage.SetButtonStructSize();
-	TBBUTTON TBBtns[]
-	{
-		{ I_IMAGENONE,TBCID_LOCATE,		TBSTATE_ENABLED,0,{},0,0 },
-		{ I_IMAGENONE,TBCID_ADD,		TBSTATE_ENABLED,0,{},0,0 },
-		{ I_IMAGENONE,TBCID_LOADLIST,	TBSTATE_ENABLED,0,{},0,0 },
-		{ I_IMAGENONE,TBCID_SAVELIST,	TBSTATE_ENABLED,0,{},0,0 },
-		{ I_IMAGENONE,TBCID_EMPTY,		TBSTATE_ENABLED,0,{},0,0 },
-		{ I_IMAGENONE,TBCID_MANAGE,		TBSTATE_ENABLED,0,{},0,0 },
-	};
-	m_TBManage.AddButtons(ARRAYSIZE(TBBtns), TBBtns);
-	m_TBManage.Show(SW_SHOWNOACTIVATE);
 
 	constexpr DWORD dwLVStyle = LVS_REPORT | LVS_SHOWSELALWAYS | LVS_OWNERDATA | LVS_EDITLABELS;
 	m_LVSearch.Create(NULL, dwLVStyle, 0, 0, 0, 0, 0, hWnd, IDC_LV_LIST);
@@ -246,6 +246,8 @@ void CWndList::OnDestroy(HWND hWnd)
 	DestroyMenu(m_hMenuManage);
 	DeleteObject(m_hFont);
 	DeleteObject(m_hFontListName);
+	DestroyIcon(m_hiSearch);
+	ImageList_Destroy(m_hIml);
 }
 
 void CWndList::OnCmdLocate()
@@ -922,7 +924,6 @@ ATOM CWndList::RegisterWndClass()
 	wcex.lpfnWndProc = DefWindowProcW;
 	wcex.hInstance = App->GetHInstance();
 	wcex.hCursor = LoadCursorW(NULL, IDC_ARROW);
-	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 	wcex.lpszClassName = WCN_LIST;
 	wcex.cbWndExtra = sizeof(void*);
 	return RegisterClassExW(&wcex);
