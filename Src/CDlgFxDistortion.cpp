@@ -1,4 +1,5 @@
-﻿#include "CDlgFxDistortion.h"
+﻿#include "pch.h"
+#include "CDlgFxDistortion.h"
 
 void CDlgFxDistortion::UpdateCtrl()
 {

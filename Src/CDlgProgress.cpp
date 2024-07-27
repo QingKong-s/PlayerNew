@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "CDlgProgress.h"
 
 BOOL CDlgProgress::OnInitDialog(HWND hDlg, HWND hFocus, LPARAM lParam)

@@ -1,4 +1,5 @@
-﻿#include "CDlgOptLrc.h"
+﻿#include "pch.h"
+#include "CDlgOptLrc.h"
 
 void CDlgOptLrc::DataToCtrl()
 {

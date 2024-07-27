@@ -1,4 +1,6 @@
-﻿#if defined _WIN64
+﻿#include "pch.h"
+
+#if defined _WIN64
 #pragma comment(lib,R"(..\BassLib\bass_x64.lib)")
 #pragma comment(lib,R"(..\BassLib\bass_fx_x64.lib)")
 #pragma comment(lib,R"(..\BassLib\bassmidi_x64.lib)")
@@ -8,6 +10,7 @@
 #pragma comment(lib,R"(..\BassLib\bass_fx.lib)")
 #pragma comment(lib,R"(..\BassLib\bassmidi.lib)")
 #endif
+#pragma comment(lib,"dcomp.lib")
 
 #include "Entry.h"
 #include "Resource.h"

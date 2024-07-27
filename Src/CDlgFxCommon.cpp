@@ -1,4 +1,5 @@
-﻿#include "CDlgFxCommon.h"
+﻿#include "pch.h"
+#include "CDlgFxCommon.h"
 
 void CDlgFxCommon::UpdateCtrl()
 {

@@ -1,4 +1,5 @@
-﻿#include "CDlgOptPlay.h"
+﻿#include "pch.h"
+#include "CDlgOptPlay.h"
 
 LRESULT CDlgOptPlay::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {

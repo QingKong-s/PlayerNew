@@ -1,13 +1,6 @@
 ﻿#pragma once
-#include <Windows.h>
-#include <windowsx.h>
-#include <d2d1_2.h>
-#include <dwrite.h>
-#include <d3d11.h>
-#include <dxgi1_2.h>
-#include <wincodec.h>
-#include <CommCtrl.h>
-#include <Shlwapi.h>
+#include "eck\ECK.h"
+
 #include <d2d1effects_2.h>
 
 #include <vector>

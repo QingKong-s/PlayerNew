@@ -1,4 +1,5 @@
-﻿#include "CWndMain.h"
+﻿#include "pch.h"
+#include "CWndMain.h"
 #include "CDlgListFile.h"
 #include "CDlgBookmark.h"
 #include "CDlgNewBookmark.h"
@@ -359,7 +360,7 @@ void CWndList::OnMenuAddDir()
 		return;
 
 	const int cchPath = (int)wcslen(pszPath);
-	PWSTR pszFindingPattern = (PWSTR)_malloca(eck::Cch2Cb(cchPath + 10));
+	PWSTR pszFindingPattern = (PWSTR)_malloca(eck::Cch2CbW(cchPath + 10));
 	EckAssert(pszFindingPattern);
 	wcscpy(pszFindingPattern, pszPath);
 
@@ -372,7 +373,7 @@ void CWndList::OnMenuAddDir()
 	WIN32_FIND_DATAW wfd;
 	HANDLE hFind;
 
-	PWSTR pszTemp = (PWSTR)_malloca(eck::Cch2Cb(cchPath + MAX_PATH + 10));
+	PWSTR pszTemp = (PWSTR)_malloca(eck::Cch2CbW(cchPath + MAX_PATH + 10));
 	EckAssert(pszTemp);
 	wcscpy(pszTemp, pszPath);
 
@@ -753,7 +754,7 @@ void CWndList::OnListLVNBeginDrag(NMLISTVIEW* pnmlv)
 		}
 	}
 #pragma region 制HDROP
-	SIZE_T cbBuf = sizeof(DROPFILES) + eck::Cch2Cb(cchTotal);
+	SIZE_T cbBuf = sizeof(DROPFILES) + eck::Cch2CbW(cchTotal);
 	HGLOBAL hGlobal = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, cbBuf);
 	if (!hGlobal)
 	{

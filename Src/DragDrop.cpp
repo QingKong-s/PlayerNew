@@ -1,4 +1,5 @@
-﻿#include "DragDrop.h"
+﻿#include "pch.h"
+#include "DragDrop.h"
 
 static HRESULT CopyHGlobal(HGLOBAL hGlobalDst, HGLOBAL hGlobalSrc)
 {

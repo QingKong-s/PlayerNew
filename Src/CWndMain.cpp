@@ -1,10 +1,9 @@
-﻿#include <format>
+﻿#include "pch.h"
+#include <format>
 
 #include "CWndMain.h"
 #include "DragDrop.h"
 #include "resource.h"
-
-
 
 class CDropTargetList :public CDropTarget
 {
@@ -137,7 +136,7 @@ public:
 		POINT pt0{ pt.x,pt.y };
 		const auto& LV = m_WndMain.m_List.m_LVList;
 		const BOOL bOnLV = (WindowFromPoint(pt0) == LV.GetHWND());// 光标是否在列表视图上
-		
+
 		LVHITTESTINFO lvhti;
 		if (bOnLV)
 		{
@@ -205,7 +204,7 @@ public:
 				ReleaseStgMedium(&sm);
 				goto TryHDrop;
 			}
-			
+
 			if (Player.GetList().IsSorting())// 如果是自进程拖放，但当前处在排序状态且Ctrl键未按下，则拒绝拖放
 			{
 				*pdwEffect = DROPEFFECT_NONE;
@@ -255,9 +254,9 @@ public:
 					while (*pszTemp != L'\0')
 					{
 						Info.cchFile = (int)wcslen(pszTemp);
-						Player.Insert(lvhti.iItem, Info, NULL, pszTemp, 
+						Player.Insert(lvhti.iItem, Info, NULL, pszTemp,
 							NULL, NULL, NULL, NULL);
-						r += eck::Cch2Cb(Info.cchFile);
+						r += eck::Cch2CbW(Info.cchFile);
 						pszTemp = (PCWSTR)r.m_pMem;
 					}
 				}
@@ -335,43 +334,43 @@ void CWndMain::InitBK()
 	ppc->Create(NULL, Dui::DES_VISIBLE, 0,
 		70, 800, 800, 80, NULL, &m_BK);*/
 
-	//auto pw = new CUIWaves{};
-	//pw->Create(NULL, Dui::DES_VISIBLE, 0,
-	//	400, 730, 500, 140, NULL, &m_BK);
-	//pw->SetLineWidth((int)(2.f * 1.5f));
+		//auto pw = new CUIWaves{};
+		//pw->Create(NULL, Dui::DES_VISIBLE, 0,
+		//	400, 730, 500, 140, NULL, &m_BK);
+		//pw->SetLineWidth((int)(2.f * 1.5f));
 
-	//auto pspe = new CUISpe;
-	//m_BK.AddElem(pspe);
-	//pspe->InitElem();
-	//rc = { 400,730,900,900 };
-	//pspe->SetElemRect(&rc);
-	//pspe->SetGapWidth(1.5f);
-	//pspe->SetCount(40);
+		//auto pspe = new CUISpe;
+		//m_BK.AddElem(pspe);
+		//pspe->InitElem();
+		//rc = { 400,730,900,900 };
+		//pspe->SetElemRect(&rc);
+		//pspe->SetGapWidth(1.5f);
+		//pspe->SetCount(40);
 
-	//auto pspe2 = new CUISpe2;
-	//m_BK.AddElem(pspe2);
-	//pspe2->InitElem();
-	//rc = { 100,120,800,600 };
-	//pspe2->SetElemRect(&rc);
-	//pspe2->SetSampleCount(60);
+		//auto pspe2 = new CUISpe2;
+		//m_BK.AddElem(pspe2);
+		//pspe2->InitElem();
+		//rc = { 100,120,800,600 };
+		//pspe2->SetElemRect(&rc);
+		//pspe2->SetSampleCount(60);
 
-	//auto pra = new CUIAlbumRotating;
-	//m_BK.AddElem(pra);
-	//pra->InitElem();
-	//rc = { 100,120,600,800 };
-	//pra->SetElemRect(&rc);
+		//auto pra = new CUIAlbumRotating;
+		//m_BK.AddElem(pra);
+		//pra->InitElem();
+		//rc = { 100,120,600,800 };
+		//pra->SetElemRect(&rc);
 
-	//auto p2 = new Dui::c;
-	//m_BK.AddElem(p2);
-	//p2->InitElem();
-	//rc = { 90,780,800,800 };
-	//p2->SetElemRect(&rc);
-	//p2->SetMax(10000ull);
+		//auto p2 = new Dui::c;
+		//m_BK.AddElem(p2);
+		//p2->InitElem();
+		//rc = { 90,780,800,800 };
+		//p2->SetElemRect(&rc);
+		//p2->SetMax(10000ull);
 
-	//auto p3 = new CUIToolBar;
-	//m_BK.AddElem(p3);
-	//p3->InitElem();
-	//p3->SetElemRect({ 70,650,800,700 });
+		//auto p3 = new CUIToolBar;
+		//m_BK.AddElem(p3);
+		//p3->InitElem();
+		//p3->SetElemRect({ 70,650,800,700 });
 
 	m_BK.Redraw();
 }
@@ -404,7 +403,7 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	BOOL bOpaqueBlend;
 	DwmGetColorizationColor(&m_argbDwm, &bOpaqueBlend);
 	m_crDwm = eck::ARGBToD2dColorF(m_argbDwm);
-	if (m_bDarkColor = eck::ShouldAppUseDarkMode())
+	if (m_bDarkColor = ShouldAppsUseDarkMode())
 	{
 		App->InvertIconColor();
 		eck::GetThreadCtx()->SetNcDarkModeForAllTopWnd(TRUE);
@@ -460,7 +459,7 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	GetClientRect(hWnd, &rc);
 	m_cxList = rc.right * 37 / 100;
 
-	m_BK.Create(NULL, WS_CHILD, 0, 0, 0, 0, 0, hWnd, IDC_BK);
+	m_BK.Create(NULL, WS_CHILD, WS_EX_NOREDIRECTIONBITMAP, 0, 0, 8, 8, hWnd, IDC_BK);
 	m_List.Create(L"列表", WS_CHILD | WS_CLIPCHILDREN, 0, 0, 0, 0, 0, hWnd, IDC_LIST);
 	m_SPB.Create(NULL, WS_CHILD, 0, 0, 0, 0, 0, hWnd, IDC_SPB);
 
@@ -472,7 +471,7 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	const auto hr = RegisterDragDrop(hWnd, m_pDropTarget);
 	if (FAILED(hr))
 		CApp::ShowError(hWnd, hr, CApp::ErrSrc::HResult, L"注册拖放目标失败");
-	
+
 	InitBK();
 	m_BK.SendMsg(PNWM_DWMCOLORCHANGED, 0, 0);
 	return TRUE;
@@ -569,7 +568,7 @@ LRESULT CWndMain::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			const auto ptc = eck::GetThreadCtx();
 			ptc->UpdateDefColor();
 			m_TbGhost.InvalidateLivePreviewCache();
-			ptc->SetNcDarkModeForAllTopWnd(eck::ShouldAppUseDarkMode());
+			ptc->SetNcDarkModeForAllTopWnd(ShouldAppsUseDarkMode());
 			ptc->SendThemeChangedToAllTopWindow();
 			App->InvertIconColor();
 		}
@@ -589,7 +588,7 @@ LRESULT CWndMain::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_CREATE:
 		return HANDLE_WM_CREATE(hWnd, wParam, lParam, OnCreate);
-		
+
 	case WM_DWMCOLORIZATIONCOLORCHANGED:
 	{
 		m_argbDwm = (ARGB)wParam;

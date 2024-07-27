@@ -1,4 +1,5 @@
-﻿#include "CLVPlay.h"
+﻿#include "pch.h"
+#include "CLVPlay.h"
 #include "CWndList.h"
 #include "CWndMain.h"
 
@@ -20,7 +21,7 @@ void CLVNew::PaintLVItem(CLVNew& LV, CWndList& WndList, PLAYLISTUNIT& Item,
 	}
 	else if (idxLVItem % 2)// 交替行色
 	{
-		SetDCBrushColor(hDC, eck::ShouldAppUseDarkMode() ? 0x383838 : GetSysColor(COLOR_3DFACE));
+		SetDCBrushColor(hDC, ShouldAppsUseDarkMode() ? 0x383838 : GetSysColor(COLOR_3DFACE));
 		FillRect(hDC, &pnmlvcd->nmcd.rc, GetStockBrush(DC_BRUSH));
 	}
 
@@ -51,7 +52,7 @@ void CLVNew::PaintLVItem(CLVNew& LV, CWndList& WndList, PLAYLISTUNIT& Item,
 		DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX | DT_NOCLIP);
 	rc.left = rc.right;
 	rc.right = pnmlvcd->nmcd.rc.right;
-	WCHAR szTime[eck::c_cchI32ToStrBufNoRadix2 * 2 + 10];
+	WCHAR szTime[eck::CchI32ToStrBufNoRadix2 * 2 + 10];
 	const int cchTime = swprintf(szTime, L"%02d:%02d", 
 		int(Item.s.uSecTime / 60), int(Item.s.uSecTime % 60));
 	DrawTextW(hDC, szTime, cchTime, &rc,

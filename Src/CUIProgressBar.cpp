@@ -1,4 +1,5 @@
-﻿#include "CWndBK.h"
+﻿#include "pch.h"
+#include "CWndBK.h"
 #include "CWndMain.h"
 
 LRESULT CUIProgressBar::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)

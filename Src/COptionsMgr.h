@@ -1,14 +1,10 @@
 ﻿#pragma once
-#include <Windows.h>
-#include <dwrite.h>
-
-#include "Utils.h"
-
 #include "eck\CRefStr.h"
 #include "eck\WndHelper.h"
 #include "eck\CWindowPosSetting.h"
 #include "eck\CFontPicker.h"
 
+#include "Utils.h"
 
 struct FONTOPTIONS
 {

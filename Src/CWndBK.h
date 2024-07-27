@@ -605,8 +605,9 @@ private:
 
 	PNInline void BeginMouseIdleDetect()
 	{
+		if (!m_tMouseIdle)
+			SetTimer(GetWnd()->HWnd, IDT_MOUSEIDLE, TE_MOUSEIDLE, NULL);
 		m_tMouseIdle = T_MOUSEIDLEMAX;
-		SetTimer(GetWnd()->HWnd, IDT_MOUSEIDLE, TE_MOUSEIDLE, NULL);
 	}
 
 	int HitTest(POINT pt);
@@ -638,6 +639,8 @@ private:
 	void ScrollToCurrPos();
 
 	void LayoutItems();
+
+	void Scrolled();
 public:
 	CUILrc()
 	{

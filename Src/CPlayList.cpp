@@ -1,4 +1,5 @@
-﻿#include "CPlayList.h"
+﻿#include "pch.h"
+#include "CPlayList.h"
 #include "CBass.h"
 
 //int CPlayList::Insert(int idxPos, const LISTFILEITEM_1& Info, PCWSTR pszName, PCWSTR pszTime, PCWSTR pszFile)

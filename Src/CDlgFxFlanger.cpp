@@ -1,4 +1,5 @@
-﻿#include "CDlgFxFlanger.h"
+﻿#include "pch.h"
+#include "CDlgFxFlanger.h"
 
 void CDlgFxFlanger::UpdateCtrl()
 {

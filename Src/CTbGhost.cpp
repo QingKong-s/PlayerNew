@@ -1,4 +1,5 @@
-﻿#include "CWndMain.h"
+﻿#include "pch.h"
+#include "CWndMain.h"
 
 LRESULT CTbGhost::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -178,53 +179,4 @@ void CTbGhost::SetIconicThumbnail(UINT cxMax, UINT cyMax)
 	DwmSetIconicThumbnail(HWnd, m_hbmThumbnailCache, 0);
 	pBmp->Release();
 	return;
-
-	//const auto& rbCover = App->GetPlayer().GetMusicInfo().rbCover;
-	//const auto pStream = new eck::CStreamView(rbCover);
-
-	//HBITMAP hBitmap;
-	//GpBitmap* pBitmap;
-	//GdipCreateBitmapFromStream(pStream, &pBitmap);
-    //if (!pBitmap)
-    //{
-    //    EckDbgBreak();
-    //    eck::CDib dib{};
-    //    DwmSetIconicThumbnail(HWnd, dib.Create(cxMax, cyMax), 0);
-    //    return;
-    //}
-
-    //UINT cx, cy, cx0, cy0;
-    //GdipGetImageWidth(pBitmap, &cx0);
-    //GdipGetImageHeight(pBitmap, &cy0);
-
-    //if ((float)cxMax / (float)cyMax > (float)cx0 / (float)cy0)// y对齐
-    //{
-    //    cy = cyMax;
-    //    cx = cx0 * cy / cy0;
-    //}
-    //else// x对齐
-    //{
-    //    cx = cxMax;
-    //    cy = cx * cy0 / cx0;
-    //}
-
-    //GpBitmap* pBitmapBK;
-    //GpGraphics* pGraphics;
-    //GdipCreateBitmapFromScan0(cx, cy, 0, GpPixelFormat::PF32bppARGB, NULL, &pBitmapBK);
-    //GdipGetImageGraphicsContext(pBitmapBK, &pGraphics);
-    //GdipGraphicsClear(pGraphics, 0x00000000);
-    //GdipSetInterpolationMode(pGraphics, GpInterpolationMode::HighQuality);
-    //GdipDrawImageRectRectI(pGraphics, pBitmap,
-    //    0, 0, cx, cy,
-    //    0, 0, cx0, cy0,
-    //    Gdiplus::UnitPixel, NULL, NULL, NULL);
-    //GdipDeleteGraphics(pGraphics);
-    //GdipCreateHBITMAPFromBitmap(pBitmapBK, &hBitmap, 0x00000000);
-
-    //DwmSetIconicThumbnail(HWnd, hBitmap, 0);
-
-    //GdipDisposeImage(pBitmap);
-    //GdipDisposeImage(pBitmapBK);
-    //m_hbmThumbnailCache = hBitmap;
-    //pStream->LeaveRelease();
 }

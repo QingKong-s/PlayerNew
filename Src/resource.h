@@ -68,6 +68,7 @@
 #define IDC_EDIT3                       1029
 #define IDC_BT_PREV                     1029
 #define IDC_EDIT4                       1030
+#define IDC_ED_SHIT                     1030
 #define IDC_EDIT5                       1031
 #define IDOK2                           1032
 #define IDC_BT_APPLY                    1032
@@ -239,7 +240,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        142
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1030
+#define _APS_NEXT_CONTROL_VALUE         1031
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

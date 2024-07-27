@@ -1,4 +1,5 @@
-﻿#include "CWndBK.h"
+﻿#include "pch.h"
+#include "CWndBK.h"
 
 void CUIInfo::UpdateTextFormat()
 {

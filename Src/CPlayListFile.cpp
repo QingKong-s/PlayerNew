@@ -1,4 +1,5 @@
-﻿#include "CPlayListFile.h"
+﻿#include "pch.h"
+#include "CPlayListFile.h"
 
 BOOL CPlayListFileReader::Open(PCWSTR pszFile)
 {
@@ -48,7 +49,7 @@ void CPlayListFileReader::For(const FItemProcessor& fnProcessor)
 #endif
 		r += sizeof(LISTFILEHEADER_1);
 		m_rsCreator.DupString((PCWSTR)r.Data(), m_pHeader1->cchCreator);
-		r += eck::Cch2Cb(m_pHeader1->cchCreator);
+		r += eck::Cch2CbW(m_pHeader1->cchCreator);
 
 		const LISTFILEITEM_1* pItem;
 
@@ -57,17 +58,17 @@ void CPlayListFileReader::For(const FItemProcessor& fnProcessor)
 			r.SkipPointer(pItem);
 
 			pszName = (PCWSTR)r.Data();
-			r += eck::Cch2Cb(pItem->cchName);
+			r += eck::Cch2CbW(pItem->cchName);
 			pszFile = (PCWSTR)r.Data();
-			r += eck::Cch2Cb(pItem->cchFile);
+			r += eck::Cch2CbW(pItem->cchFile);
 			pszTitle = (PCWSTR)r.Data();
-			r += eck::Cch2Cb(pItem->cchTitle);
+			r += eck::Cch2CbW(pItem->cchTitle);
 			pszArtist = (PCWSTR)r.Data();
-			r += eck::Cch2Cb(pItem->cchArtist);
+			r += eck::Cch2CbW(pItem->cchArtist);
 			pszAlbum = (PCWSTR)r.Data();
-			r += eck::Cch2Cb(pItem->cchAlbum);
+			r += eck::Cch2CbW(pItem->cchAlbum);
 			pszGenre = (PCWSTR)r.Data();
-			r += eck::Cch2Cb(pItem->cchGenre);
+			r += eck::Cch2CbW(pItem->cchGenre);
 			fnProcessor(pItem, pszName, pszFile, pszTitle,
 				pszArtist, pszAlbum, pszGenre);
 		}
@@ -204,25 +205,25 @@ void CPlayListFileWriter::PushBack(const LISTFILEITEM_1& Item,
 {
 	++m_Header.cItems;
 	m_File << Item;
-	m_File.Write(pszName, (DWORD)eck::Cch2Cb(Item.cchName));
-	m_File.Write(pszFile, (DWORD)eck::Cch2Cb(Item.cchFile));
+	m_File.Write(pszName, (DWORD)eck::Cch2CbW(Item.cchName));
+	m_File.Write(pszFile, (DWORD)eck::Cch2CbW(Item.cchFile));
 	if (Item.cchTitle)
-		m_File.Write(pszTitle, (DWORD)eck::Cch2Cb(Item.cchTitle));
+		m_File.Write(pszTitle, (DWORD)eck::Cch2CbW(Item.cchTitle));
 	else
 		m_File << L'\0';
 
 	if (Item.cchArtist)
-		m_File.Write(pszArtist, (DWORD)eck::Cch2Cb(Item.cchArtist));
+		m_File.Write(pszArtist, (DWORD)eck::Cch2CbW(Item.cchArtist));
 	else
 		m_File << L'\0';
 
 	if (Item.cchAlbum)
-		m_File.Write(pszAlbum, (DWORD)eck::Cch2Cb(Item.cchAlbum));
+		m_File.Write(pszAlbum, (DWORD)eck::Cch2CbW(Item.cchAlbum));
 	else
 		m_File << L'\0';
 	
 	if (Item.cchGenre)
-		m_File.Write(pszGenre, (DWORD)eck::Cch2Cb(Item.cchGenre));
+		m_File.Write(pszGenre, (DWORD)eck::Cch2CbW(Item.cchGenre));
 	else
 		m_File << L'\0';
 }
@@ -237,7 +238,7 @@ void CPlayListFileWriter::PushBackBookmark(const BOOKMARKITEM& Item, PCWSTR pszN
 {
 	++m_BmHeader.cBookmarks;
 	m_File << Item;
-	m_File.Write(pszName, (DWORD)eck::Cch2Cb(Item.cchName));
+	m_File.Write(pszName, (DWORD)eck::Cch2CbW(Item.cchName));
 }
 
 BOOL CPlayListFileWriter::End()

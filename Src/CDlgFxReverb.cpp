@@ -1,4 +1,5 @@
-﻿#include "CDlgFxReverb.h"
+﻿#include "pch.h"
+#include "CDlgFxReverb.h"
 
 void CDlgFxReverb::UpdateCtrl()
 {

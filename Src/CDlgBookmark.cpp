@@ -1,4 +1,5 @@
-﻿#include "CDlgBookmark.h"
+﻿#include "pch.h"
+#include "CDlgBookmark.h"
 
 constexpr static UINT_PTR c_uScidLVList = 20231027'01;
 

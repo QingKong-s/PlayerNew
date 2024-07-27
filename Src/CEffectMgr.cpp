@@ -1,4 +1,4 @@
-﻿#include "CEffectMgr.h"
+﻿#include "pch.h"
 
 BOOL CEffectMgr::ApplyParam(int idx) const
 {

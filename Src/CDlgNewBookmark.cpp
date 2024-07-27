@@ -1,4 +1,5 @@
-﻿#include "CDlgNewBookmark.h"
+﻿#include "pch.h"
+#include "CDlgNewBookmark.h"
 #include "Utils.h"
 
 void CDlgNewBookmark::UpdateDpiInit(int iDpi)

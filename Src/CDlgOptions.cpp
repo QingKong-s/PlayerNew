@@ -1,4 +1,5 @@
-﻿#include "CDlgOptions.h"
+﻿#include "pch.h"
+#include "CDlgOptions.h"
 #include "CWndMain.h"
 
 void CDlgOptions::OnMouseWheel(int iDelta)

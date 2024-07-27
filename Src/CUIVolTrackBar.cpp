@@ -1,4 +1,5 @@
-﻿#include "CWndBK.h"
+﻿#include "pch.h"
+#include "CWndBK.h"
 
 LRESULT CUIVolTrackBar::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {

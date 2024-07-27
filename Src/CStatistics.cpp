@@ -1,4 +1,5 @@
-﻿#include "CStatistics.h"
+﻿#include "pch.h"
+#include "CStatistics.h"
 
 int CStatistics::LoadDataBase(PCWSTR pszFileName)
 {

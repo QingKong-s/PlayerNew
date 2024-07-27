@@ -1,4 +1,5 @@
-﻿#include "CDlgFxChorus.h"
+﻿#include "pch.h"
+#include "CDlgFxChorus.h"
 
 void CDlgFxChorus::UpdateCtrl()
 {

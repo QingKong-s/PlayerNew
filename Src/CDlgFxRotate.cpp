@@ -1,4 +1,5 @@
-﻿#include "CDlgFxRotate.h"
+﻿#include "pch.h"
+#include "CDlgFxRotate.h"
 
 void CDlgFxRotate::UpdateCtrl()
 {

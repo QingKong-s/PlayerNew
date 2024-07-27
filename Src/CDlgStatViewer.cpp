@@ -1,4 +1,5 @@
-﻿#include "CDlgStatViewer.h"
+﻿#include "pch.h"
+#include "CDlgStatViewer.h"
 
 BOOL CDlgStatViewer::OnInitDialog(HWND hDlg, HWND hFocus, LPARAM lParam)
 {

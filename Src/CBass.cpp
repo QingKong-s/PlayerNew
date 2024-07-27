@@ -1,4 +1,4 @@
-﻿#include "CBass.h"
+﻿#include "pch.h"
 
 static const std::unordered_map<int, PCWSTR> c_BassErrorMap
 {

@@ -1,15 +1,18 @@
-﻿#include "CWndBK.h"
+﻿#include "pch.h"
+#include "CWndBK.h"
+#include "eck\ShellHelper.h"
 
 void CUILrc::ScrollProc(int iPos, int iPrevPos, LPARAM lParam)
 {
-	if (iPos == iPrevPos)
-		return;
-	auto p = (CUILrc*)lParam;
-
+	const auto p = (CUILrc*)lParam;
 	if (!p->m_AnEnlarge.IsEnd())
 		p->m_fAnValue = p->m_AnEnlarge.Tick((float)p->m_psv->GetCurrTickInterval());
 	else
+	{
 		p->m_bEnlarging = FALSE;
+		p->m_idxPrevAnItem = -1;
+		p->m_fAnValue = App->GetOptionsMgr().ScLrcCurrFontScale;
+	}
 
 	p->CalcTopItem();
 	p->InvalidateRect();
@@ -47,7 +50,7 @@ void CUILrc::ReCreateEmptyText()
 	pLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
 	pLayout->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);
 
-	ID2D1PathGeometry* pPathGeometry;
+	ID2D1PathGeometry1* pPathGeometry;
 	eck::GetTextLayoutPathGeometry(pLayout, m_pDC, 0.f, 0.f, pPathGeometry);
 	pLayout->Release();
 	float xDpi, yDpi;
@@ -318,7 +321,7 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		if (m_vItem.empty())
 			break;
-		BeginMouseIdleDetect();
+		Scrolled();
 		m_psv->OnMouseWheel2(-GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
 		GetWnd()->WakeRenderThread();
 	}
@@ -485,6 +488,8 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			switch (((Dui::DUINMHDR*)lParam)->uCode)
 			{
 			case Dui::EE_VSCROLL:
+				Scrolled();
+				m_psv->InterruptAnimation();
 				CalcTopItem();
 				InvalidateRect();
 				return TRUE;
@@ -548,10 +553,10 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		m_pDC->QueryInterface(&m_pDC1);
 
-		//m_pDC->CreateSolidColorBrush(eck::ColorrefToD2dColorF(eck::Colorref::Silver), &m_pBrTextNormal);
-		//m_pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_pBrTextHighlight);
-		m_pDC->CreateSolidColorBrush(eck::ColorrefToD2dColorF(eck::Colorref::Silver), &m_pBrTextHighlight);
-		m_pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_pBrTextNormal);
+		m_pDC->CreateSolidColorBrush(eck::ColorrefToD2dColorF(eck::Colorref::White), &m_pBrTextNormal);
+		m_pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_pBrTextHighlight);
+		//m_pDC->CreateSolidColorBrush(eck::ColorrefToD2dColorF(eck::Colorref::Silver), &m_pBrTextHighlight);
+		//m_pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_pBrTextNormal);
 		m_pDC->CreateSolidColorBrush({}, &m_pBrush);
 
 		m_psv = m_SB.GetScrollView();
@@ -602,7 +607,7 @@ void CUILrc::OnTimer(UINT uTimerID)
 				m_idxPrevAnItem = idxPrev;
 				m_idxCurrAnItem = m_idxPrevCurr;
 				m_AnEnlarge.Begin(1.f, fScale - 1.f, (float)m_psv->GetDuration());
-				const auto& CurrItem = m_vItem[m_idxPrevCurr];
+				const auto& CurrItem = m_vItem[m_idxPrevCurr < 0 ? 0 : m_idxPrevCurr];
 				float yDest = CurrItem.y + CurrItem.cy * fScale / 2.f;
 				GetWnd()->GetCriticalSection()->Leave();
 				m_psv->InterruptAnimation();
@@ -643,8 +648,13 @@ void CUILrc::OnTimer(UINT uTimerID)
 void CUILrc::ScrollToCurrPos()
 {
 	const auto fScale = App->GetOptionsMgr().ScLrcCurrFontScale;
-	m_bEnlarging = TRUE;
-	m_AnEnlarge.Begin(1.f, fScale - 1.f, 400);
+	if (m_idxPrevCurr != m_idxCurrAnItem && m_idxCurrAnItem >= 0)
+	{
+		m_idxPrevAnItem = m_idxCurrAnItem;
+		m_idxCurrAnItem = m_idxPrevCurr;
+		m_bEnlarging = TRUE;
+		m_AnEnlarge.Begin(1.f, fScale - 1.f, 400);
+	}
 	const auto& CurrItem = m_idxPrevCurr < 0 ? m_vItem.front() : m_vItem[m_idxPrevCurr];
 	float yDest = CurrItem.y + CurrItem.cy * fScale / 2.f;
 	m_psv->InterruptAnimation();
@@ -708,4 +718,12 @@ void CUILrc::LayoutItems()
 	m_psv->SetMin(int(-cy / 3.f - m_vItem.front().cy));
 	m_psv->SetMax(int(y - cyPadding + cy / 3.f * 2.f));
 	m_psv->SetPage((int)cy);
+}
+
+void CUILrc::Scrolled()
+{
+	BeginMouseIdleDetect();
+	m_bEnlarging = FALSE;
+	m_idxPrevAnItem = -1;
+	m_fAnValue = App->GetOptionsMgr().ScLrcCurrFontScale;
 }

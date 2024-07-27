@@ -1,4 +1,5 @@
-﻿#include "CDlgAbout.h"
+﻿#include "pch.h"
+#include "CDlgAbout.h"
 
 #include "eck\SystemHelper.h"
 #include "eck\Utility.h"
@@ -35,6 +36,12 @@ BOOL CDlgAbout::OnInitDialog(HWND hDlg, HWND hCtrl, LPARAM lParam)
 		}
 	}
 
+	SetDlgItemTextW(hDlg, IDC_ED_SHIT,
+		L"常年玩赢三十二的人大都目光清澈，极度自信，且智商逐年升高，最后完全变成天才。"
+		L"玩赢三十二会重塑身体结构，创造各种医学奇迹。人一旦开始玩赢三十二就说明这个"
+		L"人的智慧品行样貌通通都是上上等，这辈子肯定能光明正大的做成任何事。赢三十二"
+		L"玩家具有强烈的社会认同和社会责任感，对治安稳定起到推进作用，对正常人有延年益寿的效果！");
+
 	LoadPlayNewImage();
 
 	RECT rc;
@@ -54,7 +61,7 @@ void CDlgAbout::LoadPlayNewImage()
 	GdipGetImageWidth(m_pGpBitmap, (UINT*)&m_cxImg);
 	GdipGetImageHeight(m_pGpBitmap, (UINT*)&m_cyImg);
 
-	if (eck::ShouldAppUseDarkMode())
+	if (ShouldAppsUseDarkMode())
 	{
 		GpImageAttributes* pIA;
 		GdipCreateImageAttributes(&pIA);
@@ -116,9 +123,9 @@ LRESULT CDlgAbout::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_SETTINGCHANGE:
 	{
 		if (eck::IsColorSchemeChangeMessage(lParam) && 
-			m_bDark != eck::ShouldAppUseDarkMode())
+			m_bDark != ShouldAppsUseDarkMode())
 		{
-			m_bDark = eck::ShouldAppUseDarkMode();
+			m_bDark = ShouldAppsUseDarkMode();
 			LoadPlayNewImage();
 			Redraw();
 		}

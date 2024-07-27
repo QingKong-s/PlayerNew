@@ -1,4 +1,5 @@
-﻿#include "CDlgFxEQ.h"
+﻿#include "pch.h"
+#include "CDlgFxEQ.h"
 
 void CDlgFxEQ::UpdateCtrl()
 {

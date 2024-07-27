@@ -1,1 +1,2 @@
-﻿#include "CWndGenSharePic.h"
+﻿#include "pch.h"
+#include "CWndGenSharePic.h"

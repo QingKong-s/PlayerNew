@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "CDlgMusicInfo.h"
 
 void CDlgMiPicture::UpdatePic()

@@ -1,4 +1,5 @@
-﻿#include "CWndBK.h"
+﻿#include "pch.h"
+#include "CWndBK.h"
 
 LRESULT CUIAlbumRotating::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {

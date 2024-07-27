@@ -193,6 +193,9 @@
     <ClInclude Include="CDlgMusicInfo.h">
       <Filter>对话框\文件信息</Filter>
     </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>程序</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CDlgBookmark.cpp">
@@ -365,6 +368,9 @@
     </ClCompile>
     <ClCompile Include="MyEck.cpp">
       <Filter>eck</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>程序</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

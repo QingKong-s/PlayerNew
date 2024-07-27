@@ -1,4 +1,5 @@
-﻿#include "CWndBK.h"
+﻿#include "pch.h"
+#include "CWndBK.h"
 #include "CWndMain.h"
 #include "CDlgAbout.h"
 #include "CDlgOptions.h"
@@ -359,8 +360,14 @@ void CWndBK::UpdateStaticBmp()
 		pWICBitmapOrg = App->GetWicRes()[IIDX_DefCover];
 	////////////////////绘制静态位图
 	const auto pDC = GetD2D().GetDC();
-	pDC->BeginDraw();
+	ID2D1Image* pOldTarget = NULL;
+	pDC->GetTarget(&pOldTarget);
 	pDC->SetTarget(m_pBmpBKStatic);
+	D2D1_MATRIX_3X2_F Mat;
+	pDC->GetTransform(&Mat);
+	pDC->SetTransform(D2D1::Matrix3x2F::Identity());
+	pDC->BeginDraw();
+	
 	pDC->Clear(D2D1::ColorF(D2D1::ColorF::White));
 
 	UINT cx0, cy0;
@@ -416,9 +423,11 @@ void CWndBK::UpdateStaticBmp()
 		pDC->FillRectangle(m_rcfClient, m_pBrWhite2);
 	}
 
+	pDC->SetTransform(&Mat);
 	pDC->EndDraw();
-	pDC->SetTarget(GetD2D().GetBitmap());
-
+	pDC->SetTarget(pOldTarget);
+	if (pOldTarget)
+		pOldTarget->Release();
 	SetBkgBitmap(m_pBmpBKStatic);
 }
 

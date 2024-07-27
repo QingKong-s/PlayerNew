@@ -1,4 +1,5 @@
-﻿#include "CDlgFxGargle.h"
+﻿#include "pch.h"
+#include "CDlgFxGargle.h"
 
 void CDlgFxGargle::UpdateCtrl()
 {

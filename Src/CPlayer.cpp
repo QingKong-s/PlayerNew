@@ -1,8 +1,5 @@
-﻿#include "CPlayer.h"
-#include "CApp.h"
-#include "COptionsMgr.h"
-#include "CWndBK.h"
-#include "CWndMain.h"
+﻿#include "pch.h"
+
 #include "CDlgProgress.h"
 
 HRESULT CPlayer::CreateWicBmpCover()

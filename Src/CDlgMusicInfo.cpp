@@ -1,4 +1,5 @@
-﻿#include "CDlgMusicInfo.h"
+﻿#include "pch.h"
+#include "CDlgMusicInfo.h"
 
 BOOL CDlgMusicInfo::OnInitDialog(HWND hDlg, HWND hFocus, LPARAM lParam)
 {

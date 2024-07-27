@@ -236,7 +236,7 @@ struct LRCINFO
 	LRCINFO(const LRCINFO& li)
 	{
 		memcpy(this, &li, sizeof(LRCINFO));
-		pszLrc = (PWSTR)malloc(eck::Cch2Cb(cchTotal));
+		pszLrc = (PWSTR)malloc(eck::Cch2CbW(cchTotal));
         EckAssert(pszLrc);
         pszTranslation = pszLrc + cchLrc;
         wcscpy(pszLrc, li.pszLrc);
@@ -252,7 +252,7 @@ struct LRCINFO
     {
         free(pszLrc);
 		memcpy(this, &li, sizeof(LRCINFO));
-        pszLrc = (PWSTR)malloc(eck::Cch2Cb(cchTotal));
+        pszLrc = (PWSTR)malloc(eck::Cch2CbW(cchTotal));
         EckAssert(pszLrc);
 		pszTranslation = pszLrc + cchLrc;
 		wcscpy(pszLrc, li.pszLrc);

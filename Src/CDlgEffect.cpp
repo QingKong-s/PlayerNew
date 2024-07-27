@@ -1,4 +1,5 @@
-﻿#include "CDlgEffect.h"
+﻿#include "pch.h"
+#include "CDlgEffect.h"
 
 void CDlgEffect::UpdateDpi(int iDpi)
 {

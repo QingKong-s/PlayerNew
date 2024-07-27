@@ -1,4 +1,5 @@
-﻿#include "CWndMain.h"
+﻿#include "pch.h"
+#include "CWndMain.h"
 
 LRESULT CUISpe::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {

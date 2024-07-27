@@ -1,2 +1,2 @@
-#include "eck\PchInc.h"
+#include "pch.h"
 #include "eck\ECK.cpp"

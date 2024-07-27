@@ -1,4 +1,5 @@
-﻿#include "CWndLrc.h"
+﻿#include "pch.h"
+#include "CWndLrc.h"
 
 #include "COptionsMgr.h"
 #include "CWndMain.h"
@@ -171,7 +172,7 @@ float CWndLrc::DrawLrcLine(int idxLrc, float y, BOOL bSecondLine)
 			ReCreateBrush(tm.height, 0.f, bHiLight, &Cache.pBr, NULL);
 		}
 		//-----------重建几何实现
-		ID2D1PathGeometry* pPath;
+		ID2D1PathGeometry1* pPath;
 		eck::GetTextLayoutPathGeometry(Cache.pLayout, m_pRT, 0, 0, pPath);
 		SafeRelease(Cache.pGrF);
 		SafeRelease(Cache.pGrS);
@@ -204,7 +205,7 @@ float CWndLrc::DrawLrcLine(int idxLrc, float y, BOOL bSecondLine)
 				ReCreateBrush(0.f, tm.height, bHiLight, NULL, &Cache.pBrTrans);
 			}
 			//-----------重建几何实现
-			ID2D1PathGeometry* pPath;
+			ID2D1PathGeometry1* pPath;
 			eck::GetTextLayoutPathGeometry(Cache.pLayoutTrans, m_pRT, 0, 0, pPath);
 
 			SafeRelease(Cache.pGrFTrans);
@@ -334,7 +335,7 @@ void CWndLrc::DrawStaticLine(int idxFake, float y)
 			ReCreateBrush(tm.height, 0.f, FALSE, &Cache.pBr, NULL);
 		}
 		//-----------重建几何实现
-		ID2D1PathGeometry* pPath;
+		ID2D1PathGeometry1* pPath;
 		eck::GetTextLayoutPathGeometry(Cache.pLayout, m_pRT, 0, 0, pPath);
 		SafeRelease(Cache.pGrF);
 		SafeRelease(Cache.pGrS);

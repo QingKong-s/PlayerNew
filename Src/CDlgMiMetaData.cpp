@@ -1,4 +1,5 @@
-﻿#include "CDlgMusicInfo.h"
+﻿#include "pch.h"
+#include "CDlgMusicInfo.h"
 
 void CDlgMiMetaData::UpdateDpi(int iDpi)
 {

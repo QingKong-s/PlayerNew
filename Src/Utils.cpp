@@ -1,4 +1,5 @@
-﻿#include "Utils.h"
+﻿#include "pch.h"
+#include "Utils.h"
 
 #include "eck\CRefBinStream.h"
 #include "eck\CCommDlg.h"
@@ -704,7 +705,7 @@ void ParseLrc_ProcTimeLabel(std::vector<LRCINFO>& Result, std::vector<LRCLABEL>&
 		const auto cchReal = int(pos.second - pos.first);
 		if (cchReal)
 		{
-			const auto pTemp = (PWSTR)malloc(eck::Cch2Cb(cchReal));
+			const auto pTemp = (PWSTR)malloc(eck::Cch2CbW(cchReal));
 			EckCheckMem(pTemp);
 			Result.emplace_back(pTemp, nullptr, cchReal, cchReal, fTime, 0.f);
 			wcsncpy(pTemp, pos.first, cchReal);
@@ -823,7 +824,7 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 	else if (memcmp(pFileData, eck::BOM_UTF16BE, 2) == 0)
 	{
 		--cchFile;
-		pszOrg = (PWSTR)VirtualAlloc(NULL, eck::Cch2Cb(cchFile), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+		pszOrg = (PWSTR)VirtualAlloc(NULL, eck::Cch2CbW(cchFile), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 		LCMapStringEx(LOCALE_NAME_USER_DEFAULT, LCMAP_BYTEREV,
 			(PCWSTR)pFileData + 1, cchFile, pszOrg, cchFile, NULL, NULL, 0);// 反转字节序
 		VirtualFree(pFileData, 0, MEM_RELEASE);
@@ -832,7 +833,7 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 	else if (memcmp(pFileData, eck::BOM_UTF8, 3) == 0)
 	{
 		int cchBuf = MultiByteToWideChar(CP_UTF8, 0, (CHAR*)pFileData + 3, -1, NULL, 0);
-		pszOrg = (PWSTR)VirtualAlloc(NULL, eck::Cch2Cb(cchBuf), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+		pszOrg = (PWSTR)VirtualAlloc(NULL, eck::Cch2CbW(cchBuf), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 		MultiByteToWideChar(CP_UTF8, 0, (CHAR*)pFileData + 3, -1, pszOrg, cchBuf);// 转换编码
 		VirtualFree(pFileData, 0, MEM_RELEASE);
 		pFileData = (BYTE*)pszOrg;
@@ -863,7 +864,7 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 		{
 		GetLrc_GB2312:
 			int cchBuf = MultiByteToWideChar(936, 0, (CHAR*)pFileData, -1, NULL, 0);
-			pszOrg = (PWSTR)VirtualAlloc(NULL, eck::Cch2Cb(cchBuf), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+			pszOrg = (PWSTR)VirtualAlloc(NULL, eck::Cch2CbW(cchBuf), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 			MultiByteToWideChar(936, 0, (CHAR*)pFileData, -1, pszOrg, cchBuf);// 转换编码
 			VirtualFree(pFileData, 0, MEM_RELEASE);
 			pFileData = (BYTE*)pszOrg;
@@ -874,7 +875,7 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 		{
 		GetLrc_UTF8:
 			int cchBuf = MultiByteToWideChar(CP_UTF8, 0, (CHAR*)pFileData, -1, NULL, 0);
-			pszOrg = (PWSTR)VirtualAlloc(NULL, eck::Cch2Cb(cchBuf), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+			pszOrg = (PWSTR)VirtualAlloc(NULL, eck::Cch2CbW(cchBuf), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 			MultiByteToWideChar(CP_UTF8, 0, (CHAR*)pFileData, -1, pszOrg, cchBuf);// 转换编码
 			VirtualFree(pFileData, 0, MEM_RELEASE);
 			pFileData = (BYTE*)pszOrg;
@@ -1186,7 +1187,7 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 					if (cch1)
 					{
 #pragma warning (suppress: 6308)// realloc为NULL
-						TopItem.pszLrc = (PWSTR)realloc(TopItem.pszLrc, eck::Cch2Cb(cch1 + cch2 + 1));
+						TopItem.pszLrc = (PWSTR)realloc(TopItem.pszLrc, eck::Cch2CbW(cch1 + cch2 + 1));
 						EckCheckMem(TopItem.pszLrc);
 						*(TopItem.pszLrc + cch1) = L'\n';
 						wmemcpy(TopItem.pszLrc + cch1 + 1, e.pszLrc, e.cchTotal + 1);
@@ -1221,7 +1222,7 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 
 			if (!e.pszLrc)
 			{
-				e.pszLrc = (PWSTR)malloc(eck::Cch2Cb(0));
+				e.pszLrc = (PWSTR)malloc(eck::Cch2CbW(0));
 #pragma warning (suppress: 6011)// 解引用NULL
 				* e.pszLrc = L'\0';
 			}
@@ -1230,7 +1231,7 @@ BOOL ParseLrc(PCVOID p, SIZE_T cbMem, std::vector<LRCINFO>& Result, std::vector<
 		f.fDuration = fTotalTime - Result.back().fTime;
 		if (!f.pszLrc)
 		{
-			f.pszLrc = (PWSTR)malloc(eck::Cch2Cb(0));
+			f.pszLrc = (PWSTR)malloc(eck::Cch2CbW(0));
 #pragma warning (suppress: 6011)// 解引用NULL
 			* f.pszLrc = L'\0';
 		}

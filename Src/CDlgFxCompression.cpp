@@ -1,4 +1,5 @@
-﻿#include "CDlgFxCompression.h"
+﻿#include "pch.h"
+#include "CDlgFxCompression.h"
 
 void CDlgFxCompression::UpdateCtrl()
 {

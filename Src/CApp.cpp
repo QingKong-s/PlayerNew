@@ -1,5 +1,4 @@
-﻿#include "CApp.h"
-#include "eck\ImageHelper.h"
+﻿#include "pch.h"
 
 CApp* App;
 

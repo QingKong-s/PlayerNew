@@ -1,4 +1,5 @@
-﻿#include "CDlgListFile.h"
+﻿#include "pch.h"
+#include "CDlgListFile.h"
 
 BOOL CDlgListFile::OnInitDialog(HWND hDlg, HWND hFocus, LPARAM lParam)
 {
