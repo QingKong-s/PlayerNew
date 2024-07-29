@@ -459,7 +459,8 @@ BOOL CWndMain::OnCreate(HWND hWnd, CREATESTRUCTW* pcs)
 	GetClientRect(hWnd, &rc);
 	m_cxList = rc.right * 37 / 100;
 
-	m_BK.Create(NULL, WS_CHILD, WS_EX_NOREDIRECTIONBITMAP, 0, 0, 8, 8, hWnd, IDC_BK);
+	m_BK.SetPresentMode(eck::Dui::PresentMode::DCompositionSurface);
+	m_BK.Create(NULL, WS_CHILD, 0, 0, 0, 8, 8, hWnd, IDC_BK);
 	m_List.Create(L"列表", WS_CHILD | WS_CLIPCHILDREN, 0, 0, 0, 0, 0, hWnd, IDC_LIST);
 	m_SPB.Create(NULL, WS_CHILD, 0, 0, 0, 0, 0, hWnd, IDC_SPB);
 

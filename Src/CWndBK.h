@@ -13,8 +13,6 @@
 
 #include <thread>
 
-constexpr inline auto WCN_MAINBK = L"PlayerNew.WndClass.MainBK";
-
 constexpr inline D2D1_COLOR_F c_D2DClrCyanDeeper{ 0.f,0.3764f,0.7529f,1.f };
 constexpr inline D2D1_COLOR_F c_D2DCrUIProgBarTempMark{ 0.0f,0.502f,1.0f,1.0f };
 
@@ -213,19 +211,9 @@ public:
 		IDT_PGS = 101,
 	};
 
-	static ATOM RegisterWndClass();
-
 	LRESULT OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 
 	LRESULT OnElemEvent(Dui::CElem* pElem, UINT uMsg, WPARAM wParam, LPARAM lParam) override;
-
-	ECK_CWND_CREATE;
-	HWND Create(PCWSTR pszText, DWORD dwStyle, DWORD dwExStyle,
-		int x, int y, int cx, int cy, HWND hParent, HMENU hMenu, PCVOID pData = NULL) override
-	{
-		return IntCreate(dwExStyle, WCN_MAINBK, pszText, dwStyle,
-			x, y, cx, cy, hParent, hMenu, App->GetHInstance(), NULL);
-	}
 
 	/// <summary>
 	/// 播放控制操作已发生
@@ -305,6 +293,8 @@ class CUIAlbum final :public CUIElem
 {
 public:
 	LRESULT OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
+
+	LRESULT OnComposite() override;
 };
 
 // 旋转封面

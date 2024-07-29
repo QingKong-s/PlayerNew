@@ -101,7 +101,7 @@ void CWndBK::SetupElem()
 			//m_vLayout.push_back(pLoAlbumSpe);
 
 			const auto palbum = new CUIAlbum{};
-			palbum->Create(NULL, Dui::DES_VISIBLE, 0,
+			palbum->Create(NULL, Dui::DES_VISIBLE | Dui::DES_COMPOSITED, 0,
 				10, 10, 400, 500, NULL, this);
 			m_vAllElems.push_back(palbum);
 			//pLoAlbumSpe->Add(palbum, {}, eck::LLF_FIXHEIGHT | eck::LLF_FIXWIDTH);
@@ -239,18 +239,6 @@ LRESULT CWndBK::OnElemEvent(Dui::CElem* pElem, UINT uMsg, WPARAM wParam, LPARAM 
 	return 0;
 	}
 	return __super::OnElemEvent(pElem, uMsg, wParam, lParam);
-}
-
-ATOM CWndBK::RegisterWndClass()
-{
-	WNDCLASSEX wcex{ sizeof(WNDCLASSEX) };
-	wcex.style = CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc = DefWindowProcW;
-	wcex.hInstance = App->GetHInstance();
-	wcex.hCursor = LoadCursorW(NULL, IDC_ARROW);
-	wcex.lpszClassName = WCN_MAINBK;
-	wcex.cbWndExtra = sizeof(void*);
-	return RegisterClassExW(&wcex);
 }
 
 LRESULT CWndBK::OnMsg(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
