@@ -13,6 +13,8 @@ LRESULT CUIAlbum::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         const auto pBk = (CWndBK*)GetWnd();
 
+        if (GetStyle() & Dui::DES_COMPOSITED)
+            m_pDC->Clear({});
         if (!pBk->m_pBmpAlbum)
         {
             BkDbg_DrawElemFrame();
@@ -44,8 +46,6 @@ LRESULT CUIAlbum::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
             rcF.bottom = rcF.top + (FLOAT)f;
         }
 
-        if (GetStyle() & Dui::DES_COMPOSITED)
-            m_pDC->Clear({});
         m_pDC->DrawBitmap(pBk->m_pBmpAlbum, &rcF);
 
         BkDbg_DrawElemFrame();
@@ -67,14 +67,8 @@ LRESULT CUIAlbum::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
     return __super::OnEvent(uMsg, wParam, lParam);
 }
 
-LRESULT CUIAlbum::OnComposite()
+LRESULT CUIAlbum::OnComposite(const RECT& rcClip, float ox, float oy)
 {
-    //m_pDC->DrawBitmap(m_pBitmapComp);
-    //ID2D1SolidColorBrush* pBrush;
-    //m_pDC->CreateSolidColorBrush(D2D1::ColorF(0.0f, 0.0f, 0.0f, 0.1f), &pBrush);
-    //m_pDC->FillRectangle({ -10 * 6 / 2, -10 * 6 / 2, GetWidthF() + 10 * 6 / 2,GetWidthF() + 10 * 6 / 2 }, pBrush);
-    //pBrush->Release();
-
     ID2D1Effect* pFx;
     m_pDC->CreateEffect(CLSID_D2D1Shadow, &pFx);
     pFx->SetInput(0, m_pBitmapComp);
@@ -83,38 +77,7 @@ LRESULT CUIAlbum::OnComposite()
     m_pDC->DrawImage(pFx);
     pFx->Release();
 
-    const auto pBk = (CWndBK*)GetWnd();
-
-    if (!pBk->m_pBmpAlbum)
-    {
-        BkDbg_DrawElemFrame();
-        return 0;
-    }
-
-    float f;
-    const int cx0 = pBk->m_cxAlbum, cy0 = pBk->m_cyAlbum;
-    D2D1_RECT_F rcF;
-
-    const float cxElem = GetViewWidthF();
-    const float cyElem = GetViewHeightF();
-
-    if ((float)cxElem / (float)cyElem > (float)cx0 / (float)cy0)// y对齐
-    {
-        f = cx0 * cyElem / cy0;
-        rcF.left = (cxElem - f) / 2;
-        rcF.right = rcF.left + f;
-        rcF.top = 0;
-        rcF.bottom = rcF.top + cyElem;
-    }
-    else// x对齐
-    {
-        f = cxElem * cy0 / cx0;
-        rcF.left = 0;
-        rcF.right = rcF.left + cxElem;
-        rcF.top = (cyElem - f) / 2;
-        rcF.bottom = rcF.top + (FLOAT)f;
-    }
-
-    m_pDC->DrawBitmap(pBk->m_pBmpAlbum, &rcF);
+    const D2D1_RECT_F rcF{ ox,oy,ox + GetWidthF(),oy + GetHeightF() };
+    m_pDC->DrawBitmap(m_pBitmapComp, &rcF);
     return 0;
 }

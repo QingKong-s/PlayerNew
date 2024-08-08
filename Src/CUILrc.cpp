@@ -253,7 +253,6 @@ void CUILrc::GetItemRect(int idx, RECT& rc)
 
 LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	ECK_DUILOCK;
 	switch (uMsg)
 	{
 	case WM_PAINT:
@@ -292,6 +291,7 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		int idx = HitTest(pt);
 		if (idx != m_idxHot)
 		{
+			ECK_DUILOCK;
 			std::swap(idx, m_idxHot);
 			SetRedraw(FALSE);
 			if (idx >= 0)
@@ -310,6 +310,7 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		int idx = -1;
 		if (idx != m_idxHot)
 		{
+			ECK_DUILOCK;
 			std::swap(idx, m_idxHot);
 			if (idx >= 0)
 				InvalidateItem(idx);
@@ -321,6 +322,7 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		if (m_vItem.empty())
 			break;
+		ECK_DUILOCK;
 		Scrolled();
 		m_psv->OnMouseWheel2(-GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
 		GetWnd()->WakeRenderThread();
@@ -329,6 +331,7 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_LBUTTONDOWN:
 	{
+		ECK_DUILOCK;
 		SetFocus();
 		if (m_vItem.empty())
 			break;
@@ -418,8 +421,8 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			m_idxMark = idx;
 
 		}
-
 		const int iID = m_Menu.TrackPopupMenu(GetWnd()->HWnd, ptSrc.x, ptSrc.y, TPM_RETURNCMD | TPM_NONOTIFY);
+		m_bCtxMenuOpen = FALSE;
 		switch (iID)
 		{
 		case IDMI_PLAY_FROM_THIS:
@@ -456,8 +459,6 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 		}
-
-		m_bCtxMenuOpen = FALSE;
 	}
 	return 0;
 
@@ -488,6 +489,7 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			switch (((Dui::DUINMHDR*)lParam)->uCode)
 			{
 			case Dui::EE_VSCROLL:
+				ECK_DUILOCK;
 				Scrolled();
 				m_psv->InterruptAnimation();
 				CalcTopItem();
@@ -500,6 +502,7 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_SIZE:
 	{
+		ECK_DUILOCK;
 		LayoutItems();
 		RECT rc;
 		rc.left = GetViewWidth() - m_SB.GetViewWidth();
@@ -512,6 +515,7 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case UIEE_ONPLAYINGCTRL:
 	{
+		ECK_DUILOCK;
 		if (wParam == PCT_PLAYNEW)
 		{
 			if (App->GetPlayer().GetLrc().empty())
@@ -533,6 +537,7 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case UIEE_ONSETTINGSCHANGE:
 	{
+		ECK_DUILOCK;
 		ReCreateTextFormat();
 		if (!App->GetPlayer().GetLrc().empty() && GetViewWidth() > 0 && GetViewHeight() > 0)
 		{
@@ -555,8 +560,6 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		m_pDC->CreateSolidColorBrush(eck::ColorrefToD2dColorF(eck::Colorref::White), &m_pBrTextNormal);
 		m_pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_pBrTextHighlight);
-		//m_pDC->CreateSolidColorBrush(eck::ColorrefToD2dColorF(eck::Colorref::Silver), &m_pBrTextHighlight);
-		//m_pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_pBrTextNormal);
 		m_pDC->CreateSolidColorBrush({}, &m_pBrush);
 
 		m_psv = m_SB.GetScrollView();
@@ -567,10 +570,39 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		GetBk()->RegisterTimerElem(this);
 	}
-	break;
+	[[fallthrough]];
+	case Dui::WM_COLORSCHEMECHANGED:
+	{
+		Dui::CColorTheme* pct;
+		if (wParam)
+			pct = new Dui::CColorTheme(Dui::COLORTHEME
+				{
+					.crTextNormal = D2D1::ColorF(D2D1::ColorF::Silver),
+					.crTextSelected = D2D1::ColorF(D2D1::ColorF::White),
+					.crBkHot = D2D1::ColorF(D2D1::ColorF::Black),
+					.crBkSelected = D2D1::ColorF(D2D1::ColorF::Gray),
+					.crBkHotSel = D2D1::ColorF(D2D1::ColorF::Black)
+				});
+		else
+			pct = new Dui::CColorTheme(Dui::COLORTHEME
+				{
+					.crTextNormal = D2D1::ColorF(D2D1::ColorF::Gray),
+					.crTextSelected = D2D1::ColorF(D2D1::ColorF::Black),
+					.crBkHot = D2D1::ColorF(D2D1::ColorF::Silver, 0.5f),
+					.crBkSelected = D2D1::ColorF(D2D1::ColorF::Silver, 0.8f),
+					.crBkHotSel = D2D1::ColorF(D2D1::ColorF::Silver)
+				});
+		ECK_DUILOCK;
+		m_pBrTextNormal->SetColor(pct->Get().crTextNormal);
+		m_pBrTextHighlight->SetColor(pct->Get().crTextSelected);
+		SetColorTheme(pct);
+		pct->DeRef();
+	}
+	return 0;
 
 	case WM_DESTROY:
 	{
+		ECK_DUILOCK;
 		SafeRelease(m_pBrTextNormal);
 		SafeRelease(m_pBrTextHighlight);
 		SafeRelease(m_pBrush);
@@ -582,7 +614,7 @@ LRESULT CUILrc::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 	break;
 	}
-	return FALSE;
+	return __super::OnEvent(uMsg, wParam, lParam);
 }
 
 void CUILrc::OnTimer(UINT uTimerID)

@@ -2,6 +2,10 @@
 #include "eck\PchInc.h"
 #include "eck\ShellHelper.h"
 #include "eck\ImageHelper.h"
+#include "eck\MediaTag.h"
+#include "eck\MediaTagFlac.h"
+#include "eck\MediaTagID3v1.h"
+#include "eck\MediaTagID3v2.h"
 
 #include <d2d1_2.h>
 

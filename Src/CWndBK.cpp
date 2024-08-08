@@ -101,7 +101,7 @@ void CWndBK::SetupElem()
 			//m_vLayout.push_back(pLoAlbumSpe);
 
 			const auto palbum = new CUIAlbum{};
-			palbum->Create(NULL, Dui::DES_VISIBLE | Dui::DES_COMPOSITED, 0,
+			palbum->Create(NULL, Dui::DES_VISIBLE/* | Dui::DES_COMPOSITED*/, 0,
 				10, 10, 400, 500, NULL, this);
 			m_vAllElems.push_back(palbum);
 			//pLoAlbumSpe->Add(palbum, {}, eck::LLF_FIXHEIGHT | eck::LLF_FIXWIDTH);
@@ -139,6 +139,64 @@ void CWndBK::SetupElem()
 		70, 800, 800, 80, NULL, this);
 	m_vAllElems.push_back(ppc);
 	pLayout->Add(ppc, {}, eck::LLF_FIXHEIGHT | eck::LLF_FILLWIDTH);
+
+	const auto pgl = new CUIGroupList{};
+	pgl->Create(NULL, Dui::DES_VISIBLE | Dui::DES_TRANSPARENT, 0,
+		0, 0, 800, 900, NULL, this);
+	pgl->SetItemHeight(50);
+	WIN32_FIND_DATAW wfd;
+	HANDLE hFind = FindFirstFileW(LR"(D:\@重要文件\@音乐\*.mp3)", &wfd);
+	int i{};
+	do
+	{
+		if (m_vTest.size() > 30)
+			break;
+
+		if (++i < 700)
+			continue;
+		using namespace eck::MediaTag;
+		auto& e = m_vTest.emplace_back();
+		e.rs = wfd.cFileName;
+
+		CMediaFile mf((LR"(D:\@重要文件\@音乐\)"_rs + wfd.cFileName).Data(), STGM_READ);
+		mf.DetectTag();
+		CID3v2 id3(mf);
+		id3.ReadTag(0);
+		MUSICINFO mi{ .uMask = MIM_ALL,.uFlag = MIF_JOIN_ARTIST };
+		id3.SimpleExtract(mi);
+		if (auto pc = mi.GetMainCover())
+		{
+			const auto pStream = new eck::CStreamView(std::get<0>(pc->varPic));
+			IWICBitmap* pB;
+			eck::CreateWicBitmap(pB, pStream);
+			GetD2D().GetDC()->CreateBitmapFromWicBitmap(pB, &e.pBmp);
+			pB->Release();
+			pStream->LeaveRelease();
+		}
+
+		if (!mi.rsTitle.IsEmpty())
+			e.v.emplace_back(mi.rsTitle);
+		if (mi.Artist.index() == 1)
+			e.v.emplace_back(mi.GetArtistStr());
+		if (!mi.rsAlbum.IsEmpty())
+			e.v.emplace_back(mi.rsAlbum);
+
+		if(e.v.empty())
+			e.v.emplace_back(wfd.cFileName);
+	} while (FindNextFileW(hFind, &wfd));
+
+
+
+	pgl->SetGroupCount((int)m_vTest.size());
+	EckCounter((int)m_vTest.size(), i)
+	{
+		pgl->SetGroupItemCount(i, (int)m_vTest[i].v.size());
+	}
+	pgl->ReCalc(0);
+	m_vAllElems.push_back(pgl);
+
+	//pLayout->Add(pgl, { 0,0,0,margin2 }, eck::LLF_FILLWIDTH | eck::LLF_FILLHEIGHT, 1);
+
 	m_pLayout = pLayout;
 }
 
@@ -158,18 +216,21 @@ LRESULT CWndBK::OnElemEvent(Dui::CElem* pElem, UINT uMsg, WPARAM wParam, LPARAM 
 		break;
 		case IDE_BT_PLAYOPT:
 		{
-			//if (m_pVolCtrl)
-			//	break;
-			//RECT rc = pElem->GetRect();
-			//pElem->GetParentElem()->ElemToClient(rc);
+			if (m_pVolCtrl)
+			{
+				m_pVolCtrl->Destroy();
+				delete m_pVolCtrl;
+			}
+			RECT rc = pElem->GetRect();
+			pElem->GetParentElem()->ElemToClient(rc);
 
-			//auto pVol = new CUIVolTrackBar{};
-			//m_pVolCtrl = pVol;
-			//pVol->Create(NULL, Dui::DES_VISIBLE, 0,
-			//	rc.left - 40, rc.top - 200, 400, 100, NULL, this);
-			//pVol = 0;
-			if (!m_DlgFx.IsValid())
-				m_DlgFx.CreateDlg(HWnd, NULL);
+			m_pVolCtrl = new CUIVolTrackBar{};
+			m_pVolCtrl->Create(NULL, Dui::DES_VISIBLE | Dui::DES_COMPOSITED, 0,
+				rc.left - 40, rc.top - 200, 400, 100, NULL, this);
+			m_pVolCtrl->InvalidateRect();
+
+			/*if (!m_DlgFx.IsValid())
+				m_DlgFx.CreateDlg(HWnd, NULL);*/
 		}
 		break;
 		case IDE_BT_REPEATMODE:
@@ -217,7 +278,8 @@ LRESULT CWndBK::OnElemEvent(Dui::CElem* pElem, UINT uMsg, WPARAM wParam, LPARAM 
 		break;
 		}
 	}
-	return 0;
+	return 1;
+
 	case Dui::TBE_POSCHANGED:
 	{
 		switch (pElem->GetID())
@@ -236,7 +298,26 @@ LRESULT CWndBK::OnElemEvent(Dui::CElem* pElem, UINT uMsg, WPARAM wParam, LPARAM 
 		return 0;
 		}
 	}
-	return 0;
+	return 1;
+
+	case UIN_GROUPLIST_GETDISPINFO:
+	{
+		const auto pdi = (SLGETDISPINFO*)lParam;
+		if (pdi->bItem)
+		{
+			const auto& e = m_vTest[pdi->Item.idxGroup].v[pdi->Item.idxItem];
+			pdi->Item.pszText = e.Data();
+			pdi->Item.cchText = e.Size();
+		}
+		else
+		{
+			const auto& e = m_vTest[pdi->Group.idxItem];
+			pdi->Group.pszText = e.rs.Data();
+			pdi->Group.cchText = e.rs.Size();
+			pdi->Group.pBmp = e.pBmp;
+		}
+	}
+	return 1;
 	}
 	return __super::OnElemEvent(pElem, uMsg, wParam, lParam);
 }

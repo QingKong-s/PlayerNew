@@ -372,6 +372,9 @@
     <ClCompile Include="pch.cpp">
       <Filter>程序</Filter>
     </ClCompile>
+    <ClCompile Include="CUIGroupList.cpp">
+      <Filter>视觉对象</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PlayerNew.rc">

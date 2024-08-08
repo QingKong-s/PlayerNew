@@ -400,6 +400,7 @@
     <ClCompile Include="CDlgStatViewer.cpp" />
     <ClCompile Include="CEffectMgr.cpp" />
     <ClCompile Include="CStatistics.cpp" />
+    <ClCompile Include="CUIGroupList.cpp" />
     <ClCompile Include="CWndGenSharePic.cpp" />
     <ClCompile Include="CLVPlay.cpp" />
     <ClCompile Include="COptionsMgr.cpp" />

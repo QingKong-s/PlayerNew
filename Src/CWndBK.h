@@ -21,6 +21,12 @@ namespace Dui
 	using namespace eck::Dui;
 }
 
+enum
+{
+	UIN_BEGIN = Dui::EE_PRIVATE_BEGIN,
+	UIN_GROUPLIST_GETDISPINFO,
+};
+
 // UI元素类型
 enum UIELEMTYPE
 {
@@ -107,7 +113,8 @@ enum CUIBTNNOTIFY
 	friend class CUIInfo; \
 	friend class CUIButton; \
 	friend class CUIRoundButton; \
-	friend class CUIPlayingCtrl;
+	friend class CUIPlayingCtrl; \
+	friend class CUIVolTrackBar;
 
 constexpr UINT WM_BK_LRCANIMATION = eck::WM_USER_SAFE;
 
@@ -140,6 +147,17 @@ private:
 
 	std::vector<eck::ILayout*> m_vLayout{};
 	eck::ILayout* m_pLayout = NULL;
+
+	CUIVolTrackBar* m_pVolCtrl{};
+
+	struct TEST
+	{
+		eck::CRefStrW rs;
+		ID2D1Bitmap1* pBmp;
+		std::vector<eck::CRefStrW> v;
+	};
+
+	std::vector<TEST> m_vTest{};
 
 	enum
 	{
@@ -294,7 +312,7 @@ class CUIAlbum final :public CUIElem
 public:
 	LRESULT OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 
-	LRESULT OnComposite() override;
+	LRESULT OnComposite(const RECT& rcClip, float ox, float oy) override;
 };
 
 // 旋转封面
@@ -572,18 +590,15 @@ private:
 
 	PNInline void FillItemBkg(int idx, const D2D1_RECT_F& rc)
 	{
-		constexpr D2D1_COLOR_F crHot{ eck::ColorrefToD2dColorF(eck::Colorref::Silver,0.5f) };
-		constexpr D2D1_COLOR_F crSel{ eck::ColorrefToD2dColorF(eck::Colorref::Gray,0.6f) };
-		constexpr D2D1_COLOR_F crHotSel{ eck::ColorrefToD2dColorF(eck::Colorref::Gray,0.8f) };
-
+		const auto& cr = GetColorTheme()->Get();
 		if (m_vItem[idx].bSel)
 			if (idx == m_idxHot)
-				m_pBrush->SetColor(crHotSel);
+				m_pBrush->SetColor(cr.crBkHotSel);
 			else
-				m_pBrush->SetColor(crSel);
+				m_pBrush->SetColor(cr.crBkSelected);
 		else
 			if (idx == m_idxHot)
-				m_pBrush->SetColor(crHot);
+				m_pBrush->SetColor(cr.crBkHot);
 			else
 				return;
 		m_pDC->FillRectangle(rc, m_pBrush);
@@ -661,7 +676,10 @@ class CUIVolTrackBar final :public CUIElem
 	friend class CUIPlayingCtrl;
 private:
 	Dui::CTrackBar m_TrackBar{};
-	ID2D1SolidColorBrush* m_pBrush = NULL;
+	ID2D1SolidColorBrush* m_pBrush{};
+
+	eck::CEasingCurve* m_pec{};
+	int m_yBegin{};
 public:
 	BOOL Create(PCWSTR pszText, DWORD dwStyle, DWORD dwExStyle,
 		int x, int y, int cx, int cy, CElem* pParent, Dui::CDuiWnd* pWnd, int iId = 0, PCVOID pData = NULL) override
@@ -671,6 +689,8 @@ public:
 	}
 
 	LRESULT OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
+
+	LRESULT OnComposite(const RECT& rcClip, float ox, float oy) override;
 };
 
 class CUIPlayingCtrl final :public CUIElem
@@ -712,4 +732,155 @@ public:
 	LRESULT OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 
 	void OnTimer(UINT uTimerID) override;
+};
+
+struct SLITEMINFO
+{
+	PCWSTR pszText;
+	int cchText;
+	int idxItem;
+	int idxGroup;
+};
+
+struct SLGROUPINFO
+{
+	PCWSTR pszText;
+	int cchText;
+	int idxItem;
+	ID2D1DeviceContext* pDC;
+	ID2D1Bitmap1* pBmp;
+};
+
+struct SLGETDISPINFO
+{
+	Dui::DUINMHDR nmhdr;
+	BOOL bItem;
+	union
+	{
+		SLITEMINFO Item;
+		SLGROUPINFO Group;
+	};
+};
+
+struct SLHITTEST
+{
+	int idxGroup;
+	BITBOOL bHitCover : 1;
+};
+
+class CUIGroupList final :public CUIElem
+{
+private:
+	Dui::CScrollBar m_SB{};
+
+	struct ITEM
+	{
+		int y = 0;
+	};
+
+	struct GROUPITEM
+	{
+		int y = 0;
+		std::vector<ITEM> Item{};
+	};
+
+	IDWriteTextFormat* m_pTextFormat = NULL;
+	IDWriteTextFormat* m_pTfGroupTitle = NULL;
+
+	ID2D1SolidColorBrush* m_pBrText = NULL;
+	ID2D1SolidColorBrush* m_pBrHot = NULL;
+	ID2D1SolidColorBrush* m_pBrBk = NULL;
+	ID2D1SolidColorBrush* m_pBrGroup = NULL;
+	ID2D1SolidColorBrush* m_pBrGroupText = NULL;
+	ID2D1SolidColorBrush* m_pBrSBThumb = NULL;
+
+	int m_cyItem = 0;
+	int m_cyGroupHeader = 40;
+
+	int m_idxTop = 0;
+	int m_idxTopGroup{ 0 };
+	int m_idxHot = -1;
+	int m_idxHotItemSGroup = -1;// 热点项所在的组
+	int m_idxHotGroup = -1;
+	std::unordered_set<int> m_SelItems{};
+	int m_idxSel = -1;
+
+	int m_oyTop = 0;
+
+	int m_cxCover = 0;
+
+	float m_cxSBThumb = 0.f;
+
+	eck::CInertialScrollView* m_psv{};
+
+	BOOL m_bGroup = TRUE;
+
+	int m_cItems = 0;
+
+	std::vector<ITEM> m_Item{};
+	std::vector<GROUPITEM> m_Group{};
+
+	constexpr static int c_iMinLinePerGroup = 3;
+
+	int m_iDpi = USER_DEFAULT_SCREEN_DPI;
+	ECK_DS_BEGIN(DPIS)
+		ECK_DS_ENTRY_F(cxTextPadding, 4.f)
+		ECK_DS_ENTRY_F(EmText, 12.f)
+		ECK_DS_ENTRY_F(EmGroupText, 16.f)
+		ECK_DS_ENTRY_F(cyGroupLine, 1.f)
+		ECK_DS_ENTRY_F(cxScrollBarMini, 1.5f)
+		ECK_DS_ENTRY_F(cxScrollBar, 8.f)
+		ECK_DS_ENTRY_F(cyMinSBThumb, 30.f)
+		;
+	ECK_DS_END_VAR(m_DsF);
+
+	BOOL RedrawItem(int idxItem, D2D1_RECT_F& rcItem);
+
+	BOOL DrawGroupItem(int idxGroup, int idxItem);
+
+	BOOL DrawGroup(int idxGroup);
+
+public:
+	LRESULT OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
+
+	void CalcTopItem();
+
+	void SetItemCount(int cItems)
+	{
+		m_Item.resize(cItems);
+		//m_cItems = cItems;
+		//m_psv->SetMax(m_cItems * m_cyItem);
+		//Redraw();
+	}
+
+	void SetGroupCount(int cGroups)
+	{
+		m_Group.resize(cGroups);
+	}
+
+	EckInline constexpr int GetGroupCount() const { return (int)m_Group.size(); }
+
+	void SetGroupItemCount(int idxGroup, int cItems)
+	{
+		m_Group[idxGroup].Item.resize(cItems);
+	}
+
+	EckInline constexpr int GetGroupItemCount(int idxGroup) const {return (int)m_Group[idxGroup].Item.size(); }
+
+	void ReCalc(int idxBegin);
+
+	int GetItemHeight()
+	{
+		return m_cyItem;
+	}
+
+	void SetItemHeight(int cyItem)
+	{
+		m_cyItem = cyItem;
+		m_cxCover = cyItem * 3 - cyItem / 4;
+	}
+
+	int HitTest(POINT pt, SLHITTEST& pslht);
+
+	void InvalidateItem(int idxGroup, int idxItemInGroup);
 };
