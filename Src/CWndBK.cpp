@@ -143,16 +143,31 @@ void CWndBK::SetupElem()
 	const auto pgl = new CUIGroupList{};
 	pgl->Create(NULL, Dui::DES_VISIBLE | Dui::DES_TRANSPARENT, 0,
 		0, 0, 800, 900, NULL, this);
+	const auto pcolor = new Dui::CColorTheme(Dui::COLORTHEME
+		{
+			.crTextNormal = D2D1::ColorF(D2D1::ColorF::White),// D2D1::ColorF(D2D1::ColorF::Black),
+			//.crBkNormal = D2D1::ColorF(D2D1::ColorF::White),
+			.crBkHot = D2D1::ColorF(D2D1::ColorF::LightGray),
+		});
+	const auto pcolorG = new Dui::CColorTheme(Dui::COLORTHEME
+		{
+			.crTextNormal = D2D1::ColorF(eck::ColorrefToARGB(eck::Colorref::CyanBlue, 0), 1.f),
+			.crTextHot = D2D1::ColorF(D2D1::ColorF::Black),
+			.crBkNormal = D2D1::ColorF(D2D1::ColorF::White),
+			.crBkHot = D2D1::ColorF(D2D1::ColorF::White),
+		});
+	pgl->SetColorTheme(pcolor);
+	pgl->SetColorThemeGroup(pcolorG);
 	pgl->SetItemHeight(50);
 	WIN32_FIND_DATAW wfd;
 	HANDLE hFind = FindFirstFileW(LR"(D:\@重要文件\@音乐\*.mp3)", &wfd);
 	int i{};
 	do
 	{
-		if (m_vTest.size() > 30)
+		if (m_vTest.size() > 5)
 			break;
 
-		if (++i < 700)
+		if (++i < 100)
 			continue;
 		using namespace eck::MediaTag;
 		auto& e = m_vTest.emplace_back();

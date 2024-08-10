@@ -773,26 +773,34 @@ class CUIGroupList final :public CUIElem
 private:
 	Dui::CScrollBar m_SB{};
 
+	enum :UINT
+	{
+		ITF_LAYOUT_CACHE_VALID = 1u << 0,
+		ITF_SELECTED = 1u << 1,
+	};
+
 	struct ITEM
 	{
-		int y = 0;
+		int y{};
+		UINT uFlags{};
+		IDWriteTextLayout* pLayout{};
 	};
 
 	struct GROUPITEM
 	{
-		int y = 0;
+		int y{};
+		UINT uFlags{};
 		std::vector<ITEM> Item{};
+		IDWriteTextLayout* pLayout{};
+		float cxText{};
 	};
 
 	IDWriteTextFormat* m_pTextFormat = NULL;
 	IDWriteTextFormat* m_pTfGroupTitle = NULL;
 
-	ID2D1SolidColorBrush* m_pBrText = NULL;
-	ID2D1SolidColorBrush* m_pBrHot = NULL;
-	ID2D1SolidColorBrush* m_pBrBk = NULL;
-	ID2D1SolidColorBrush* m_pBrGroup = NULL;
-	ID2D1SolidColorBrush* m_pBrGroupText = NULL;
-	ID2D1SolidColorBrush* m_pBrSBThumb = NULL;
+	ID2D1SolidColorBrush* m_pBr{};
+
+	Dui::CColorTheme* m_pGroupColor{};
 
 	int m_cyItem = 0;
 	int m_cyGroupHeader = 40;
@@ -828,9 +836,6 @@ private:
 		ECK_DS_ENTRY_F(EmText, 12.f)
 		ECK_DS_ENTRY_F(EmGroupText, 16.f)
 		ECK_DS_ENTRY_F(cyGroupLine, 1.f)
-		ECK_DS_ENTRY_F(cxScrollBarMini, 1.5f)
-		ECK_DS_ENTRY_F(cxScrollBar, 8.f)
-		ECK_DS_ENTRY_F(cyMinSBThumb, 30.f)
 		;
 	ECK_DS_END_VAR(m_DsF);
 
@@ -878,9 +883,22 @@ public:
 	{
 		m_cyItem = cyItem;
 		m_cxCover = cyItem * 3 - cyItem / 4;
+		m_psv->SetDelta(m_cyItem * 3);
 	}
 
 	int HitTest(POINT pt, SLHITTEST& pslht);
 
 	void InvalidateItem(int idxGroup, int idxItemInGroup);
+
+	EckInline void SetColorThemeGroup(Dui::CColorTheme* pTheme)
+	{
+		ECK_DUILOCK;
+		std::swap(m_pGroupColor, pTheme);
+		if (m_pGroupColor)
+			m_pGroupColor->Ref();
+		if (pTheme)
+			pTheme->DeRef();
+	}
+
+
 };

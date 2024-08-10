@@ -45,6 +45,8 @@ LRESULT CUIGroupList::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		Dui::ELEMPAINTSTRU eps;
 		BeginPaint(eps, wParam, lParam);
+		m_pBr->SetColor(GetColorTheme()->Get().crBkNormal);
+		m_pDC->FillRectangle(eps.rcfClipInElem, m_pBr);
 		for (int i = m_idxTopGroup; i < GetGroupCount(); ++i)
 		{
 			(DrawGroup(i));
@@ -168,12 +170,7 @@ LRESULT CUIGroupList::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, m_DsF.EmGroupText, L"zh-cn", &m_pTfGroupTitle);
 		m_pTfGroupTitle->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 
-		m_pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_pBrText);
-		m_pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::LightGray), &m_pBrHot);
-		m_pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &m_pBrBk);
-		m_pDC->CreateSolidColorBrush(D2D1::ColorF(eck::ColorrefToARGB(eck::Colorref::Azure, 0), 0.6f), &m_pBrGroup);
-		m_pDC->CreateSolidColorBrush(D2D1::ColorF(eck::ColorrefToARGB(eck::Colorref::CyanBlue, 0), 1.f), &m_pBrGroupText);
-		m_pDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black, 0.7f), &m_pBrSBThumb);
+		m_pDC->CreateSolidColorBrush({}, &m_pBr);
 	}
 	break;
 
@@ -263,6 +260,7 @@ void CUIGroupList::ReCalc(int idxBegin)
 
 BOOL CUIGroupList::DrawGroup(int idxGroup)
 {
+	auto& Group = m_Group[idxGroup];
 	SLGETDISPINFO sldi{};
 	sldi.nmhdr.uCode = UIN_GROUPLIST_GETDISPINFO;
 	sldi.bItem = FALSE;
@@ -271,7 +269,17 @@ BOOL CUIGroupList::DrawGroup(int idxGroup)
 	sldi.Group.pDC = m_pDC;
 	GenElemNotify(&sldi);
 
-	auto& Group = m_Group[idxGroup];
+	if (!(Group.uFlags & ITF_LAYOUT_CACHE_VALID))
+	{
+		SafeRelease(Group.pLayout);
+		App->m_pDwFactory->CreateTextLayout(sldi.Group.pszText, sldi.Group.cchText, m_pTfGroupTitle,
+			GetWidthF(), (float)m_cyGroupHeader, &Group.pLayout);
+		DWRITE_TEXT_METRICS tm;
+		Group.pLayout->GetMetrics(&tm);
+		Group.cxText = tm.width;
+		Group.uFlags |= ITF_LAYOUT_CACHE_VALID;
+	}
+
 	D2D1_RECT_F rcGroup
 	{
 		0.f,
@@ -293,20 +301,20 @@ BOOL CUIGroupList::DrawGroup(int idxGroup)
 	if(sldi.Group.pBmp)
 	m_pDC->DrawBitmap(sldi.Group.pBmp, &rcTemp);
 
-	rcTemp.top = rcTemp.bottom;
-	rcTemp.bottom = rcGroup.bottom + (float)(cSubItem < c_iMinLinePerGroup ? c_iMinLinePerGroup * m_cyItem : cSubItem * m_cyItem);
-	m_pDC->FillRectangle(&rcTemp, m_pBrBk);
-	if (cSubItem < c_iMinLinePerGroup)
-	{
-		rcTemp =
-		{
-			(float)m_cxCover,
-			(float)(Group.Item.back().y + m_cyItem),
-			GetWidthF(),
-			(float)(Group.Item.front().y + m_cyItem * c_iMinLinePerGroup)
-		};
-		m_pDC->FillRectangle(&rcTemp, m_pBrBk);
-	}
+	//rcTemp.top = rcTemp.bottom;
+	//rcTemp.bottom = rcGroup.bottom + (float)(cSubItem < c_iMinLinePerGroup ? c_iMinLinePerGroup * m_cyItem : cSubItem * m_cyItem);
+	//m_pDC->FillRectangle(&rcTemp, m_pBrBk);
+	//if (cSubItem < c_iMinLinePerGroup)
+	//{
+	//	rcTemp =
+	//	{
+	//		(float)m_cxCover,
+	//		(float)(Group.Item.back().y + m_cyItem),
+	//		GetWidthF(),
+	//		(float)(Group.Item.front().y + m_cyItem * c_iMinLinePerGroup)
+	//	};
+	//	m_pDC->FillRectangle(rcTemp, m_pBrBk);
+	//}
 
 	if (rcGroup.bottom < 0.f || rcGroup.top > GetHeight())
 		return FALSE;
@@ -319,39 +327,41 @@ BOOL CUIGroupList::DrawGroup(int idxGroup)
 		//if (idxItem == m_idxHot)
 		//	m_pDC->FillRectangle(rcItem, m_pBrHot);
 		//else
-		m_pDC->FillRectangle(rcGroup, m_pBrBk);
+		//m_pDC->FillRectangle(rcGroup, m_pBrBk);
 		//m_pDC->FillRectangle(rcGroup, m_pBrGroup);
 
-		IDWriteTextLayout* pLayout;
-		App->m_pDwFactory->CreateTextLayout(sldi.Group.pszText, sldi.Group.cchText, m_pTfGroupTitle,
-			GetWidthF(), (float)m_cyGroupHeader, &pLayout);
-		DWRITE_TEXT_METRICS Metrics;
-		pLayout->GetMetrics(&Metrics);
-
-		m_pDC->DrawTextLayout({ rcGroup.left + m_DsF.cxTextPadding,rcGroup.top }, pLayout,
-			m_pBrGroupText, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
-		pLayout->Release();
+		m_pBr->SetColor(m_pGroupColor->Get().crTextNormal);
+		m_pDC->DrawTextLayout({ rcGroup.left + m_DsF.cxTextPadding,rcGroup.top }, Group.pLayout,
+			m_pBr, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
 
 		const float yLine = rcGroup.top + (float)(m_cyGroupHeader / 2);
-		m_pDC->DrawLine({ rcGroup.left + m_DsF.cxTextPadding * 2.f + Metrics.width,yLine },
-			{ GetWidthF() - m_DsF.cxTextPadding,yLine }, m_pBrGroupText, m_DsF.cyGroupLine);
+		m_pDC->DrawLine({ rcGroup.left + m_DsF.cxTextPadding * 2.f + Group.cxText,yLine },
+			{ GetWidthF() - m_DsF.cxTextPadding,yLine }, m_pBr, m_DsF.cyGroupLine);
 	}
-	else
-		m_pDC->FillRectangle(rcGroup, m_pBrBk);
 	return TRUE;
 }
 
 BOOL CUIGroupList::DrawGroupItem(int idxGroup, int idxItem)
 {
-	SLGETDISPINFO sldi{};
-	sldi.nmhdr.uCode = UIN_GROUPLIST_GETDISPINFO;
-	sldi.bItem = TRUE;
-	sldi.Item.cchText = -1;
-	sldi.Item.idxItem = idxItem;
-	sldi.Item.idxGroup = idxGroup;
-	GenElemNotify(&sldi);
-
 	auto& Item = m_Group[idxGroup].Item[idxItem];
+
+	if (!(Item.uFlags & ITF_LAYOUT_CACHE_VALID))
+	{
+		SLGETDISPINFO sldi{};
+		sldi.nmhdr.uCode = UIN_GROUPLIST_GETDISPINFO;
+		sldi.bItem = TRUE;
+		sldi.Item.cchText = -1;
+		sldi.Item.idxItem = idxItem;
+		sldi.Item.idxGroup = idxGroup;
+		GenElemNotify(&sldi);
+
+		SafeRelease(Item.pLayout);
+		App->m_pDwFactory->CreateTextLayout(sldi.Item.pszText, sldi.Item.cchText, m_pTextFormat,
+			GetWidthF() - (float)m_cxCover, (float)m_cyItem, &Item.pLayout);
+		DWRITE_TEXT_METRICS tm;
+		Item.uFlags |= ITF_LAYOUT_CACHE_VALID;
+	}
+
 	D2D1_RECT_F rcItem
 	{
 		(float)m_cxCover,
@@ -363,23 +373,20 @@ BOOL CUIGroupList::DrawGroupItem(int idxGroup, int idxItem)
 	if (rcItem.bottom < 0.f || rcItem.top > GetHeight())
 		return FALSE;
 
-	if (sldi.Item.pszText)
+	if (Item.pLayout)
 	{
-		if (sldi.Item.cchText < 0)
-			sldi.Item.cchText = (int)wcslen(sldi.Item.pszText);
-
 		if (idxItem == m_idxHot && idxGroup == m_idxHotItemSGroup)
-			m_pDC->FillRectangle(rcItem, m_pBrHot);
-		else
-			m_pDC->FillRectangle(rcItem, m_pBrBk);
+		{
+			m_pBr->SetColor(GetColorTheme()->Get().crBkHot);
+			m_pDC->FillRectangle(rcItem, m_pBr);
+		}
 
 		rcItem.left += m_DsF.cxTextPadding;
-		m_pDC->DrawTextW(sldi.Item.pszText, sldi.Item.cchText, m_pTextFormat,
-			rcItem, m_pBrText, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
+		m_pBr->SetColor(GetColorTheme()->Get().crTextNormal);
+		m_pDC->DrawTextLayout({ rcItem.left,rcItem.top }, Item.pLayout, 
+			m_pBr, D2D1_DRAW_TEXT_OPTIONS_NONE);
 		rcItem.left -= m_DsF.cxTextPadding;
 	}
-	else
-		m_pDC->FillRectangle(rcItem, m_pBrBk);
 	return TRUE;
 }
 
@@ -409,16 +416,16 @@ BOOL CUIGroupList::RedrawItem(int idxItem, D2D1_RECT_F& rcItem)
 			sldi.Item.cchText = (int)wcslen(sldi.Item.pszText);
 
 		if (idxItem == m_idxHot)
-			m_pDC->FillRectangle(rcItem, m_pBrHot);
-		else
-			m_pDC->FillRectangle(rcItem, m_pBrBk);
+		{
+			m_pBr->SetColor(GetColorTheme()->Get().crBkHot);
+			m_pDC->FillRectangle(rcItem, m_pBr);
+		}
 
 		rcItem.left += m_DsF.cxTextPadding;
+		m_pBr->SetColor(GetColorTheme()->Get().crTextNormal);
 		m_pDC->DrawTextW(sldi.Item.pszText, sldi.Item.cchText, m_pTextFormat,
-			rcItem, m_pBrText, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
+			rcItem, m_pBr, D2D1_DRAW_TEXT_OPTIONS_NONE);
 		rcItem.left -= m_DsF.cxTextPadding;
 	}
-	else
-		m_pDC->FillRectangle(rcItem, m_pBrBk);
 	return TRUE;
 }
