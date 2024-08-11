@@ -770,6 +770,14 @@ struct SLHITTEST
 
 class CUIGroupList final :public CUIElem
 {
+public:
+	enum class Part
+	{
+		GroupHeader,
+		GroupText,
+		Item,
+		Cover,
+	};
 private:
 	Dui::CScrollBar m_SB{};
 
@@ -843,8 +851,7 @@ private:
 
 	BOOL DrawGroupItem(int idxGroup, int idxItem);
 
-	BOOL DrawGroup(int idxGroup);
-
+	BOOL DrawGroup(int idxGroup, const RECT& rcPaint);
 public:
 	LRESULT OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 
@@ -870,7 +877,7 @@ public:
 		m_Group[idxGroup].Item.resize(cItems);
 	}
 
-	EckInline constexpr int GetGroupItemCount(int idxGroup) const {return (int)m_Group[idxGroup].Item.size(); }
+	EckInline constexpr int GetGroupItemCount(int idxGroup) const { return (int)m_Group[idxGroup].Item.size(); }
 
 	void ReCalc(int idxBegin);
 
@@ -887,6 +894,10 @@ public:
 	}
 
 	int HitTest(POINT pt, SLHITTEST& pslht);
+
+	void GetGroupPartRect(RECT& rc, Part ePart, int idxGroup, int idxItemInGroup);
+
+	void GetGroupPartRect(D2D1_RECT_F& rc, Part ePart, int idxGroup, int idxItemInGroup);
 
 	void InvalidateItem(int idxGroup, int idxItemInGroup);
 

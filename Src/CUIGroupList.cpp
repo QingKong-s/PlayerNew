@@ -10,7 +10,7 @@ void CUIGroupList::CalcTopItem()
 			m_idxTopGroup = m_idxTop = 0;
 			return;
 		}
-		const auto it = std::lower_bound(m_Group.begin(), m_Group.end(), m_psv->GetPos(), 
+		const auto it = std::lower_bound(m_Group.begin(), m_Group.end(), m_psv->GetPos(),
 			[](const GROUPITEM& x, int iPos)
 			{
 				return x.y < iPos;
@@ -47,25 +47,46 @@ LRESULT CUIGroupList::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		BeginPaint(eps, wParam, lParam);
 		m_pBr->SetColor(GetColorTheme()->Get().crBkNormal);
 		m_pDC->FillRectangle(eps.rcfClipInElem, m_pBr);
-		for (int i = m_idxTopGroup; i < GetGroupCount(); ++i)
+		if (m_Group.empty())
 		{
-			(DrawGroup(i));
-			{
-				EckCounter((int)m_Group[i].Item.size(), j)
-					DrawGroupItem(i, j);
+			EndPaint(eps);
+			return 0;
+		}
 
+		const int iSbPos = m_psv->GetPos();
+		auto it = std::lower_bound(m_Group.begin() + m_idxTopGroup, m_Group.end(),
+			eps.prcClip->top + iSbPos, [](const GROUPITEM& x, int iPos)
+			{
+				return x.y < iPos;
+			});
+
+		if (it != m_Group.begin())
+			--it;
+		for (int i = (int)std::distance(m_Group.begin(), it); i < GetGroupCount(); ++i)
+		{
+			const auto& e = m_Group[i];
+			if (e.y >= (int)eps.rcfClipInElem.bottom + iSbPos)
+				break;
+			DrawGroup(i, eck::MakeRect(eps.rcfClipInElem));
+			for (int j = (i == m_idxTopGroup ? m_idxTop : 0); j < (int)e.Item.size(); ++j)
+			{
+				const auto& f = e.Item[j];
+				if (f.y >= (int)eps.rcfClipInElem.bottom + iSbPos)
+					break;
+				DrawGroupItem(i, j);
 			}
-			
 		}
 		EndPaint(eps);
 	}
 	return 0;
+
 	case WM_SIZE:
 	{
 		m_SB.SetRect({ GetWidth() - (int)GetWnd()->GetDs().CommSBCxy,0,GetWidth(),GetHeight() });
 		m_psv->SetPage(GetHeight());
 	}
 	return 0;
+
 	case WM_MOUSEMOVE:
 	{
 		POINT pt ECK_GET_PT_LPARAM(lParam);
@@ -79,8 +100,10 @@ LRESULT CUIGroupList::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 				std::swap(idxHot, m_idxHot);
 				std::swap(slht.idxGroup, m_idxHotItemSGroup);
-				InvalidateItem(slht.idxGroup,  idxHot );
-				InvalidateItem(m_idxHotItemSGroup, m_idxHot );
+				if (slht.idxGroup >= 0 && idxHot >= 0)
+					InvalidateItem(slht.idxGroup, idxHot);
+				if (m_idxHotItemSGroup >= 0 && m_idxHot >= 0)
+					InvalidateItem(m_idxHotItemSGroup, m_idxHot);
 			}
 		}
 		else
@@ -103,7 +126,8 @@ LRESULT CUIGroupList::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			int idxGroup = -1;
 			std::swap(idx, m_idxHot);
 			std::swap(idxGroup, m_idxHotItemSGroup);
-			InvalidateItem(idxGroup,  idx );
+			if (idxGroup >= 0 && idx >= 0)
+				InvalidateItem(idxGroup, idx);
 		}
 		else
 		{
@@ -155,12 +179,13 @@ LRESULT CUIGroupList::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			0, 0, 0, 0, this, GetWnd());
 		m_SB.SetRect({ GetWidth() - (int)GetWnd()->GetDs().CommSBCxy,0,GetWidth(),GetHeight() });
 		m_psv = m_SB.GetScrollView();
+		m_psv->AddRef();
 		m_psv->SetCallBack([](int iPos, int iPrevPos, LPARAM lParam)
 			{
 				const auto p = (CUIGroupList*)lParam;
 				p->CalcTopItem();
 				p->InvalidateRect();
-			},(LPARAM)this);
+			}, (LPARAM)this);
 
 		App->m_pDwFactory->CreateTextFormat(L"Î¢ÈíÑÅºÚ", NULL, DWRITE_FONT_WEIGHT_NORMAL,
 			DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, m_DsF.EmText, L"zh-cn", &m_pTextFormat);
@@ -176,6 +201,10 @@ LRESULT CUIGroupList::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_DESTROY:
 	{
+		SafeRelease(m_pTextFormat);
+		SafeRelease(m_pTfGroupTitle);
+		SafeRelease(m_pBr);
+		SafeRelease(m_psv);
 	}
 	break;
 	}
@@ -184,7 +213,9 @@ LRESULT CUIGroupList::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void CUIGroupList::InvalidateItem(int idxGroup, int idxItemInGroup)
 {
-	InvalidateRect();
+	RECT rc;
+	GetGroupPartRect(rc, Part::Item, idxGroup, idxItemInGroup);
+	InvalidateRect(&rc);
 }
 
 int CUIGroupList::HitTest(POINT pt, SLHITTEST& pslht)
@@ -238,6 +269,54 @@ int CUIGroupList::HitTest(POINT pt, SLHITTEST& pslht)
 	}
 }
 
+void CUIGroupList::GetGroupPartRect(RECT& rc, Part ePart, int idxGroup, int idxItemInGroup)
+{
+	auto& e = m_Group[idxGroup];
+	switch (ePart)
+	{
+	case Part::GroupHeader:
+		rc =
+		{
+			(int)m_DsF.cxTextPadding,
+			e.y - m_psv->GetPos(),
+			GetWidth(),
+			e.y - m_psv->GetPos() + m_cyGroupHeader,
+		};
+		break;
+	case Part::GroupText:
+		EckDbgBreak();
+		break;
+	case Part::Item:
+		rc =
+		{
+			m_cxCover,
+			e.Item[idxItemInGroup].y - m_psv->GetPos(),
+			GetWidth(),
+			e.Item[idxItemInGroup].y - m_psv->GetPos() + m_cyItem,
+		};
+		break;
+	case Part::Cover:
+		rc =
+		{
+			0,
+			e.y - m_psv->GetPos() + m_cyGroupHeader,
+			m_cxCover,
+			e.y - m_psv->GetPos() + m_cyGroupHeader + m_cxCover
+		};
+		break;
+	default:
+		EckDbgBreak();
+		break;
+	}
+}
+
+void CUIGroupList::GetGroupPartRect(D2D1_RECT_F& rc, Part ePart, int idxGroup, int idxItemInGroup)
+{
+	RECT rc2;
+	GetGroupPartRect(rc2, ePart, idxGroup, idxItemInGroup);
+	rc = eck::MakeD2DRcF(rc2);
+}
+
 void CUIGroupList::ReCalc(int idxBegin)
 {
 	int y = 0;
@@ -258,86 +337,58 @@ void CUIGroupList::ReCalc(int idxBegin)
 	m_psv->SetMax(y);
 }
 
-BOOL CUIGroupList::DrawGroup(int idxGroup)
+BOOL CUIGroupList::DrawGroup(int idxGroup, const RECT& rcPaint)
 {
-	auto& Group = m_Group[idxGroup];
-	SLGETDISPINFO sldi{};
-	sldi.nmhdr.uCode = UIN_GROUPLIST_GETDISPINFO;
-	sldi.bItem = FALSE;
-	sldi.Group.cchText = -1;
-	sldi.Group.idxItem = idxGroup;
-	sldi.Group.pDC = m_pDC;
-	GenElemNotify(&sldi);
+	auto& e = m_Group[idxGroup];
 
-	if (!(Group.uFlags & ITF_LAYOUT_CACHE_VALID))
-	{
-		SafeRelease(Group.pLayout);
-		App->m_pDwFactory->CreateTextLayout(sldi.Group.pszText, sldi.Group.cchText, m_pTfGroupTitle,
-			GetWidthF(), (float)m_cyGroupHeader, &Group.pLayout);
-		DWRITE_TEXT_METRICS tm;
-		Group.pLayout->GetMetrics(&tm);
-		Group.cxText = tm.width;
-		Group.uFlags |= ITF_LAYOUT_CACHE_VALID;
-	}
+	D2D1_RECT_F rcGroup;
+	GetGroupPartRect(rcGroup, Part::GroupHeader, idxGroup, 0);
 
-	D2D1_RECT_F rcGroup
-	{
-		0.f,
-		(float)(Group.y - m_psv->GetPos()),
-		GetWidthF(),
-		(float)(Group.y + m_cyGroupHeader - m_psv->GetPos()),
-	};
+	D2D1_RECT_F rcCover;
+	GetGroupPartRect(rcCover, Part::Cover, idxGroup, 0);
 
-	const int cSubItem = (int)Group.Item.size();
-
-	D2D1_RECT_F rcTemp
-	{
-		0.f,
-		rcGroup.bottom,
-		(float)m_cxCover,
-		rcGroup.bottom + (float)m_cxCover
-	};
-
-	if(sldi.Group.pBmp)
-	m_pDC->DrawBitmap(sldi.Group.pBmp, &rcTemp);
-
-	//rcTemp.top = rcTemp.bottom;
-	//rcTemp.bottom = rcGroup.bottom + (float)(cSubItem < c_iMinLinePerGroup ? c_iMinLinePerGroup * m_cyItem : cSubItem * m_cyItem);
-	//m_pDC->FillRectangle(&rcTemp, m_pBrBk);
-	//if (cSubItem < c_iMinLinePerGroup)
-	//{
-	//	rcTemp =
-	//	{
-	//		(float)m_cxCover,
-	//		(float)(Group.Item.back().y + m_cyItem),
-	//		GetWidthF(),
-	//		(float)(Group.Item.front().y + m_cyItem * c_iMinLinePerGroup)
-	//	};
-	//	m_pDC->FillRectangle(rcTemp, m_pBrBk);
-	//}
-
-	if (rcGroup.bottom < 0.f || rcGroup.top > GetHeight())
+	const BOOL bText = !(rcGroup.bottom <= rcPaint.top || rcGroup.top >= rcPaint.bottom);
+	const BOOL bCover = !(rcCover.bottom <= rcPaint.top || rcCover.top >= rcPaint.bottom);
+	if (!bText && !bCover)
 		return FALSE;
 
-	if (sldi.Group.pszText)
+	SLGETDISPINFO sldi{};
+	if (bText || bCover)
 	{
-		if (sldi.Group.cchText < 0)
-			sldi.Group.cchText = (int)wcslen(sldi.Item.pszText);
-
-		//if (idxItem == m_idxHot)
-		//	m_pDC->FillRectangle(rcItem, m_pBrHot);
-		//else
-		//m_pDC->FillRectangle(rcGroup, m_pBrBk);
-		//m_pDC->FillRectangle(rcGroup, m_pBrGroup);
-
-		m_pBr->SetColor(m_pGroupColor->Get().crTextNormal);
-		m_pDC->DrawTextLayout({ rcGroup.left + m_DsF.cxTextPadding,rcGroup.top }, Group.pLayout,
-			m_pBr, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
-
-		const float yLine = rcGroup.top + (float)(m_cyGroupHeader / 2);
-		m_pDC->DrawLine({ rcGroup.left + m_DsF.cxTextPadding * 2.f + Group.cxText,yLine },
-			{ GetWidthF() - m_DsF.cxTextPadding,yLine }, m_pBr, m_DsF.cyGroupLine);
+		sldi.nmhdr.uCode = UIN_GROUPLIST_GETDISPINFO;
+		sldi.bItem = FALSE;
+		sldi.Group.cchText = -1;
+		sldi.Group.idxItem = idxGroup;
+		sldi.Group.pDC = m_pDC;
+		GenElemNotify(&sldi);
 	}
+
+	if (bText)
+	{
+		if (!(e.uFlags & ITF_LAYOUT_CACHE_VALID))
+		{
+			SafeRelease(e.pLayout);
+			App->m_pDwFactory->CreateTextLayout(sldi.Group.pszText, sldi.Group.cchText, m_pTfGroupTitle,
+				GetWidthF(), (float)m_cyGroupHeader, &e.pLayout);
+			DWRITE_TEXT_METRICS tm;
+			e.pLayout->GetMetrics(&tm);
+			e.cxText = tm.width;
+			e.uFlags |= ITF_LAYOUT_CACHE_VALID;
+		}
+		if (sldi.Group.pszText)
+		{
+			m_pBr->SetColor(m_pGroupColor->Get().crTextNormal);
+			m_pDC->DrawTextLayout({ rcGroup.left,rcGroup.top }, e.pLayout,
+				m_pBr, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
+
+			const float yLine = rcGroup.top + (float)(m_cyGroupHeader / 2);
+			m_pDC->DrawLine({ rcGroup.left + m_DsF.cxTextPadding * 2.f + e.cxText,yLine },
+				{ GetWidthF() - m_DsF.cxTextPadding,yLine }, m_pBr, m_DsF.cyGroupLine);
+		}
+	}
+
+	if (bCover && sldi.Group.pBmp)
+		m_pDC->DrawBitmap(sldi.Group.pBmp, &rcCover);
 	return TRUE;
 }
 
@@ -383,7 +434,7 @@ BOOL CUIGroupList::DrawGroupItem(int idxGroup, int idxItem)
 
 		rcItem.left += m_DsF.cxTextPadding;
 		m_pBr->SetColor(GetColorTheme()->Get().crTextNormal);
-		m_pDC->DrawTextLayout({ rcItem.left,rcItem.top }, Item.pLayout, 
+		m_pDC->DrawTextLayout({ rcItem.left,rcItem.top }, Item.pLayout,
 			m_pBr, D2D1_DRAW_TEXT_OPTIONS_NONE);
 		rcItem.left -= m_DsF.cxTextPadding;
 	}

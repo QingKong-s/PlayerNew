@@ -145,8 +145,8 @@ void CWndBK::SetupElem()
 		0, 0, 800, 900, NULL, this);
 	const auto pcolor = new Dui::CColorTheme(Dui::COLORTHEME
 		{
-			.crTextNormal = D2D1::ColorF(D2D1::ColorF::White),// D2D1::ColorF(D2D1::ColorF::Black),
-			//.crBkNormal = D2D1::ColorF(D2D1::ColorF::White),
+			.crTextNormal = D2D1::ColorF(D2D1::ColorF::Black),
+			.crBkNormal = D2D1::ColorF(D2D1::ColorF::White),
 			.crBkHot = D2D1::ColorF(D2D1::ColorF::LightGray),
 		});
 	const auto pcolorG = new Dui::CColorTheme(Dui::COLORTHEME
